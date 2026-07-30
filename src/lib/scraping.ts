@@ -94,7 +94,7 @@ export async function scrapeFromLasterketak(): Promise<ScrapedRace[]> {
 
     while (page <= totalPages && page <= maxPages) {
       const response = await fetchWithTimeout(
-        `https://lasterketak.eus/eu/wp-json/wp/v2/event?per_page=100&page=${page}&_embed=1&_fields=id,title,slug,link,content,excerpt,eventcat,event_tags,featured_media`
+        `https://lasterketak.eus/eu/wp-json/wp/v2/event?per_page=100&page=${page}&_embed=1`
       );
 
       const events = await response.json() as Record<string, unknown>[];
