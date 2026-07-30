@@ -202,7 +202,7 @@ export async function scrapeFromBuscametas(): Promise<ScrapedRace[]> {
     };
 
     const currentYear = new Date().getFullYear().toString();
-    const eventRegex = /<a\s+href="(\/evento\/\d+\/)"[^>]*>.*?<span>(\d+)<\/span>\s*([A-Z]{3}).*?item-calendar-data[^>]*>(.*?)<\/div>\s*<\/div>\s*<\/div>\s*<\/a>/gs;
+    const eventRegex = /<a\s+href="(\/evento\/\d+\/)"[^>]*>[\s\S]*?<span>(\d+)<\/span>\s*([A-Z]{3})[\s\S]*?item-calendar-data[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>\s*<\/a>/g;
     let match: RegExpExecArray | null;
 
     while ((match = eventRegex.exec(html)) !== null) {
