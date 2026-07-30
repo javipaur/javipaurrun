@@ -115,15 +115,15 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
           )}
         </div>
 
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 pt-3 border-t border-gray-100 dark:border-gray-700">
           <span className="text-xs text-gray-400">{race.province}</span>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <button
               onClick={handleCompare}
               className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-orange-600 cursor-pointer transition-colors"
             >
               <BarChart3 size={12} />
-              Comparar
+              <span className="hidden sm:inline">Comparar</span>
             </button>
             <button
               onClick={handleShare}
@@ -140,7 +140,7 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
               className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-orange-600 cursor-pointer transition-colors"
             >
               <Clock size={12} />
-              {success ? "✅ Registrado" : "Registrar tiempo"}
+              {success ? "✅" : "Registrar tiempo"}
             </span>
             {race.url && (
               <a
@@ -150,7 +150,7 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
                 onClick={(e) => e.stopPropagation()}
                 className="flex items-center gap-1 text-xs font-medium text-orange-500 hover:text-orange-600 transition-colors"
               >
-                Inscríbete
+                <span className="hidden sm:inline">Inscríbete</span>
                 <ArrowUpRight size={12} />
               </a>
             )}

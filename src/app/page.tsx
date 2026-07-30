@@ -8,13 +8,13 @@ import { EventJsonLd } from "@/components/JsonLd";
 import { ArrowRight, CalendarDays, ChevronRight, Search, TrendingUp } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "JavipaurRun - Calendario de carreras populares en Euskadi y norte de España",
+  title: "JavipaurRun - Calendario de carreras populares en España",
   description:
-    "Encuentra tu próxima carrera popular en Euskadi, Cantabria, Burgos, La Rioja, Navarra y Zamora. Calendario actualizado de carreras de asfalto, trail, marchas y orientación. Scraping automático desde lasterketak.eus, rockthesport.com y buscametas.com.",
+    "Encuentra tu próxima carrera popular en toda España. Calendario actualizado de carreras de asfalto, trail, marchas y orientación. Scraping automático desde rockthesport.com, sportmaniacs.com y más fuentes.",
   openGraph: {
     title: "JavipaurRun - Calendario de carreras populares",
     description:
-      "Encuentra tu próxima carrera popular en Euskadi y norte de España",
+      "Encuentra tu próxima carrera popular en toda España",
     siteName: "JavipaurRun",
     type: "website",
     locale: "es_ES",
@@ -80,7 +80,7 @@ export default async function Home() {
               Encuentra tu próxima carrera
             </h1>
             <p className="text-gray-500 text-base sm:text-lg max-w-xl mx-auto mb-8 leading-relaxed">
-              El calendario más completo de carreras populares en Euskadi, Navarra, Cantabria, Burgos, La Rioja y Zamora.
+              Carreras populares, trails, marchas y orientación por toda España. Filtra por tipo, provincia o comunidad autónoma.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
               <Link
@@ -109,14 +109,14 @@ export default async function Home() {
       <section className="pb-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex flex-wrap gap-2 justify-center">
-            {categories.map((cat) => (
+            {categories.filter((cat) => (typeCountMap[cat.type] || 0) > 0).map((cat) => (
               <Link
                 key={cat.type}
                 href={cat.path}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-sm text-gray-600 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-50 transition-all"
               >
                 {cat.label}
-                <span className="text-xs text-gray-400 font-medium">({typeCountMap[cat.type] || 0})</span>
+                <span className="text-xs text-gray-400 font-medium">({typeCountMap[cat.type]})</span>
               </Link>
             ))}
           </div>
