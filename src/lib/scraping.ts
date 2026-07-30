@@ -105,7 +105,7 @@ export async function scrapeFromLasterketak(): Promise<ScrapedRace[]> {
 
       for (const event of events) {
         const content = (event.content as { rendered: string })?.rendered || "";
-        const text = content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+        const text = decodeHtmlEntities(content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
 
         const dateTimeMatch = text.match(
           /(\d{4})\/(\d{2})\/(\d{2})\s*[-–]\s*(\d{2}):(\d{2})/
