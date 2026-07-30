@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, X, MapPin } from "lucide-react";
 import { raceTypes, provinces, autonomousCommunities } from "@/lib/utils";
 
 export default function RaceFilters() {
@@ -24,6 +24,34 @@ export default function RaceFilters() {
       params.delete(key);
     }
     router.push(`/calendario?${params.toString()}`);
+  }
+
+  const [locating, setLocating] = useState(false);
+
+  function detectLocation() {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=es`,
+            { headers: { "User-Agent": "JavipaurRun/1.0" } }
+          );
+          const data = await res.json();
+          const addr = data.address || {};
+          const province = addr.province || addr.state || addr.region || "";
+          if (province) {
+            updateFilter("provincia", province);
+          }
+        } catch {
+          // ignore
+        }
+        setLocating(false);
+      },
+      () => setLocating(false),
+      { timeout: 10000 }
+    );
   }
 
   function clearFilters() {
@@ -59,6 +87,15 @@ export default function RaceFilters() {
           ))}
         </select>
       </div>
+
+      <button
+        onClick={detectLocation}
+        disabled={locating}
+        className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-orange-50 text-orange-700 text-sm font-medium hover:bg-orange-100 transition-colors disabled:opacity-50"
+      >
+        <MapPin size={14} />
+        {locating ? "Detectando ubicación..." : "Usar mi ubicación"}
+      </button>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1.5">Comunidad Autónoma</label>

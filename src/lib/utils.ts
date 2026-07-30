@@ -44,6 +44,7 @@ const autonomousCommunities = [
   { value: "murcia", label: "Murcia" },
   { value: "navarra", label: "Navarra" },
   { value: "pais-vasco", label: "País Vasco" },
+  { value: "otra", label: "Otra" },
 ] as const;
 
 const provinceToCommunity: Record<string, string> = {

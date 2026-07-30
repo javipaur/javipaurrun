@@ -27,7 +27,6 @@ export default async function CalendarPage({ searchParams }: PageProps) {
   where.date = { gte: new Date() };
 
   if (params.tipo && Object.values(RaceType).includes(params.tipo as RaceType)) where.type = params.tipo as RaceType;
-  if (params.comunidad) where.province = params.comunidad; // placeholder, overridden after fetch
   if (params.provincia) where.province = params.provincia;
   if (params.buscar) {
     where.OR = [

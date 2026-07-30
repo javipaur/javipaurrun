@@ -64,6 +64,39 @@ function getProvinceFromTag(tagSlug: string): string {
   return map[tagSlug] || "";
 }
 
+function detectRaceType(name: string, distance?: string, sport?: string): string {
+  const lower = name.toLowerCase();
+
+  if (sport === "trail" || sport === "ultra-trail") return "TRAIL";
+
+  if (lower.includes("orientación") || lower.includes("orientacion")) return "ORIENTACION";
+
+  if (lower.includes("marcha") && !lower.includes("media maratón") && !lower.includes("media maraton")) return "MARCHA";
+
+  if (lower.includes("trail") || lower.includes("txakurkros")) return "TRAIL";
+
+  if (
+    lower.includes("maratón") || lower.includes("marathon") ||
+    lower.startsWith("maratón") || lower.startsWith("marathon")
+  ) return "MARATON";
+
+  if (
+    lower.includes("media maratón") || lower.includes("media maraton") ||
+    lower.includes("medio maratón") || lower.includes("medio maraton") ||
+    lower.startsWith("media maratón") || lower.startsWith("media maraton")
+  ) return "MEDIA_MARATON";
+
+  if (distance) {
+    const distNum = parseFloat(distance.replace(",", ".").split(" ")[0]);
+    if (!isNaN(distNum)) {
+      if (distNum >= 42) return "MARATON";
+      if (distNum >= 21) return "MEDIA_MARATON";
+    }
+  }
+
+  return "ASFALTO";
+}
+
 function parseDistanceFromText(text: string): string | undefined {
   const kmMatch = text.match(/(\d+[.,]\d+)\s*km/i);
   if (kmMatch) return `${kmMatch[1].replace(",", ".")} km`;
@@ -126,17 +159,12 @@ export async function scrapeFromLasterketak(): Promise<ScrapedRace[]> {
 
         const isTrail = eventcats.some((cat) => cat.slug === "trail");
         const isTxakurkros = eventcats.some((cat) => cat.slug === "txakurkros");
-        const isTxiki = eventcats.some((cat) => cat.slug === "txiki");
 
-        let type = "ASFALTO";
-        if (isTrail) type = "TRAIL";
-        else if (isTxakurkros) type = "MARCHA";
-        else if (isTxiki) type = "MARCHA";
-        else {
-          const distNum = distance ? parseFloat(distance.replace(",", ".").split(" ")[0]) : 0;
-          if (distNum >= 42) type = "MARATON";
-          else if (distNum >= 21) type = "MEDIA_MARATON";
-        }
+        const type = detectRaceType(
+          name,
+          distance,
+          isTrail || isTxakurkros ? "trail" : undefined
+        );
 
         const locationTag = eventTags.find((tag) => !PROVINCE_TAGS.has(tag.slug));
         const provinceTag = eventTags.find((tag) => PROVINCE_TAGS.has(tag.slug));
@@ -227,9 +255,7 @@ export async function scrapeFromRockTheSport(): Promise<ScrapedRace[]> {
         if (!name || name.length < 3) continue;
 
         const sport = (item.sport as string) || "";
-
-        let type = "ASFALTO";
-        if (sport === "trail" || sport === "ultra-trail") type = "TRAIL";
+        const type = detectRaceType(name, undefined, sport);
 
         const dateIso = (item.startedDateIso as string) || "";
         const dateStr = dateIso.split("T")[0];
@@ -295,9 +321,7 @@ export async function scrapeFromSportmaniacs(): Promise<ScrapedRace[]> {
         const province = (item.province as string) || "";
         const location = (item.city as string) || province || "Por determinar";
 
-        let type = "ASFALTO";
-        const lowerName = name.toLowerCase();
-        if (lowerName.includes("trail") || lowerName.includes("montaña") || lowerName.includes("montaña")) type = "TRAIL";
+        const type = detectRaceType(name);
 
         const slug = (item.slug as string) || "";
 
@@ -352,10 +376,8 @@ export async function scrapeFromBuscametas(): Promise<ScrapedRace[]> {
         : text.split("Ver más")[0]?.trim();
       if (!name || name.length < 3) continue;
 
-      let type = "ASFALTO";
-      if (text.toLowerCase().includes("trail")) type = "TRAIL";
-
       const distance = parseDistanceFromText(text);
+      const type = detectRaceType(name, distance);
 
       races.push({
         name,
@@ -384,6 +406,48 @@ function detectProvince(text: string): string {
     "La Rioja": ["rioja", "logroño", "calahorra", "haro"],
     Navarra: ["navarra", "nafarroa", "pamplona", "iruña", "tudela", "estella", "tafalla", "lizarra", "aoiz", "murchante", "valtierra", "falces", "sartaguda", "ribaforada", "fustiñana"],
     Zamora: ["zamora", "benavente"],
+    Madrid: ["madrid"],
+    Barcelona: ["barcelona"],
+    Valencia: ["valencia"],
+    Sevilla: ["sevilla"],
+    Málaga: ["málaga", "malaga"],
+    Alicante: ["alicante", "alacant"],
+    "A Coruña": ["coruña", "coruna", "la coruña"],
+    Murcia: ["murcia"],
+    Asturias: ["asturias", "gijón", "oviedo"],
+    "Las Palmas": ["las palmas", "gran canaria"],
+    "Santa Cruz de Tenerife": ["tenerife", "santa cruz de tenerife"],
+    Zaragoza: ["zaragoza"],
+    Valladolid: ["valladolid"],
+    Cádiz: ["cádiz", "cadiz"],
+    Granada: ["granada"],
+    Tarragona: ["tarragona"],
+    Lleida: ["lleida", "lérida"],
+    Girona: ["girona", "gerona"],
+    Albacete: ["albacete"],
+    Salamanca: ["salamanca"],
+    Huelva: ["huelva"],
+    León: ["león", "leon"],
+    Córdoba: ["córdoba", "cordoba"],
+    Almería: ["almería", "almeria"],
+    Castellón: ["castellón", "castellon", "castelló"],
+    Badajoz: ["badajoz"],
+    "Ciudad Real": ["ciudad real"],
+    Huesca: ["huesca"],
+    Jaén: ["jaén", "jaen"],
+    Ourense: ["ourense", "orense"],
+    "Baleares (Illes)": ["baleares", "mallorca", "menorca", "ibiza", "palma"],
+    Pontevedra: ["pontevedra", "vigo"],
+    Lugo: ["lugo"],
+    Palencia: ["palencia"],
+    Segovia: ["segovia"],
+    Soria: ["soria"],
+    Teruel: ["teruel"],
+    Toledo: ["toledo"],
+    Cuenca: ["cuenca"],
+    Guadalajara: ["guadalajara"],
+    Ávila: ["ávila", "avila"],
+    Cáceres: ["cáceres", "caceres"],
   };
 
   const lower = text.toLowerCase();
