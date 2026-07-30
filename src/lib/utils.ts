@@ -67,7 +67,6 @@ const provinceToCommunity: Record<string, string> = {
   "Ávila": "castilla-y-leon",
   "Badajoz": "extremadura",
   "Barcelona": "cataluna",
-  "Burgos": "castilla-y-leon",
   "Cáceres": "extremadura",
   "Cádiz": "andalucia",
   "Castellón": "comunidad-valenciana",
