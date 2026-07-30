@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer className="bg-gray-50 dark:bg-[#111] border-t border-gray-200 dark:border-gray-800 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
           <div>
             <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-3">Carreras</h4>
             <ul className="space-y-2">
@@ -29,11 +29,25 @@ export default function Footer() {
             </ul>
           </div>
           <div>
+            <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-3">Ciudades</h4>
+            <ul className="space-y-2">
+              <li><Link href="/carreras/ciudad/bilbao" className="text-sm text-gray-500 hover:text-orange-500 transition-colors">Bilbao</Link></li>
+              <li><Link href="/carreras/ciudad/vitoria-gasteiz" className="text-sm text-gray-500 hover:text-orange-500 transition-colors">Vitoria-Gasteiz</Link></li>
+              <li><Link href="/carreras/ciudad/donostia" className="text-sm text-gray-500 hover:text-orange-500 transition-colors">Donostia</Link></li>
+              <li><Link href="/carreras/ciudad/santander" className="text-sm text-gray-500 hover:text-orange-500 transition-colors">Santander</Link></li>
+              <li><Link href="/carreras/ciudad/pamplona" className="text-sm text-gray-500 hover:text-orange-500 transition-colors">Pamplona</Link></li>
+              <li><Link href="/carreras/ciudad/logrono" className="text-sm text-gray-500 hover:text-orange-500 transition-colors">Logroño</Link></li>
+              <li><Link href="/carreras/ciudad/burgos" className="text-sm text-gray-500 hover:text-orange-500 transition-colors">Burgos</Link></li>
+              <li><Link href="/carreras/ciudad/barakaldo" className="text-sm text-gray-500 hover:text-orange-500 transition-colors">Barakaldo</Link></li>
+            </ul>
+          </div>
+          <div>
             <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-3">Contenido</h4>
             <ul className="space-y-2">
               <li><Link href="/blog" className="text-sm text-gray-500 hover:text-orange-500 transition-colors">Blog</Link></li>
               <li><Link href="/about" className="text-sm text-gray-500 hover:text-orange-500 transition-colors">Sobre mí</Link></li>
               <li><Link href="/calculadora-ritmo" className="text-sm text-gray-500 hover:text-orange-500 transition-colors">Calculadora de ritmo</Link></li>
+              <li><Link href="/ranking" className="text-sm text-gray-500 hover:text-orange-500 transition-colors">Ranking</Link></li>
               <li><Link href="/auth/register" className="text-sm text-gray-500 hover:text-orange-500 transition-colors">Crear cuenta</Link></li>
             </ul>
           </div>

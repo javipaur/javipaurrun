@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Calendar, MapPin, Timer, ArrowUpRight, Tag, Clock, BarChart3 } from "lucide-react";
+import { Calendar, MapPin, Timer, ArrowUpRight, Tag, Clock, BarChart3, Share2 } from "lucide-react";
 import { formatDateShort, getRaceTypeLabel } from "@/lib/utils";
 import RaceResultForm from "./RaceResultForm";
+import ShareButtons from "./ShareButtons";
 
 interface RaceCardProps {
   race: {
@@ -39,6 +40,18 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
   const [showForm, setShowForm] = useState(false);
   const [success, setSuccess] = useState(false);
   const config = typeConfig[race.type] || typeConfig.ASFALTO;
+
+  function handleShare(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const url = window.location.origin + "/carrera/" + race.slug;
+    const text = `${race.name} - ${formatDateShort(race.date)} en ${race.location}`;
+    if (navigator.share) {
+      navigator.share({ title: race.name, text, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url);
+    }
+  }
 
   function handleCompare(e: React.MouseEvent) {
     e.preventDefault();
@@ -111,6 +124,12 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
             >
               <BarChart3 size={12} />
               Comparar
+            </button>
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-orange-600 cursor-pointer transition-colors"
+            >
+              <Share2 size={12} />
             </button>
             <span
               onClick={(e) => {

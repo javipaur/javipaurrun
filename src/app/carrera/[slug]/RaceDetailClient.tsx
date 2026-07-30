@@ -12,13 +12,12 @@ import {
   Clock,
   Share2,
   Trophy,
-  Check,
-  Copy,
 } from "lucide-react";
 import RaceMap from "@/components/RaceMap";
 import RaceResultForm from "@/components/RaceResultForm";
 import ReviewSection from "@/components/ReviewSection";
 import WeatherWidget from "@/components/WeatherWidget";
+import ShareButtons from "@/components/ShareButtons";
 import { downloadICal } from "@/lib/ical";
 
 interface Race {
@@ -66,7 +65,6 @@ export default function RaceDetailClient({
   const [showForm, setShowForm] = useState(false);
   const [success, setSuccess] = useState(false);
   const [results, setResults] = useState<Result[]>([]);
-  const [copied, setCopied] = useState(false);
   const [reminder, setReminder] = useState<"none" | "loading" | "active" | "error">("none");
 
   useEffect(() => {
@@ -106,25 +104,6 @@ export default function RaceDetailClient({
         distance: race.distance,
       }]
     : [];
-
-  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-  const shareText = `${race.name} - ${formatDate(race.date)} en ${race.location}`;
-
-  function handleShare(platform: string) {
-    const urls: Record<string, string> = {
-      whatsapp: `https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`,
-      twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-    };
-    if (platform === "copy") {
-      navigator.clipboard.writeText(shareUrl).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      });
-      return;
-    }
-    window.open(urls[platform], "_blank", "noopener,noreferrer");
-  }
 
   const dateObj = new Date(race.date);
   const isPast = dateObj < new Date();
@@ -278,37 +257,22 @@ export default function RaceDetailClient({
             </div>
           )}
 
-          <div className="border-t border-gray-100 pt-6">
+          <div className="border-t border-gray-100 dark:border-gray-700 pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-semibold text-gray-900 mb-1">Compartir</h2>
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-1.5">
+                  <Share2 size={14} />
+                  Compartir
+                </h2>
                 <p className="text-xs text-gray-400">
                   {results.length} resultado{results.length !== 1 ? "s" : ""}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleShare("whatsapp")}
-                  className="w-9 h-9 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 flex items-center justify-center transition-colors"
-                  title="Compartir en WhatsApp"
-                >
-                  <span className="text-sm font-bold">WA</span>
-                </button>
-                <button
-                  onClick={() => handleShare("twitter")}
-                  className="w-9 h-9 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 flex items-center justify-center transition-colors"
-                  title="Compartir en Twitter"
-                >
-                  <span className="text-sm font-bold">𝕏</span>
-                </button>
-                <button
-                  onClick={() => handleShare("copy")}
-                  className="w-9 h-9 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 flex items-center justify-center transition-colors"
-                  title="Copiar enlace"
-                >
-                  {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
-                </button>
-              </div>
+              <ShareButtons
+                url={typeof window !== "undefined" ? window.location.href : ""}
+                title={race.name}
+                description={`${formatDate(race.date)} en ${race.location}`}
+              />
             </div>
           </div>
 
