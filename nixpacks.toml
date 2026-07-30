@@ -8,4 +8,4 @@ cmd = "npm ci"
 cmd = "npm run build"
 
 [start]
-cmd = "npx prisma db push && npm run start"
+cmd = "DATABASE_URL='file:./dev.db' npx prisma db push && DATABASE_URL='file:./dev.db' npm run start"
