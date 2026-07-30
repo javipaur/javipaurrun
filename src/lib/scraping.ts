@@ -90,7 +90,7 @@ export async function scrapeFromLasterketak(): Promise<ScrapedRace[]> {
   try {
     let page = 1;
     let totalPages = 1;
-    const maxPages = 3;
+    const maxPages = 1;
 
     while (page <= totalPages && page <= maxPages) {
       const response = await fetchWithTimeout(
