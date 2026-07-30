@@ -12,18 +12,25 @@ const provinces = [
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const posts = await prisma.blogPost.findMany({
-    where: { published: true },
-    select: { slug: true, createdAt: true },
-    orderBy: { createdAt: "desc" },
-    take: 1000,
-  });
+  let posts: { slug: string; createdAt: Date }[] = [];
+  let races: { slug: string; date: Date }[] = [];
 
-  const races = await prisma.race.findMany({
-    select: { slug: true, date: true },
-    orderBy: { date: "desc" },
-    take: 1000,
-  });
+  try {
+    posts = await prisma.blogPost.findMany({
+      where: { published: true },
+      select: { slug: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+      take: 1000,
+    });
+  } catch {}
+
+  try {
+    races = await prisma.race.findMany({
+      select: { slug: true, date: true },
+      orderBy: { date: "desc" },
+      take: 1000,
+    });
+  } catch {}
 
   const entries: MetadataRoute.Sitemap = [
     { url: BASE, lastModified: new Date(), changeFrequency: "weekly", priority: 1 },
