@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Calendar, MapPin, Timer, ArrowUpRight, Tag, Clock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Calendar, MapPin, Timer, ArrowUpRight, Tag, Clock, BarChart3 } from "lucide-react";
 import { formatDateShort, getRaceTypeLabel } from "@/lib/utils";
 import RaceResultForm from "./RaceResultForm";
 
@@ -34,15 +35,34 @@ const typeConfig: Record<string, { bg: string; text: string }> = {
 };
 
 export default function RaceCard({ race, index = 0 }: RaceCardProps) {
+  const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [success, setSuccess] = useState(false);
   const config = typeConfig[race.type] || typeConfig.ASFALTO;
+
+  function handleCompare(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const params = new URLSearchParams(window.location.search);
+    const existing = params.get("ids") || "";
+    const ids = existing ? existing.split(",") : [];
+    if (!ids.includes(race.id)) {
+      ids.push(race.id);
+    }
+    if (ids.length >= 2) {
+      router.push(`/comparar?ids=${ids.slice(0, 3).join(",")}`);
+    } else {
+      const url = new URL(window.location.href);
+      url.searchParams.set("ids", ids.join(","));
+      window.history.replaceState({}, "", url.toString());
+    }
+  }
 
   return (
     <>
       <Link
         href={`/carrera/${race.slug}`}
-        className="group block bg-white rounded-xl border border-gray-200 p-5 hover:shadow-lg hover:border-gray-300 transition-all duration-200 animate-fade-in-up"
+        className="group block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 animate-fade-in-up"
         style={{ animationDelay: `${index * 60}ms` }}
       >
         <div className="flex items-center justify-between mb-3">
@@ -82,9 +102,16 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
           )}
         </div>
 
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+        <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
           <span className="text-xs text-gray-400">{race.province}</span>
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleCompare}
+              className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-orange-600 cursor-pointer transition-colors"
+            >
+              <BarChart3 size={12} />
+              Comparar
+            </button>
             <span
               onClick={(e) => {
                 e.preventDefault();

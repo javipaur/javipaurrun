@@ -7,8 +7,19 @@ export default function PWARegister() {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/sw.js")
-        .then(() => console.log("SW registered"))
-        .catch(() => console.log("SW registration failed"));
+        .then((reg) => {
+          reg.addEventListener("updatefound", () => {
+            const installing = reg.installing;
+            if (installing) {
+              installing.addEventListener("statechange", () => {
+                if (installing.state === "activated") {
+                  window.location.reload();
+                }
+              });
+            }
+          });
+        })
+        .catch(() => {});
     }
   }, []);
 

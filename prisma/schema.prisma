@@ -24,20 +24,22 @@ enum RaceStatus {
 }
 
 model User {
-  id             String    @id @default(cuid())
-  name           String?
-  email          String    @unique
-  emailVerified  DateTime?
-  image          String?
-  password       String?
-  role           String    @default("USER")
-  isSubscribed   Boolean   @default(false)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  accounts       Account[]
-  sessions       Session[]
-  posts          BlogPost[]
-  results        RaceResult[]
+  id            String         @id @default(cuid())
+  name          String?
+  email         String         @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          String         @default("USER")
+  isSubscribed  Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  posts         BlogPost[]
+  results       RaceResult[]
+  reviews       Review[]
+  reminders     RaceReminder[]
 }
 
 model Account {
@@ -78,28 +80,30 @@ model VerificationToken {
 }
 
 model Race {
-  id          String    @id @default(cuid())
-  name        String
-  slug        String    @unique
-  type        RaceType
-  distance    String?
-  location    String
-  province    String
-  date        DateTime
-  endDate     DateTime?
-  time        String?
-  description String?
-  url         String?
-  image       String?
-  price       String?
-  latitude    Float?
-  longitude   Float?
-  status      RaceStatus @default(PROXIMAMENTE)
-  source      String?
-  featured    Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  results      RaceResult[]
+  id            String         @id @default(cuid())
+  name          String
+  slug          String         @unique
+  type          RaceType
+  distance      String?
+  location      String
+  province      String
+  date          DateTime
+  endDate       DateTime?
+  time          String?
+  description   String?
+  url           String?
+  image         String?
+  price         String?
+  latitude      Float?
+  longitude     Float?
+  status        RaceStatus     @default(PROXIMAMENTE)
+  source        String?
+  featured      Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  results       RaceResult[]
+  reviews       Review[]
+  raceReminders RaceReminder[]
 }
 
 model RaceResult {
@@ -116,8 +120,8 @@ model RaceResult {
   proofUrl  String?
   createdAt DateTime @default(now())
 
-  race      Race     @relation(fields: [raceId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  race Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([raceId, userId])
 }
@@ -142,6 +146,34 @@ model NewsletterSubscriber {
   name      String?
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
+}
+
+model RaceReminder {
+  id         String   @id @default(cuid())
+  raceId     String
+  userId     String
+  daysBefore Int      @default(1)
+  sent       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  race Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([raceId, userId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  raceId    String
+  userId    String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  race Race @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([raceId, userId])
 }
 
 model ScrapeLog {

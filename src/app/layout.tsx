@@ -4,6 +4,8 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SessionProvider from "@/components/SessionProvider";
+import ThemeProvider from "@/components/ThemeProvider";
+import { I18nProvider } from "@/lib/i18n/provider";
 import PWARegister from "@/components/PWARegister";
 import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/JsonLd";
 import { auth } from "@/lib/auth";
@@ -46,12 +48,16 @@ export default async function RootLayout({
       <body className="min-h-dvh flex flex-col bg-[#fafafa] antialiased pt-16 pb-16 md:pb-0">
         <OrganizationJsonLd />
         <WebSiteJsonLd />
-        <SessionProvider>
-          <Header session={session} />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <PWARegister />
-        </SessionProvider>
+        <I18nProvider>
+          <ThemeProvider>
+            <SessionProvider>
+              <Header session={session} />
+              <main className="flex-1">{children}</main>
+              <Footer />
+              <PWARegister />
+            </SessionProvider>
+          </ThemeProvider>
+        </I18nProvider>
       </body>
     </html>
   );

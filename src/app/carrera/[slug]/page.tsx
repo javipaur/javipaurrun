@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { EventJsonLd } from "@/components/JsonLd";
 import RaceDetailClient from "./RaceDetailClient";
+import RelatedRaces from "@/components/RelatedRaces";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -51,6 +52,19 @@ export default async function RaceDetailPage({ params }: PageProps) {
 
   const typeColor = typeColors[race.type] || typeColors.ASFALTO;
 
+  const related = await prisma.race.findMany({
+    where: {
+      id: { not: race.id },
+      date: { gte: new Date() },
+      OR: [
+        { province: race.province },
+        { type: race.type },
+      ],
+    },
+    orderBy: { date: "asc" },
+    take: 4,
+  });
+
   return (
     <>
       <EventJsonLd
@@ -63,7 +77,12 @@ export default async function RaceDetailPage({ params }: PageProps) {
         image={race.image}
       />
 
-      <RaceDetailClient race={race} typeColor={typeColor} typeLabel={typeLabel} formatDate={formatDate} />
+      <div className="max-w-4xl mx-auto">
+        <RaceDetailClient race={race} typeColor={typeColor} typeLabel={typeLabel} formatDate={formatDate} />
+        <div className="px-4 sm:px-6">
+          <RelatedRaces races={related} />
+        </div>
+      </div>
     </>
   );
 }

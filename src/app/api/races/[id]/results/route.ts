@@ -27,7 +27,7 @@ export async function GET(
     const results = await prisma.raceResult.findMany({
       where: { raceId: id },
       orderBy: [{ hours: "asc" }, { minutes: "asc" }, { seconds: "asc" }],
-      include: { user: { select: { name: true } } },
+      include: { user: { select: { id: true, name: true } } },
     });
 
     return NextResponse.json({ results });
@@ -88,7 +88,7 @@ export async function POST(
         notes: notes || null,
         proofUrl: proofUrl || null,
       },
-      include: { user: { select: { name: true } } },
+      include: { user: { select: { id: true, name: true } } },
     });
 
     return NextResponse.json({ success: true, result });

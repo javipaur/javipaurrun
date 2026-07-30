@@ -17,6 +17,9 @@ import {
 } from "lucide-react";
 import RaceMap from "@/components/RaceMap";
 import RaceResultForm from "@/components/RaceResultForm";
+import ReviewSection from "@/components/ReviewSection";
+import WeatherWidget from "@/components/WeatherWidget";
+import { downloadICal } from "@/lib/ical";
 
 interface Race {
   id: string;
@@ -46,7 +49,7 @@ interface Result {
   category: string | null;
   notes: string | null;
   createdAt: string;
-  user: { name: string | null };
+  user: { id: string; name: string | null };
 }
 
 export default function RaceDetailClient({
@@ -64,6 +67,7 @@ export default function RaceDetailClient({
   const [success, setSuccess] = useState(false);
   const [results, setResults] = useState<Result[]>([]);
   const [copied, setCopied] = useState(false);
+  const [reminder, setReminder] = useState<"none" | "loading" | "active" | "error">("none");
 
   useEffect(() => {
     fetch(`/api/races/${race.id}/results`)
@@ -71,6 +75,22 @@ export default function RaceDetailClient({
       .then((data) => setResults(data.results || []))
       .catch(() => {});
   }, [race.id]);
+
+  useEffect(() => {
+    fetch(`/api/races/${race.id}/remind`)
+      .then((r) => r.json())
+      .then((d) => { if (d.reminder) setReminder("active"); })
+      .catch(() => {});
+  }, [race.id]);
+
+  async function handleRemind() {
+    setReminder("loading");
+    try {
+      const res = await fetch(`/api/races/${race.id}/remind`, { method: "POST" });
+      if (res.ok) setReminder("active");
+      else setReminder("none");
+    } catch { setReminder("error"); }
+  }
 
   const mapMarkers = race.latitude && race.longitude
     ? [{
@@ -201,19 +221,53 @@ export default function RaceDetailClient({
             )}
             <button
               onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 bg-white text-gray-700 border border-gray-300 px-6 py-3 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors"
+              className="inline-flex items-center gap-2 bg-white text-gray-700 border border-gray-300 px-6 py-3 rounded-xl text-sm font-semibold hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors"
             >
               <Trophy size={16} />
               {success ? "✅ Tiempo registrado" : "Registrar mi tiempo"}
+            </button>
+            <button
+              onClick={() =>
+                downloadICal({
+                  name: race.name,
+                  description: race.description,
+                  location: `${race.location}, ${race.province}`,
+                  startDate: new Date(race.date),
+                  endDate: race.endDate ? new Date(race.endDate) : undefined,
+                  url: race.url,
+                })
+              }
+              className="inline-flex items-center gap-2 bg-white text-gray-700 border border-gray-300 px-6 py-3 rounded-xl text-sm font-semibold hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors"
+            >
+              <Calendar size={16} />
+              Añadir a calendario
+            </button>
+            <button
+              onClick={handleRemind}
+              disabled={reminder === "loading" || reminder === "active"}
+              className="inline-flex items-center gap-2 bg-white text-gray-700 border border-gray-300 px-6 py-3 rounded-xl text-sm font-semibold hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {reminder === "active" ? "✅ Recordatorio activo" : reminder === "loading" ? "..." : "🔔 Recordar"}
             </button>
           </div>
 
           {race.description && (
             <div className="mb-8">
-              <h2 className="text-sm font-semibold text-gray-900 mb-2">Descripción</h2>
-              <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Descripción</h2>
+              <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed whitespace-pre-wrap">
                 {race.description}
               </p>
+            </div>
+          )}
+
+          {race.latitude && race.longitude && (
+            <div className="mb-6">
+              <WeatherWidget
+                latitude={race.latitude}
+                longitude={race.longitude}
+                date={race.date instanceof Date ? race.date.toISOString() : race.date}
+                raceLocation={`${race.location}, ${race.province}`}
+              />
             </div>
           )}
 
@@ -259,21 +313,21 @@ export default function RaceDetailClient({
           </div>
 
           {results.length > 0 && (
-            <div className="border-t border-gray-100 pt-6 mt-6">
-              <h2 className="text-sm font-semibold text-gray-900 mb-3">
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-6 mt-6">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
                 Resultados ({results.length})
               </h2>
               <div className="space-y-2">
                 {results.map((r, i) => (
                   <div
                     key={r.id}
-                    className="flex items-center gap-4 px-4 py-3 bg-gray-50 rounded-xl text-sm"
+                    className="flex items-center gap-4 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm"
                   >
                     <span className="text-gray-400 font-mono w-6 text-center">
                       {i + 1}
                     </span>
                     <div className="flex-1">
-                      <span className="font-semibold text-gray-900 font-mono">
+                      <span className="font-semibold text-gray-900 dark:text-gray-100 font-mono">
                         {r.time}
                       </span>
                       {r.category && (
@@ -283,14 +337,19 @@ export default function RaceDetailClient({
                         <span className="text-gray-500 ml-2">· Puesto #{r.position}</span>
                       )}
                     </div>
-                    <span className="text-gray-400 text-xs">
+                    <Link
+                      href={`/atleta/${r.user.id}`}
+                      className="text-gray-400 text-xs hover:text-orange-500 transition-colors"
+                    >
                       {r.user.name || "Anónimo"}
-                    </span>
+                    </Link>
                   </div>
                 ))}
               </div>
             </div>
           )}
+
+          <ReviewSection raceId={race.id} />
         </div>
       </div>
 
