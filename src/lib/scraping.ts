@@ -182,7 +182,78 @@ export async function scrapeFromLasterketak(): Promise<ScrapedRace[]> {
 }
 
 export async function scrapeFromRockTheSport(): Promise<ScrapedRace[]> {
-  return [];
+  const races: ScrapedRace[] = [];
+  const API_BASE = "https://publicservice.rockthesport.com";
+  const API_KEY = "rts_public_web_2024_a8f3d9e1c4b7";
+
+  try {
+    const now = Date.now();
+    const sports = ["trail", "running", "ultra-trail"];
+    let page = 1;
+    let totalPages = 1;
+    const maxPages = 10;
+
+    while (page <= totalPages && page <= maxPages) {
+      const res = await fetch(`${API_BASE}/api/event/list?pageNumber=${page}&pageSize=20`, {
+        method: "POST",
+        headers: {
+          "X-API-Key": API_KEY,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          kind: "country:65",
+          "data.sport(s)": sports,
+          "(ge) data.dates.startedDateTimestamp": now,
+        }),
+      });
+
+      if (!res.ok) {
+        console.error(`RockTheSport API error: ${res.status}`);
+        break;
+      }
+
+      const data = (await res.json()) as Record<string, unknown>;
+      const responseData = data.data as Record<string, unknown> | undefined;
+      const items = (responseData?.items as Record<string, unknown>[]) || [];
+      const pagination = responseData?.pagination as Record<string, unknown> | undefined;
+
+      if (page === 1 && pagination) {
+        totalPages = (pagination.totalPages as number) || 1;
+      }
+
+      for (const item of items) {
+        const name = (item.title as string || "").trim();
+        if (!name || name.length < 3) continue;
+
+        const sport = (item.sport as string) || "";
+
+        let type = "ASFALTO";
+        if (sport === "trail" || sport === "ultra-trail") type = "TRAIL";
+
+        const dateIso = (item.startedDateIso as string) || "";
+        const dateStr = dateIso.split("T")[0];
+
+        const slug = (item.slug as string) || "";
+
+        races.push({
+          name,
+          type,
+          location: "Por determinar",
+          province: detectProvince(name),
+          date: dateStr,
+          url: slug ? `https://web.rockthesport.com/en/event/${slug}` : undefined,
+          image: (item.urlImage as string) || undefined,
+        });
+      }
+
+      page++;
+    }
+  } catch (error) {
+    console.error("Error scraping RockTheSport:", error);
+  }
+
+  return races;
 }
 
 export async function scrapeFromBuscametas(): Promise<ScrapedRace[]> {
