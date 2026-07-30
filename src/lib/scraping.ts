@@ -157,6 +157,11 @@ export async function scrapeFromLasterketak(): Promise<ScrapedRace[]> {
         const eventcats = (termGroups[0] || []) as { slug: string }[];
         const eventTags = (termGroups[2] || []) as { name: string; slug: string }[];
 
+        const name = decodeHtmlEntities(
+          ((event.title as { rendered?: string })?.rendered || "").trim()
+        );
+        if (!name) continue;
+
         const isTrail = eventcats.some((cat) => cat.slug === "trail");
         const isTxakurkros = eventcats.some((cat) => cat.slug === "txakurkros");
 
@@ -180,11 +185,6 @@ export async function scrapeFromLasterketak(): Promise<ScrapedRace[]> {
         const description = excerptRaw
           ? decodeHtmlEntities(excerptRaw.replace(/<[^>]+>/g, "").trim())
           : undefined;
-
-        const name = decodeHtmlEntities(
-          ((event.title as { rendered?: string })?.rendered || "").trim()
-        );
-        if (!name) continue;
 
         races.push({
           name,
