@@ -1,19 +1,15 @@
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const session = await auth();
+  if (!session?.user?.email) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const { email } = await req.json();
-  if (!email) {
-    return NextResponse.json({ error: "Email requerido" }, { status: 400 });
-  }
-
   const user = await prisma.user.update({
-    where: { email },
+    where: { email: session.user.email },
     data: { role: "ADMIN" },
   });
 
