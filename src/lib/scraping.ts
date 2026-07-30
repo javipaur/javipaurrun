@@ -94,7 +94,8 @@ export async function scrapeFromLasterketak(): Promise<ScrapedRace[]> {
 
     while (page <= totalPages && page <= maxPages) {
       const response = await fetchWithTimeout(
-        `https://lasterketak.eus/eu/wp-json/wp/v2/event?per_page=100&page=${page}&_embed=1`
+        `https://lasterketak.eus/eu/wp-json/wp/v2/event?per_page=100&page=${page}&_embed=1`,
+        60000
       );
 
       const events = await response.json() as Record<string, unknown>[];
@@ -181,96 +182,58 @@ export async function scrapeFromLasterketak(): Promise<ScrapedRace[]> {
 }
 
 export async function scrapeFromRockTheSport(): Promise<ScrapedRace[]> {
-  const races: ScrapedRace[] = [];
-
-  try {
-    const sportTypes = [
-      { type: "ASFALTO", path: "running-athletics" },
-      { type: "TRAIL", path: "trail" },
-    ];
-
-    for (const sport of sportTypes) {
-      const response = await fetchWithTimeout(`https://web.rockthesport.com/es/sport/${sport.path}`);
-      const html = await response.text();
-      const cheerio = await import("cheerio");
-      const $ = cheerio.load(html);
-
-      $("a[href*='/es/event/']").each((_, el) => {
-        const parent = $(el).closest("div").length ? $(el).closest("div") : $(el).parent();
-        const text = parent.text();
-
-        const name = $(el).text().trim();
-        if (!name || name.length < 3) return;
-
-        const href = $(el).attr("href") || "";
-
-        const dateMatch = text.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-        let dateStr = "";
-        if (dateMatch) {
-          dateStr = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
-        }
-
-        const typeLabels = ["running", "atletismo", "maratón", "10km", "5km", "media maratón"];
-        const isRunning = typeLabels.some((l) => text.toLowerCase().includes(l));
-        const type = sport.type === "TRAIL" ? "TRAIL" : isRunning ? "ASFALTO" : "ASFALTO";
-
-        if (name && dateStr) {
-          races.push({
-            name,
-            type,
-            location: "RockTheSport",
-            province: detectProvince(text),
-            date: dateStr,
-            url: href.startsWith("http") ? href : `https://web.rockthesport.com${href}`,
-          });
-        }
-      });
-    }
-  } catch (error) {
-    console.error("Error scraping RockTheSport:", error);
-  }
-
-  return races;
+  return [];
 }
 
 export async function scrapeFromBuscametas(): Promise<ScrapedRace[]> {
   const races: ScrapedRace[] = [];
 
   try {
-    const response = await fetchWithTimeout("https://www.buscametas.com/");
-    const html = await response.text();
-    const cheerio = await import("cheerio");
-    const $ = cheerio.load(html);
+    const res = await fetchWithTimeout(
+      "https://www.buscametas.com/modulos/calendario/fuentes/get_eventos.php",
+      30000
+    );
+    const data = await res.json() as Record<string, unknown>;
+    const html = (data.html_eventos || "") as string;
 
-    $("a[href*='/event/'], a[href*='/carrera/']").each((_, el) => {
-      const text = $(el).text().trim();
-      if (!text || text.length < 3) return;
+    const MONTHS: Record<string, string> = {
+      ENE: "01", FEB: "02", MAR: "03", ABR: "04", MAY: "05", JUN: "06",
+      JUL: "07", AGO: "08", SEP: "09", OCT: "10", NOV: "11", DIC: "12",
+    };
 
-      const parentText = $(el).closest("div, li, article").text();
-      const dateMatch = parentText.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-      let dateStr = "";
-      if (dateMatch) {
-        dateStr = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
-      }
+    const currentYear = new Date().getFullYear().toString();
+    const eventRegex = /<a\s+href="(\/evento\/\d+\/)"[^>]*>.*?<span>(\d+)<\/span>\s*([A-Z]{3}).*?item-calendar-data[^>]*>(.*?)<\/div>\s*<\/div>\s*<\/div>\s*<\/a>/gs;
+    let match: RegExpExecArray | null;
+
+    while ((match = eventRegex.exec(html)) !== null) {
+      const [, href, day, monthAbbr, dataHtml] = match;
+      const month = MONTHS[monthAbbr];
+      if (!month) continue;
+
+      const dateStr = `${currentYear}-${month}-${day.padStart(2, "0")}`;
+      const text = dataHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+
+      const nameMatch = dataHtml.match(/<h[234][^>]*>(.*?)<\/h[234]>/);
+      const name = nameMatch
+        ? nameMatch[1].replace(/<[^>]+>/g, "").trim()
+        : text.split("Ver más")[0]?.trim();
+      if (!name || name.length < 3) continue;
 
       let type = "ASFALTO";
-      if (parentText.toLowerCase().includes("trail")) type = "TRAIL";
-      else if (parentText.toLowerCase().includes("ciclismo") || parentText.toLowerCase().includes("btt")) type = "MARCHA";
-      else if (parentText.toLowerCase().includes("triatl")) type = "MARCHA";
+      if (text.toLowerCase().includes("trail")) type = "TRAIL";
 
-      const href = $(el).attr("href") || "";
+      const distance = parseDistanceFromText(text);
 
-      if (text && dateStr) {
-        races.push({
-          name: text,
-          type,
-          location: "Buscametas",
-          province: detectProvince(parentText),
-          date: dateStr,
-          url: href.startsWith("http") ? href : `https://www.buscametas.com${href}`,
-        });
-      }
-    });
+      races.push({
+        name,
+        type,
+        distance,
+        location: "Buscametas",
+        province: detectProvince(text),
+        date: dateStr,
+        url: `https://www.buscametas.com${href}`,
+      });
+    }
   } catch (error) {
     console.error("Error scraping Buscametas:", error);
   }
