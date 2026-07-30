@@ -5,10 +5,13 @@ import { apiLimiter } from "@/lib/rate-limit";
 import { raceCreateSchema, getZodErrorMessage } from "@/lib/validation";
 import { slugify } from "@/lib/utils";
 
+import { getAutonomousCommunity } from "@/lib/utils";
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type") as string | null;
   const province = searchParams.get("province") as string | null;
+  const comunidad = searchParams.get("comunidad") as string | null;
   const search = searchParams.get("search") as string | null;
 
   const where: Record<string, unknown> = {};
@@ -21,10 +24,14 @@ export async function GET(req: Request) {
     ];
   }
 
-  const races = await prisma.race.findMany({
+  let races = await prisma.race.findMany({
     where,
     orderBy: { date: "asc" },
   });
+
+  if (comunidad) {
+    races = races.filter((r) => getAutonomousCommunity(r.province) === comunidad);
+  }
 
   return NextResponse.json(races);
 }

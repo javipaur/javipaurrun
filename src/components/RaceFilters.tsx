@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
-import { raceTypes, provinces } from "@/lib/utils";
+import { raceTypes, provinces, autonomousCommunities } from "@/lib/utils";
 
 export default function RaceFilters() {
   const router = useRouter();
@@ -12,8 +12,9 @@ export default function RaceFilters() {
 
   const currentType = searchParams.get("tipo") || "";
   const currentProvince = searchParams.get("provincia") || "";
+  const currentComunidad = searchParams.get("comunidad") || "";
   const currentSearch = searchParams.get("buscar") || "";
-  const hasFilters = currentType || currentProvince || currentSearch;
+  const hasFilters = currentType || currentProvince || currentComunidad || currentSearch;
 
   function updateFilter(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -55,6 +56,20 @@ export default function RaceFilters() {
           <option value="">Todos</option>
           {raceTypes.map((t) => (
             <option key={t.value} value={t.value}>{t.label}</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">Comunidad Autónoma</label>
+        <select
+          value={currentComunidad}
+          onChange={(e) => updateFilter("comunidad", e.target.value)}
+          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all"
+        >
+          <option value="">Todas</option>
+          {autonomousCommunities.map((c) => (
+            <option key={c.value} value={c.value}>{c.label}</option>
           ))}
         </select>
       </div>

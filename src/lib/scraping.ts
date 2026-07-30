@@ -256,6 +256,68 @@ export async function scrapeFromRockTheSport(): Promise<ScrapedRace[]> {
   return races;
 }
 
+export async function scrapeFromSportmaniacs(): Promise<ScrapedRace[]> {
+  const races: ScrapedRace[] = [];
+
+  try {
+    const maxPages = 5;
+    const pageSize = 25;
+
+    for (let page = 1; page <= maxPages; page++) {
+      const res = await fetchWithTimeout(
+        `https://sportmaniacs.com/api/races?page=${page}&limit=${pageSize}&raceType=1`,
+        30000
+      );
+
+      if (!res.ok) {
+        console.error(`Sportmaniacs API error: ${res.status}`);
+        break;
+      }
+
+      const data = (await res.json()) as Record<string, unknown>;
+      const items = (data.data as Record<string, unknown>[]) || [];
+
+      if (items.length === 0) break;
+
+      for (const item of items) {
+        const country = (item.country as string) || "";
+        if (country !== "España" && item.country_id !== "ESP") continue;
+
+        const name = (item.name as string || "").trim();
+        if (!name || name.length < 3) continue;
+
+        const dateStr = (item.date as string) || "";
+        if (!dateStr) continue;
+
+        const dateObj = new Date(dateStr);
+        if (dateObj < new Date()) continue;
+
+        const province = (item.province as string) || "";
+        const location = (item.city as string) || province || "Por determinar";
+
+        let type = "ASFALTO";
+        const lowerName = name.toLowerCase();
+        if (lowerName.includes("trail") || lowerName.includes("montaña") || lowerName.includes("montaña")) type = "TRAIL";
+
+        const slug = (item.slug as string) || "";
+
+        races.push({
+          name,
+          type,
+          location,
+          province,
+          date: dateStr,
+          url: slug ? `https://sportmaniacs.com/es/race/${slug}` : undefined,
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Error scraping Sportmaniacs:", error);
+  }
+
+  return races;
+}
+
 export async function scrapeFromBuscametas(): Promise<ScrapedRace[]> {
   const races: ScrapedRace[] = [];
 
@@ -380,6 +442,7 @@ export interface ScrapeResult {
 const sources = [
   { key: "lasterketak", label: "Lasterketak.eus", scrape: scrapeFromLasterketak },
   { key: "rockthesport", label: "RockTheSport", scrape: scrapeFromRockTheSport },
+  { key: "sportmaniacs", label: "Sportmaniacs", scrape: scrapeFromSportmaniacs },
   { key: "buscametas", label: "Buscametas", scrape: scrapeFromBuscametas },
 ] as const;
 

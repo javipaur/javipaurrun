@@ -3,17 +3,19 @@ import { prisma } from "@/lib/prisma";
 import RaceCard from "@/components/RaceCard";
 import RaceFilters from "@/components/RaceFilters";
 import { Prisma, RaceType } from "@/generated/prisma/client";
+import { getAutonomousCommunity } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Calendario de carreras populares - JavipaurRun",
   description:
-    "Calendario actualizado con todas las carreras populares en Euskadi, Cantabria, Burgos, La Rioja, Navarra y Zamora. Filtra por tipo, provincia o busca tu próxima carrera.",
+    "Calendario actualizado con todas las carreras populares en España. Filtra por tipo, provincia, comunidad autónoma o busca tu próxima carrera.",
 };
 
 interface PageProps {
   searchParams: Promise<{
     tipo?: string;
     provincia?: string;
+    comunidad?: string;
     buscar?: string;
   }>;
 }
@@ -25,6 +27,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
   where.date = { gte: new Date() };
 
   if (params.tipo && Object.values(RaceType).includes(params.tipo as RaceType)) where.type = params.tipo as RaceType;
+  if (params.comunidad) where.province = params.comunidad; // placeholder, overridden after fetch
   if (params.provincia) where.province = params.provincia;
   if (params.buscar) {
     where.OR = [
@@ -33,10 +36,14 @@ export default async function CalendarPage({ searchParams }: PageProps) {
     ];
   }
 
-  const races = await prisma.race.findMany({
+  let races = await prisma.race.findMany({
     where,
     orderBy: { date: "asc" },
   });
+
+  if (params.comunidad) {
+    races = races.filter((r) => getAutonomousCommunity(r.province) === params.comunidad);
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
