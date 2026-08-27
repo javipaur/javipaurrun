@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import RaceCard from "@/components/RaceCard";
 import BlogCard from "@/components/BlogCard";
 import NewsletterForm from "@/components/NewsletterForm";
+import NearbyRaces from "@/components/NearbyRaces";
 import { EventJsonLd } from "@/components/JsonLd";
 import { ArrowRight, CalendarDays, ChevronRight, MapPin, Search } from "lucide-react";
 
@@ -43,6 +44,29 @@ export default async function Home() {
   });
 
   const totalRaces = await prisma.race.count();
+
+  const gpsRaces = await prisma.race.findMany({
+    where: {
+      date: { gte: new Date() },
+      latitude: { not: null },
+      longitude: { not: null },
+    },
+    orderBy: { date: "asc" },
+    take: 60,
+  });
+
+  const nearbyRaceData = gpsRaces.map((r) => ({
+    id: r.id,
+    name: r.name,
+    slug: r.slug,
+    type: r.type,
+    distance: r.distance,
+    location: r.location,
+    province: r.province,
+    date: r.date.toISOString(),
+    latitude: r.latitude as number,
+    longitude: r.longitude as number,
+  }));
 
   const categories = [
     { type: "ASFALTO", label: "Running / Asfalto", path: "/calendario?tipo=ASFALTO" },
@@ -144,6 +168,22 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* Carreras cerca de ti */}
+      {nearbyRaceData.length > 0 && (
+        <section className="py-8 md:py-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="mb-6">
+              <p className="section-eyebrow mb-1.5">Geolocalización</p>
+              <h2 className="section-title">Carreras cerca de ti</h2>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1.5">
+                Activa tu ubicación para ver los próximos eventos más próximos a tu posición.
+              </p>
+            </div>
+            <NearbyRaces races={nearbyRaceData} />
+          </div>
+        </section>
+      )}
 
       {/* Featured Races */}
       <section className="py-8 md:py-12">
