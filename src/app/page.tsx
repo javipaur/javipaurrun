@@ -5,7 +5,7 @@ import RaceCard from "@/components/RaceCard";
 import BlogCard from "@/components/BlogCard";
 import NewsletterForm from "@/components/NewsletterForm";
 import { EventJsonLd } from "@/components/JsonLd";
-import { ArrowRight, CalendarDays, ChevronRight, Search } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronRight, MapPin, Search } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "JavipaurRun - Calendario de carreras populares en España",
@@ -69,40 +69,59 @@ export default async function Home() {
       ))}
 
       {/* Hero */}
-      <section className="bg-hero">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16 md:py-24">
+      <section className="relative overflow-hidden isolate">
+        <div className="absolute inset-0 -z-10">
+          <img
+            src="https://images.unsplash.com/photo-1552674605-db6ffd4facb5?q=80&w=2000&auto=format&fit=crop"
+            alt="Corredores de trail al amanecer"
+            className="w-full h-full object-cover"
+            fetchPriority="high"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/55 to-[#f6f7fb] dark:to-[#09090b]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-600/30 to-transparent" />
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-20 md:pt-32 pb-24 md:pb-36">
           <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-gradient/10 border border-orange-200/60 dark:border-orange-500/20 text-orange-600 dark:text-orange-400 text-xs font-semibold mb-6 animate-fade-in-up">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-white text-xs font-semibold mb-7 animate-fade-in-up">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-500 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-400"></span>
               </span>
               {totalRaces} carreras en el calendario
             </div>
-            <h1 className="text-4xl sm:text-6xl font-black text-gray-900 dark:text-white mb-5 leading-[1.05] tracking-tight animate-fade-in-up stagger-1">
+            <h1 className="text-4xl sm:text-6xl font-black text-white mb-5 leading-[1.05] tracking-tight animate-fade-in-up stagger-1">
               Encuentra tu <span className="text-brand-gradient">próxima carrera</span>
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 text-base sm:text-lg max-w-xl mx-auto mb-9 leading-relaxed animate-fade-in-up stagger-2">
+            <p className="text-white/85 text-base sm:text-lg max-w-xl mx-auto mb-10 leading-relaxed animate-fade-in-up stagger-2 drop-shadow">
               Carreras populares, trails, marchas y orientación por toda España. Filtra por tipo, distancia o provincia.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center animate-fade-in-up stagger-3">
-              <Link
-                href="/calendario"
-                className="btn-primary"
-              >
-                <CalendarDays size={16} />
-                Explorar calendario
-                <ArrowRight size={14} />
-              </Link>
-              <form action="/calendario" method="GET" className="relative w-full max-w-xs">
-                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+
+            {/* Search bar */}
+            <form action="/calendario" method="GET" className="max-w-2xl mx-auto animate-fade-in-up stagger-3">
+              <div className="relative flex items-center bg-white/95 dark:bg-[#131316]/95 backdrop-blur rounded-2xl p-1.5 shadow-2xl ring-1 ring-white/20">
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   name="buscar"
-                  placeholder="Buscar carreras..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                  placeholder="Busca por nombre, ciudad o provincia..."
+                  className="flex-1 min-w-0 pl-11 pr-3 py-3 bg-transparent text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none"
                 />
-              </form>
+                <button type="submit" className="btn-primary shrink-0">
+                  Buscar carreras <ArrowRight size={15} />
+                </button>
+              </div>
+            </form>
+
+            <div className="flex flex-wrap gap-3 justify-center mt-6 animate-fade-in-up stagger-4">
+              <Link href="/calendario" className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white text-gray-900 text-sm font-bold hover:bg-gray-100 transition-colors shadow-lg">
+                <CalendarDays size={16} />
+                Explorar calendario
+              </Link>
+              <Link href="/mapa" className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full border border-white/40 text-white text-sm font-semibold hover:bg-white/10 transition-colors">
+                <MapPin size={16} />
+                Ver mapa nacional
+              </Link>
             </div>
           </div>
         </div>
