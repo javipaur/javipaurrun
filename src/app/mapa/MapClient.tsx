@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import RaceMap from "@/components/RaceMap";
+import dynamic from "next/dynamic";
+
+const RaceMap = dynamic(
+  () => import("@/components/RaceMap"),
+  { ssr: false, loading: () => null }
+);
 
 interface Marker {
   id: string;

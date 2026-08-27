@@ -38,9 +38,10 @@ export default async function MapaPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900">Mapa de carreras</h1>
-        <p className="text-gray-500 text-sm mt-0.5">
+      <div className="mb-7">
+        <p className="section-eyebrow mb-1.5">Explora</p>
+        <h1 className="section-title mb-2">Mapa de carreras</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">
           {markers.length} carrera{markers.length !== 1 ? "s" : ""} en el mapa
           {noCoords > 0 && (
             <span className="text-gray-400">
@@ -54,12 +55,12 @@ export default async function MapaPage() {
       <MapClient markers={markers} />
 
       {markers.length === 0 && (
-        <div className="text-center py-16 bg-white rounded-xl border border-gray-200 mt-6">
+        <div className="text-center py-16 card-premium mt-6">
           <div className="text-4xl mb-3">🗺️</div>
-          <p className="text-gray-500 font-medium mb-1">
+          <p className="font-semibold text-gray-900 dark:text-white mb-1">
             No hay carreras geolocalizadas aún
           </p>
-          <p className="text-gray-400 text-sm">
+          <p className="text-gray-500 text-sm">
             Ejecuta el scraping para importar carreras con ubicación
           </p>
         </div>

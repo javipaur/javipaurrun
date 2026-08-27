@@ -5,7 +5,7 @@ import RaceCard from "@/components/RaceCard";
 import BlogCard from "@/components/BlogCard";
 import NewsletterForm from "@/components/NewsletterForm";
 import { EventJsonLd } from "@/components/JsonLd";
-import { ArrowRight, CalendarDays, ChevronRight, Search, TrendingUp } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronRight, Search } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "JavipaurRun - Calendario de carreras populares en España",
@@ -69,35 +69,38 @@ export default async function Home() {
       ))}
 
       {/* Hero */}
-      <section className="py-12 md:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <section className="bg-hero">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16 md:py-24">
           <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-orange-600 text-xs font-medium mb-5">
-              <TrendingUp size={13} />
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-gradient/10 border border-orange-200/60 dark:border-orange-500/20 text-orange-600 dark:text-orange-400 text-xs font-semibold mb-6 animate-fade-in-up">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-500 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+              </span>
               {totalRaces} carreras en el calendario
             </div>
-            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4 leading-tight">
-              Encuentra tu próxima carrera
+            <h1 className="text-4xl sm:text-6xl font-black text-gray-900 dark:text-white mb-5 leading-[1.05] tracking-tight animate-fade-in-up stagger-1">
+              Encuentra tu <span className="text-brand-gradient">próxima carrera</span>
             </h1>
-            <p className="text-gray-500 text-base sm:text-lg max-w-xl mx-auto mb-8 leading-relaxed">
-              Carreras populares, trails, marchas y orientación por toda España. Filtra por tipo, provincia o comunidad autónoma.
+            <p className="text-gray-500 dark:text-gray-400 text-base sm:text-lg max-w-xl mx-auto mb-9 leading-relaxed animate-fade-in-up stagger-2">
+              Carreras populares, trails, marchas y orientación por toda España. Filtra por tipo, distancia o provincia.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center animate-fade-in-up stagger-3">
               <Link
                 href="/calendario"
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-gray-900 text-white font-medium text-sm hover:bg-gray-800 transition-colors"
+                className="btn-primary"
               >
                 <CalendarDays size={16} />
                 Explorar calendario
                 <ArrowRight size={14} />
               </Link>
               <form action="/calendario" method="GET" className="relative w-full max-w-xs">
-                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   name="buscar"
                   placeholder="Buscar carreras..."
-                  className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
                 />
               </form>
             </div>
@@ -106,17 +109,17 @@ export default async function Home() {
       </section>
 
       {/* Categories */}
-      <section className="pb-6">
+      <section className="pb-6 pt-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex flex-wrap gap-2 justify-center">
             {categories.filter((cat) => (typeCountMap[cat.type] || 0) > 0).map((cat) => (
               <Link
                 key={cat.type}
                 href={cat.path}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-sm text-gray-600 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-50 transition-all"
+                className="chip"
               >
                 {cat.label}
-                <span className="text-xs text-gray-400 font-medium">({typeCountMap[cat.type]})</span>
+                <span className="text-xs font-semibold opacity-60">({typeCountMap[cat.type]})</span>
               </Link>
             ))}
           </div>
@@ -126,12 +129,13 @@ export default async function Home() {
       {/* Featured Races */}
       <section className="py-8 md:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-end justify-between mb-7">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Próximas carreras</h2>
-              <p className="text-gray-500 text-sm mt-0.5">Las más cercanas en tu zona</p>
+              <p className="section-eyebrow mb-1.5">Calendario</p>
+              <h2 className="section-title">Próximas carreras</h2>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1.5">Las más cercanas en tu zona</p>
             </div>
-            <Link href="/calendario" className="hidden sm:flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+            <Link href="/calendario" className="btn-secondary hidden sm:inline-flex">
               Ver todas <ChevronRight size={15} />
             </Link>
           </div>
@@ -146,8 +150,8 @@ export default async function Home() {
               <p className="text-gray-500 text-sm">No hay carreras próximas disponibles</p>
             </div>
           )}
-          <div className="text-center mt-6 sm:hidden">
-            <Link href="/calendario" className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors">
+          <div className="text-center mt-8 sm:hidden">
+            <Link href="/calendario" className="btn-primary">
               Ver todas las carreras <ArrowRight size={14} />
             </Link>
           </div>
@@ -156,14 +160,15 @@ export default async function Home() {
 
       {/* Blog */}
       {latestPosts.length > 0 && (
-        <section className="py-8 md:py-12 bg-white border-t border-gray-100">
+        <section className="py-8 md:py-12 bg-white dark:bg-[#0e0e11] border-y border-gray-200/60 dark:border-gray-800/60">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-end justify-between mb-7">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Últimos del blog</h2>
-                <p className="text-gray-500 text-sm mt-0.5">Noticias, consejos y más</p>
+                <p className="section-eyebrow mb-1.5">Blog</p>
+                <h2 className="section-title">Últimos del blog</h2>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1.5">Noticias, consejos y más</p>
               </div>
-              <Link href="/blog" className="hidden sm:flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+              <Link href="/blog" className="btn-secondary hidden sm:inline-flex">
                 Ver blog <ChevronRight size={15} />
               </Link>
             </div>

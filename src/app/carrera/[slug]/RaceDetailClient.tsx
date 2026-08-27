@@ -13,12 +13,17 @@ import {
   Share2,
   Trophy,
 } from "lucide-react";
-import RaceMap from "@/components/RaceMap";
+import dynamic from "next/dynamic";
 import RaceResultForm from "@/components/RaceResultForm";
 import ReviewSection from "@/components/ReviewSection";
 import WeatherWidget from "@/components/WeatherWidget";
 import ShareButtons from "@/components/ShareButtons";
 import { downloadICal } from "@/lib/ical";
+
+const RaceMap = dynamic(
+  () => import("@/components/RaceMap"),
+  { ssr: false, loading: () => null }
+);
 
 interface Race {
   id: string;
@@ -118,7 +123,7 @@ export default function RaceDetailClient({
         Volver al calendario
       </Link>
 
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+      <div className="card-premium overflow-hidden">
         {race.image && (
           <div className="aspect-[2/1] sm:aspect-[3/1] bg-gray-100 relative overflow-hidden">
             <img
@@ -131,22 +136,23 @@ export default function RaceDetailClient({
 
         <div className="p-6 md:p-8">
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className={`inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold ${typeColor}`}>
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${typeColor}`}>
               {typeLabel[race.type] || race.type}
             </span>
             {race.distance && (
-              <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
                 {race.distance}
               </span>
             )}
             {race.status === "INSCRIPCIONES_ABIERTAS" && (
-              <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold bg-green-50 text-green-700">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse" />
                 Inscripciones abiertas
               </span>
             )}
           </div>
 
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 leading-tight">
+          <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white mb-7 leading-tight tracking-tight">
             {race.name}
           </h1>
 
@@ -192,7 +198,7 @@ export default function RaceDetailClient({
                 href={race.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-orange-500 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:bg-orange-600 transition-colors"
+                className="btn-primary"
               >
                 <ExternalLink size={16} />
                 {isPast ? "Ver resultado" : "Inscribirme"}
@@ -200,7 +206,7 @@ export default function RaceDetailClient({
             )}
             <button
               onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 bg-white text-gray-700 border border-gray-300 px-6 py-3 rounded-xl text-sm font-semibold hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors"
+              className="btn-secondary"
             >
               <Trophy size={16} />
               {success ? "✅ Tiempo registrado" : "Registrar mi tiempo"}
@@ -216,7 +222,7 @@ export default function RaceDetailClient({
                   url: race.url,
                 })
               }
-              className="inline-flex items-center gap-2 bg-white text-gray-700 border border-gray-300 px-6 py-3 rounded-xl text-sm font-semibold hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors"
+              className="btn-secondary"
             >
               <Calendar size={16} />
               Añadir a calendario
@@ -224,7 +230,7 @@ export default function RaceDetailClient({
             <button
               onClick={handleRemind}
               disabled={reminder === "loading" || reminder === "active"}
-              className="inline-flex items-center gap-2 bg-white text-gray-700 border border-gray-300 px-6 py-3 rounded-xl text-sm font-semibold hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {reminder === "active" ? "✅ Recordatorio activo" : reminder === "loading" ? "..." : "🔔 Recordar"}
             </button>
@@ -232,7 +238,7 @@ export default function RaceDetailClient({
 
           {race.description && (
             <div className="mb-8">
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Descripción</h2>
+              <p className="section-eyebrow mb-2">Descripción</p>
               <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed whitespace-pre-wrap">
                 {race.description}
               </p>
@@ -252,7 +258,7 @@ export default function RaceDetailClient({
 
           {mapMarkers.length > 0 && (
             <div className="mb-8">
-              <h2 className="text-sm font-semibold text-gray-900 mb-3">Ubicación</h2>
+              <p className="section-eyebrow mb-3">Ubicación</p>
               <RaceMap races={mapMarkers} zoom={12} />
             </div>
           )}

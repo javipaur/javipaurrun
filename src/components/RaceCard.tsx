@@ -35,6 +35,15 @@ const typeConfig: Record<string, { bg: string; text: string }> = {
   ORIENTACION: { bg: "bg-blue-50", text: "text-blue-700" },
 };
 
+const typeDot: Record<string, string> = {
+  ASFALTO: "bg-orange-500",
+  MEDIA_MARATON: "bg-purple-500",
+  MARATON: "bg-red-500",
+  TRAIL: "bg-emerald-500",
+  MARCHA: "bg-amber-500",
+  ORIENTACION: "bg-blue-500",
+};
+
 export default function RaceCard({ race, index = 0 }: RaceCardProps) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
@@ -75,59 +84,60 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
     <>
       <Link
         href={`/carrera/${race.slug}`}
-        className="group block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 animate-fade-in-up"
+        className="card-premium group block p-5 animate-fade-in-up"
         style={{ animationDelay: `${index * 60}ms` }}
       >
-        <div className="flex items-center justify-between mb-3">
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold ${config.bg} ${config.text}`}>
+        <div className="flex items-center justify-between mb-3.5">
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${config.bg} ${config.text}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${typeDot[race.type] || "bg-gray-400"}`} />
             {getRaceTypeLabel(race.type)}
           </span>
           {race.distance && (
-            <span className="text-xs text-gray-400 font-medium">{race.distance}</span>
+            <span className="text-xs font-semibold text-gray-400">{race.distance}</span>
           )}
         </div>
 
-        <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-3 line-clamp-2 group-hover:text-orange-600 transition-colors">
+        <h3 className="font-bold text-gray-900 dark:text-white text-[15px] leading-snug mb-4 line-clamp-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
           {race.name}
         </h3>
 
-        <div className="space-y-1.5 mb-4">
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+        <div className="space-y-2 mb-5">
+          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
             <Calendar size={13} className="shrink-0 text-gray-400" />
-            <span>{formatDateShort(race.date)}</span>
+            <span className="font-medium">{formatDateShort(race.date)}</span>
             {race.time && (
               <>
-                <span className="text-gray-300">·</span>
+                <span className="text-gray-300 dark:text-gray-600">·</span>
                 <Timer size={13} className="shrink-0 text-gray-400" />
                 <span>{race.time}</span>
               </>
             )}
           </div>
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
             <MapPin size={13} className="shrink-0 text-gray-400" />
             <span className="truncate">{race.location}</span>
           </div>
           {race.price && (
-            <div className="flex items-center gap-2 text-xs text-gray-500">
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
               <Tag size={13} className="shrink-0 text-gray-400" />
               <span>{race.price}</span>
             </div>
           )}
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 pt-3 border-t border-gray-100 dark:border-gray-700">
-          <span className="text-xs text-gray-400">{race.province}</span>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-3.5 border-t hairline">
+          <span className="text-xs font-medium text-gray-400">{race.province}</span>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <button
               onClick={handleCompare}
-              className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-orange-600 cursor-pointer transition-colors"
+              className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 cursor-pointer transition-colors"
             >
               <BarChart3 size={12} />
               <span className="hidden sm:inline">Comparar</span>
             </button>
             <button
               onClick={handleShare}
-              className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-orange-600 cursor-pointer transition-colors"
+              className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 cursor-pointer transition-colors"
             >
               <Share2 size={12} />
             </button>
@@ -137,7 +147,7 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
                 e.stopPropagation();
                 setShowForm(true);
               }}
-              className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-orange-600 cursor-pointer transition-colors"
+              className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 cursor-pointer transition-colors"
             >
               <Clock size={12} />
               {success ? "✅" : "Registrar tiempo"}
@@ -148,7 +158,7 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="flex items-center gap-1 text-xs font-medium text-orange-500 hover:text-orange-600 transition-colors"
+                className="flex items-center gap-1 text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors"
               >
                 <span className="hidden sm:inline">Inscríbete</span>
                 <ArrowUpRight size={12} />

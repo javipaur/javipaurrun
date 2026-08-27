@@ -18,26 +18,24 @@ export default function RelatedRaces({ races }: { races: RaceSummary[] }) {
   if (races.length === 0) return null;
 
   return (
-    <div className="border-t border-gray-100 dark:border-gray-700 pt-6 mt-6">
-      <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-        Carreras relacionadas
-      </h2>
+    <div className="border-t hairline pt-7 mt-8">
+      <p className="section-eyebrow mb-3.5">También te puede interesar</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {races.map((r) => (
           <Link
             key={r.id}
             href={`/carrera/${r.slug}`}
-            className="flex flex-col gap-1.5 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="card-premium group flex flex-col gap-1.5 px-4 py-3.5"
           >
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-orange-600 dark:text-orange-400 uppercase">
+              <span className="text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wide">
                 {getRaceTypeLabel(r.type)}
               </span>
               {r.distance && (
                 <span className="text-[10px] text-gray-400">{r.distance}</span>
               )}
             </div>
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-1">
+            <span className="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
               {r.name}
             </span>
             <div className="flex items-center gap-3 text-[11px] text-gray-500 dark:text-gray-400">

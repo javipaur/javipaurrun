@@ -40,16 +40,16 @@ export default function Header({ session }: { session: any }) {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/85 dark:bg-[#09090b]/85 backdrop-blur-xl border-b border-gray-200/70 dark:border-gray-800/70 supports-[backdrop-filter]:bg-white/75">
         {/* Top Row */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14 sm:h-16">
-            <Link href="/" className="flex items-center gap-2 shrink-0">
-              <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">J</span>
+            <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+              <div className="w-9 h-9 rounded-xl bg-brand-gradient flex items-center justify-center shadow-glow">
+                <span className="text-white font-black text-base tracking-tight">J</span>
               </div>
-              <span className="text-base sm:text-lg font-bold text-gray-900 hidden sm:block">
-                JavipaurRun
+              <span className="text-lg sm:text-xl font-black tracking-tight text-gray-900 dark:text-white hidden sm:block transition-colors">
+                Javipaur<span className="text-brand-gradient">Run</span>
               </span>
             </Link>
 
@@ -71,7 +71,7 @@ export default function Header({ session }: { session: any }) {
               {session ? (
                 <Link
                   href="/admin"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-full btn-primary"
                 >
                   <Shield size={15} />
                   Panel
@@ -80,15 +80,15 @@ export default function Header({ session }: { session: any }) {
                 <>
                   <Link
                     href="/auth/login"
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                    className="flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                   >
                     <User size={15} />
                     Atleta
                   </Link>
-                  <span className="text-gray-300">|</span>
+                  <span className="text-gray-300 dark:text-gray-700">|</span>
                   <Link
                     href="/auth/register"
-                    className="px-4 py-1.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all"
+                    className="px-4 py-1.5 rounded-full border border-gray-300 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:border-orange-400 hover:text-orange-500 dark:hover:text-orange-400 transition-all"
                   >
                     Registrarse
                   </Link>
@@ -107,9 +107,9 @@ export default function Header({ session }: { session: any }) {
         </div>
 
         {/* Category Bar */}
-        <div className="border-t border-gray-100 bg-white">
+        <div className="border-t border-gray-100/70 dark:border-gray-800/70 bg-white/60 dark:bg-[#09090b]/60 backdrop-blur-md">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-none">
+            <div className="flex items-center gap-1.5 overflow-x-auto py-2.5 scrollbar-none">
               {categories.map((cat) => {
                 const isActive = pathname === "/calendario" && cat.href.includes("tipo=")
                   ? new URLSearchParams(window.location.search).get("tipo") === cat.href.split("=")[1]
@@ -118,10 +118,10 @@ export default function Header({ session }: { session: any }) {
                   <Link
                     key={cat.href}
                     href={cat.href}
-                    className={`shrink-0 px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+                    className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
                       isActive
-                        ? "bg-orange-500 text-white"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                        ? "chip-active shadow-sm"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
                     }`}
                   >
                     {cat.label}

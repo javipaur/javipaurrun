@@ -127,28 +127,33 @@ export default async function ProvincePage({ params }: PageProps) {
         Volver al calendario
       </Link>
 
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <MapPin size={20} className="text-orange-500" />
-          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-            Carreras en {displayName(name)}
-          </h1>
+      <div className="mb-7">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-11 h-11 rounded-2xl bg-brand-gradient/10 border border-orange-200/60 dark:border-orange-500/20 flex items-center justify-center">
+            <MapPin size={22} className="text-orange-500" />
+          </div>
+          <div>
+            <p className="section-eyebrow mb-0.5">Por provincia</p>
+            <h1 className="section-title">
+              Carreras en {displayName(name)}
+            </h1>
+          </div>
         </div>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
           {races.length} carrera{races.length !== 1 ? "s" : ""} próxima{races.length !== 1 ? "s" : ""} en {displayName(name)}
         </p>
       </div>
 
       {typeCounts.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-7">
           {typeCounts.map((t) => (
             <Link
               key={t.type}
               href={`/calendario?tipo=${t.type}&provincia=${encodeURIComponent(dbProvince)}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+              className="chip"
             >
               {t.type.replace("_", " ").toLowerCase()}
-              <span className="text-gray-400 font-medium">({t._count})</span>
+              <span className="font-semibold opacity-60">({t._count})</span>
             </Link>
           ))}
         </div>
@@ -161,10 +166,12 @@ export default async function ProvincePage({ params }: PageProps) {
           ))}
         </div>
       ) : (
-        <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700">
-          <MapPin size={40} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-          <p className="text-gray-500 font-medium mb-1">No hay carreras próximas en {displayName(name)}</p>
-          <p className="text-gray-400 text-sm mb-4">Prueba a buscar en otras provincias cercanas</p>
+        <div className="text-center py-16 card-premium px-6">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-orange-50 dark:bg-orange-950/40 flex items-center justify-center mb-4">
+            <MapPin size={28} className="text-gray-300 dark:text-gray-600" />
+          </div>
+          <p className="font-semibold text-gray-900 dark:text-white mb-1">No hay carreras próximas en {displayName(name)}</p>
+          <p className="text-gray-500 text-sm mb-5">Prueba a buscar en otras provincias cercanas</p>
           <div className="flex flex-wrap gap-2 justify-center">
             {allProvinceSlugs
               .filter((s) => s !== slug)
@@ -174,7 +181,7 @@ export default async function ProvincePage({ params }: PageProps) {
                 <Link
                   key={k}
                   href={`/carreras/${k}`}
-                  className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="chip"
                 >
                   {displayName(provinceSlugs[k])}
                 </Link>

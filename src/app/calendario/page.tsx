@@ -56,17 +56,18 @@ export default async function CalendarPage({ searchParams }: PageProps) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900">Calendario de carreras</h1>
-        <p className="text-gray-500 text-sm mt-0.5">
+      <div className="mb-8">
+        <p className="section-eyebrow mb-1.5">Directorio nacional</p>
+        <h1 className="section-title mb-2">Calendario de carreras</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">
           {races.length} carrera{races.length !== 1 ? "s" : ""} encontrada{races.length !== 1 ? "s" : ""}
           {params.buscar && (
-            <> para &ldquo;<span className="font-medium">{params.buscar}</span>&rdquo;</>
+            <> para &ldquo;<span className="font-medium text-gray-700 dark:text-gray-200">{params.buscar}</span>&rdquo;</>
           )}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
         <RaceFilters />
         <div>
           {races.length > 0 ? (
@@ -76,10 +77,10 @@ export default async function CalendarPage({ searchParams }: PageProps) {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
-              <div className="text-4xl mb-3">🔍</div>
-              <p className="text-gray-500 font-medium mb-1">No hay carreras con esos filtros</p>
-              <p className="text-gray-400 text-sm">Prueba con otros criterios de búsqueda</p>
+            <div className="text-center py-20 card-premium px-6">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-orange-50 dark:bg-orange-950/40 flex items-center justify-center text-3xl mb-4">🔍</div>
+              <p className="font-semibold text-gray-900 dark:text-white mb-1.5">No hay carreras con esos filtros</p>
+              <p className="text-gray-500 text-sm">Prueba con otros criterios de búsqueda</p>
             </div>
           )}
         </div>

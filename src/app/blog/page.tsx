@@ -15,8 +15,12 @@ export default async function BlogPage() {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Blog</h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <div className="mb-9">
+        <p className="section-eyebrow mb-1.5">Contenido</p>
+        <h1 className="section-title mb-2">Blog</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">Noticias, consejos y artículos sobre running y trail.</p>
+      </div>
       {posts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {posts.map((post) => (
@@ -24,7 +28,7 @@ export default async function BlogPage() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+        <div className="text-center py-16 card-premium">
           <p className="text-gray-500">No hay artículos publicados aún</p>
         </div>
       )}

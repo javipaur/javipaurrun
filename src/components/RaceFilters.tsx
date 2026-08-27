@@ -62,25 +62,25 @@ export default function RaceFilters() {
   const filtersContent = (
     <div className="space-y-5">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Buscar</label>
+        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Buscar</label>
         <div className="relative">
           <input
             type="text"
             defaultValue={currentSearch}
             placeholder="Nombre, lugar..."
             onChange={(e) => updateFilter("buscar", e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all"
+            className="field pl-10"
           />
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Tipo</label>
+        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Tipo</label>
         <select
           value={currentType}
           onChange={(e) => updateFilter("tipo", e.target.value)}
-          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all"
+          className="field"
         >
           <option value="">Todos</option>
           {raceTypes.map((t) => (
@@ -90,11 +90,11 @@ export default function RaceFilters() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Distancia</label>
+        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Distancia</label>
         <select
           value={currentDistancia}
           onChange={(e) => updateFilter("distancia", e.target.value)}
-          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all"
+          className="field"
         >
           <option value="">Todas</option>
           {distanceRanges.map((r) => (
@@ -106,18 +106,18 @@ export default function RaceFilters() {
       <button
         onClick={detectLocation}
         disabled={locating}
-        className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-orange-50 text-orange-700 text-sm font-medium hover:bg-orange-100 transition-colors disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-full btn-primary disabled:opacity-60"
       >
         <MapPin size={14} />
         {locating ? "Detectando ubicación..." : "Usar mi ubicación"}
       </button>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Comunidad Autónoma</label>
+        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Comunidad Autónoma</label>
         <select
           value={currentComunidad}
           onChange={(e) => updateFilter("comunidad", e.target.value)}
-          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all"
+          className="field"
         >
           <option value="">Todas</option>
           {autonomousCommunities.map((c) => (
@@ -127,11 +127,11 @@ export default function RaceFilters() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Provincia</label>
+        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Provincia</label>
         <select
           value={currentProvince}
           onChange={(e) => updateFilter("provincia", e.target.value)}
-          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all"
+          className="field"
         >
           <option value="">Todas</option>
           {provinces.map((p) => (
@@ -143,7 +143,7 @@ export default function RaceFilters() {
       {hasFilters && (
         <button
           onClick={clearFilters}
-          className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium hover:bg-gray-200 transition-colors"
+          className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-full border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
           <X size={14} />
           Limpiar filtros
@@ -156,14 +156,17 @@ export default function RaceFilters() {
     <>
       <button
         onClick={() => setShowMobile(true)}
-        className="lg:hidden fixed bottom-20 right-4 z-40 w-12 h-12 rounded-xl bg-gray-900 text-white shadow-lg flex items-center justify-center hover:bg-gray-800 transition-all"
+        className="lg:hidden fixed bottom-20 right-4 z-40 w-12 h-12 rounded-xl bg-brand-gradient text-white shadow-lg flex items-center justify-center hover:brightness-105 transition-all"
       >
         <SlidersHorizontal size={20} />
       </button>
 
       <aside className="hidden lg:block">
-        <div className="bg-white rounded-xl border border-gray-200 p-5 sticky top-20">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4">Filtros</h3>
+        <div className="card-premium p-5 sticky top-24">
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <SlidersHorizontal size={15} className="text-orange-500" />
+            Filtros
+          </h3>
           {filtersContent}
         </div>
       </aside>
@@ -171,10 +174,10 @@ export default function RaceFilters() {
       {showMobile && (
         <div className="fixed inset-0 z-50 lg:hidden animate-fade-in">
           <div className="absolute inset-0 bg-black/20" onClick={() => setShowMobile(false)} />
-          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-5 pb-8 max-h-[80vh] overflow-y-auto">
+          <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#131316] rounded-t-2xl p-5 pb-8 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-semibold text-gray-900">Filtros</h3>
-              <button onClick={() => setShowMobile(false)} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+              <h3 className="font-bold text-gray-900 dark:text-white">Filtros</h3>
+              <button onClick={() => setShowMobile(false)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 <X size={18} />
               </button>
             </div>
