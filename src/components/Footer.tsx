@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Logo from "./Logo";
 
 export default function Footer() {
   return (
@@ -6,15 +7,11 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10">
           <div>
-            <Link href="/" className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-brand-gradient flex items-center justify-center">
-                <span className="text-white font-black text-sm">J</span>
-              </div>
-              <span className="text-base font-black tracking-tight text-white">
-                Javipaur<span className="text-brand-gradient">Run</span>
-              </span>
+            <Link href="/" className="mb-4 inline-block">
+              <Logo size={38} markOnly />
             </Link>
-            <p className="text-sm text-gray-500 leading-relaxed">
+            <span className="sr-only">JavipaurRun</span>
+            <p className="text-sm text-gray-500 leading-relaxed mt-2">
               El calendario de carreras populares de España. Ascene a los trails, maratones y marchas de todo el país.
             </p>
           </div>

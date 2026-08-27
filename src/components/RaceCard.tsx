@@ -22,6 +22,7 @@ interface RaceCardProps {
     description?: string | null;
     url?: string | null;
     price?: string | null;
+    image?: string | null;
   };
   index?: number;
 }
@@ -84,9 +85,27 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
     <>
       <Link
         href={`/carrera/${race.slug}`}
-        className="card-premium group block p-5 animate-fade-in-up"
+        className={`card-premium group block overflow-hidden animate-fade-in-up ${race.image ? "" : "p-5"}`}
         style={{ animationDelay: `${index * 60}ms` }}
       >
+        {race.image && (
+          <div className="relative aspect-[16/9] bg-gray-100 dark:bg-gray-800 overflow-hidden">
+            <img
+              src={race.image}
+              alt={race.name}
+              loading="lazy"
+              className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/10" />
+            <span className={`absolute bottom-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold shadow-sm ${config.bg} ${config.text}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${typeDot[race.type] || "bg-gray-400"}`} />
+              {getRaceTypeLabel(race.type)}
+            </span>
+          </div>
+        )}
+
+        <div className={race.image ? "p-5" : ""}>
+        {!race.image && (
         <div className="flex items-center justify-between mb-3.5">
           <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${config.bg} ${config.text}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${typeDot[race.type] || "bg-gray-400"}`} />
@@ -96,6 +115,7 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
             <span className="text-xs font-semibold text-gray-400">{race.distance}</span>
           )}
         </div>
+        )}
 
         <h3 className="font-bold text-gray-900 dark:text-white text-[15px] leading-snug mb-4 line-clamp-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
           {race.name}
@@ -165,6 +185,7 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
               </a>
             )}
           </div>
+        </div>
         </div>
       </Link>
 

@@ -8,6 +8,7 @@ import { useTheme } from "./ThemeProvider";
 import { useI18n } from "@/lib/i18n/provider";
 import SearchAutocomplete from "./SearchAutocomplete";
 import LangSwitcher from "./LangSwitcher";
+import Logo from "./Logo";
 
 const categories = [
   { href: "/calendario", label: "Todas las carreras" },
@@ -44,13 +45,8 @@ export default function Header({ session }: { session: any }) {
         {/* Top Row */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14 sm:h-16">
-            <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-              <div className="w-9 h-9 rounded-xl bg-brand-gradient flex items-center justify-center shadow-glow">
-                <span className="text-white font-black text-base tracking-tight">J</span>
-              </div>
-              <span className="text-lg sm:text-xl font-black tracking-tight text-gray-900 dark:text-white hidden sm:block transition-colors">
-                Javipaur<span className="text-brand-gradient">Run</span>
-              </span>
+            <Link href="/" className="shrink-0">
+              <Logo size={34} />
             </Link>
 
             {/* Search Bar - Desktop */}
