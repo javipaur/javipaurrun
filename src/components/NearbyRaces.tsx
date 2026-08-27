@@ -48,18 +48,45 @@ export default function NearbyRaces({
   function requestLocation() {
     if (typeof window === "undefined" || !("geolocation" in navigator)) {
       setStatus("unsupported");
+      setError("Tu navegador no soporta geolocalización.");
       return;
     }
     setStatus("loading");
     setError("");
+
+    let settled = false;
+    const fail = (msg: string) => {
+      if (settled) return;
+      settled = true;
+      setStatus("denied");
+      setError(msg);
+    };
+
+    const watchdog = window.setTimeout(() => {
+      if (settled) return;
+      // El navegador no respondió (permiso bloqueado o sin prompt) → avisar y permitir reintentar
+      settled = true;
+      setStatus("idle");
+      setError(
+        "No se pudo obtener tu ubicación. Asegúrate de permitir el acceso a la ubicación en tu navegador (y usa HTTPS) e inténtalo de nuevo."
+      );
+    }, 12000);
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        window.clearTimeout(watchdog);
+        if (settled) return;
+        settled = true;
         setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setStatus("granted");
       },
-      () => {
-        setStatus("denied");
-        setError("Activa la ubicación en tu navegador para ver carreras cerca de ti.");
+      (err) => {
+        window.clearTimeout(watchdog);
+        fail(
+          err?.code === 1
+            ? "Has denegado el acceso a la ubicación. Actívalo en los ajustes de tu navegador para ver carreras cerca de ti."
+            : "No se pudo obtener tu ubicación en este momento. Inténtalo de nuevo."
+        );
       },
       { enableHighAccuracy: false, timeout: 10000 }
     );
@@ -90,9 +117,7 @@ export default function NearbyRaces({
             <div>
               <h3 className="font-bold text-gray-900 dark:text-white">Carreras cerca de ti</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                {status === "denied"
-                  ? error
-                  : "Comparte tu ubicación para encontrar las carreras más cercanas."}
+                {error || "Comparte tu ubicación para encontrar las carreras más cercanas."}
               </p>
             </div>
           </div>
