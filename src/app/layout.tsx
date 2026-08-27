@@ -25,13 +25,17 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "JavipaurRun",
   },
+  icons: {
+    icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+    apple: [{ url: "/icons/icon-192.png", sizes: "192x192" }],
+  },
   formatDetection: {
     telephone: false,
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f97316",
+  themeColor: "#ff4d00",
   width: "device-width",
   initialScale: 1,
 };
