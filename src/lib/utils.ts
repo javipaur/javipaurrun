@@ -116,7 +116,21 @@ const raceTypes = [
   { value: "ORIENTACION", label: "Orientación" },
 ] as const;
 
-export { autonomousCommunities, provinceToCommunity, provinces, raceTypes };
+const distanceRanges = [
+  { value: "corto", label: "Corta (≤ 5 km)", min: 0, max: 5 },
+  { value: "medio", label: "Media (5-15 km)", min: 5, max: 15 },
+  { value: "largo", label: "Larga (15-42 km)", min: 15, max: 42 },
+  { value: "ultra", label: "Ultra (> 42 km)", min: 42, max: Infinity },
+] as const;
+
+export function parseKmFromDistance(distance?: string | null): number | null {
+  if (!distance) return null;
+  const match = distance.match(/(\d+[.,]?\d*)\s*km/i);
+  if (!match) return null;
+  return parseFloat(match[1].replace(",", "."));
+}
+
+export { autonomousCommunities, provinceToCommunity, provinces, raceTypes, distanceRanges };
 
 export function getProvinceLabel(value: string): string {
   return provinces.find((p) => p === value) || value;

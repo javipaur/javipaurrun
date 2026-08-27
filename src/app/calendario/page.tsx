@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import RaceCard from "@/components/RaceCard";
 import RaceFilters from "@/components/RaceFilters";
 import { Prisma, RaceType } from "@/generated/prisma/client";
-import { getAutonomousCommunity } from "@/lib/utils";
+import { getAutonomousCommunity, parseKmFromDistance, distanceRanges } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Calendario de carreras populares - JavipaurRun",
@@ -16,6 +16,7 @@ interface PageProps {
     tipo?: string;
     provincia?: string;
     comunidad?: string;
+    distancia?: string;
     buscar?: string;
   }>;
 }
@@ -42,6 +43,15 @@ export default async function CalendarPage({ searchParams }: PageProps) {
 
   if (params.comunidad) {
     races = races.filter((r) => getAutonomousCommunity(r.province) === params.comunidad);
+  }
+
+  const distanceRange = distanceRanges.find((r) => r.value === params.distancia);
+  if (distanceRange) {
+    races = races.filter((r) => {
+      const km = parseKmFromDistance(r.distance);
+      if (km == null) return params.distancia === "sin-distancia";
+      return km > distanceRange.min && km <= distanceRange.max;
+    });
   }
 
   return (

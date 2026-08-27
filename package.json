@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "import:races": "tsx scripts/import-all.mts",
     "lint": "eslint",
     "postinstall": "npx prisma generate"
   },
@@ -43,6 +44,7 @@
     "eslint-config-next": "16.2.12",
     "prisma": "^7.9.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.12",
     "typescript": "^5"
   }
 }

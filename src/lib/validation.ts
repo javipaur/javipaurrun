@@ -63,5 +63,5 @@ export const newsletterSchema = z.object({
 });
 
 export const scrapingSchema = z.object({
-  source: z.enum(["lasterketak", "rockthesport", "buscametas"]),
+  source: z.enum(["lasterketak", "rockthesport", "sportmaniacs", "buscametas"]),
 });

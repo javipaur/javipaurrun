@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# JavipaurRun
 
-## Getting Started
+Director web de carreras populares (asfalto, trail, media maratón, maratón, marcha y orientación) en toda España. Permite buscar por **provincia**, **distancia** y **tipo de carrera**, y consultar un calendario actualizado cada día.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Next.js 16 (App Router) + React 19
+- Prisma 7 + PostgreSQL (via driver adapter pg/libsql)
+- Tailwind CSS 4
+- NextAuth 5
+- Scraping automático con Cheerio
+
+## Funcionalidades
+
+- **Calendario filtrable** (`/calendario`) por tipo, provincia, comunidad autónoma, distancia y búsqueda libre.
+- **Directorio por provincia** (`/carreras/[provincia]`) con páginas para las 50 provincias españolas.
+- **Directorio por ciudad** (`/carreras/ciudad/[ciudad]`).
+- **Detalle de carrera** (`/carrera/[slug]`) con mapa, tiempo, reviews, comparador, recordatorios.
+- Panel **admin** para gestionar carreras, resultados, blog, suscriptores y el scraping.
+
+## Scraping de carreras
+
+El proyecto importa carreras automáticamente desde varias fuentes gratuitas:
+
+| Fuente | Cobertura |
+|--------|-----------|
+| Sportmaniacs | Nacional (~3000 carreras de running), incluye provincia, ciudad y coordenadas |
+| RockTheSport | Nacional (~350 carreras de trail/running) |
+| Buscametas | Calendario nacional |
+| Lasterketak.eus | País Vasco / norte |
+
+Todas las carreras se deduplican (por URL o nombre+fecha) y se **actualizan** en cada ejecución: si una carrera cambia de fecha, distancia o precio, se refresca en lugar de crear un duplicado. Las provincias se normalizan a un vocabulario canónico de 50 provincias.
+
+### Refresco diario (cron)
+
+Configura un cron gratuito (recomendado: [cron-job.org](https://cron-job.org)) para llamar una vez al día:
+
+```
+GET {TU_URL}/api/cron/scrape?key={CRON_SECRET}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Este endpoint ejecuta todos los scrapers completos y a continuación la geocodificación de las carreras que aún no tienen coordenadas.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+También existe un endpoint de recordatorios de carreras próximas:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+GET {TU_URL}/api/cron/reminders
+```
 
-## Learn More
+(autenticado con `Authorization: Bearer {CRON_SECRET}`).
 
-To learn more about Next.js, take a look at the following resources:
+### Importación manual (sincronización inicial / puntual)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Si quieres poblar o refrescar la base de datos sin depender del cron, ejecuta el script desde el servidor que tenga acceso a la base de datos:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run import:races
+```
 
-## Deploy on Vercel
+o directamente:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npx tsx scripts/import-all.mts
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Este script ejecuta todos los scrapers, imprime un resumen por fuente (encontradas/nuevas) y el total de carreras en BD. La deduplicación por URL o nombre+fecha evita duplicados y la actualización mantiene fechas, distancias y precios al día.
+
+### Ejecución automática en el despliegue (Nixpacks)
+
+En producción, el arranque (`nixpacks.toml`) usa `scripts/start.sh`, que en cada despliegue:
+
+1. Aplica el esquema con `prisma db push --skip-generate`.
+2. Ejecuta la importación de carreras (`tsx scripts/import-all.mts`) para poblar o actualizar la base de datos.
+3. Arranca `next start`.
+
+El import no bloquea el arranque: si falla o excede el tiempo (9 minutos) se continúa sirviendo la app, y el cron diario se encarga del refresco.
+
+### Variables de entorno
+
+Ver `.env.example`:
+
+- `DATABASE_URL` — cadena de conexión a PostgreSQL.
+- `AUTH_SECRET` — secreto de NextAuth.
+- `CRON_SECRET` — secreto para los endpoints de cron.
+- `RESEND_API_KEY` — para envío de emails.
+- `NEXT_PUBLIC_APP_URL` — URL pública de la aplicación.
+
+## Desarrollo
+
+```bash
+npm install
+npm run dev
+```
+
+## Producción
+
+Despliegue vía Nixpacks (`nixpacks.toml`) que ejecuta `prisma db push` y `npm run start`.

@@ -13,13 +13,15 @@ interface LogEntry {
 
 const sources = [
   { id: "lasterketak", name: "Lasterketak.eus", desc: "API REST de WordPress +8500 carreras", icon: "🏃" },
-  { id: "rockthesport", name: "RockTheSport", desc: "Scraping HTML (Cloudflare)", icon: "🎽" },
+  { id: "rockthesport", name: "RockTheSport", desc: "API pública nacional trail/running (~350)", icon: "🎽" },
+  { id: "sportmaniacs", name: "Sportmaniacs", desc: "Calendario nacional running (~3000)", icon: "🏁" },
   { id: "buscametas", name: "Buscametas", desc: "Scraping HTML (anti-bot)", icon: "🔍" },
 ];
 
 const sourceLabels: Record<string, string> = {
   lasterketak: "Lasterketak.eus",
   rockthesport: "RockTheSport",
+  sportmaniacs: "Sportmaniacs",
   buscametas: "Buscametas",
 };
 

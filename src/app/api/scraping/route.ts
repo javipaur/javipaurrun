@@ -6,6 +6,7 @@ import {
   scrapeFromLasterketak,
   scrapeFromRockTheSport,
   scrapeFromBuscametas,
+  scrapeFromSportmaniacs,
   importScrapedRaces,
 } from "@/lib/scraping";
 import { prisma } from "@/lib/prisma";
@@ -13,6 +14,7 @@ import { prisma } from "@/lib/prisma";
 const sources: Record<string, { scrape: () => Promise<unknown[]>; label: string }> = {
   lasterketak: { scrape: scrapeFromLasterketak, label: "Lasterketak.eus" },
   rockthesport: { scrape: scrapeFromRockTheSport, label: "RockTheSport" },
+  sportmaniacs: { scrape: scrapeFromSportmaniacs, label: "Sportmaniacs" },
   buscametas: { scrape: scrapeFromBuscametas, label: "Buscametas" },
 };
 
@@ -30,13 +32,13 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = scrapingSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Fuente no soportada. Usa: lasterketak, rockthesport, buscametas" }, { status: 400 });
+      return NextResponse.json({ error: "Fuente no soportada. Usa: lasterketak, rockthesport, sportmaniacs, buscametas" }, { status: 400 });
     }
 
     const { source } = parsed.data;
     const sourceConfig = sources[source];
     const scraped = await sourceConfig.scrape();
-    const imported = await importScrapedRaces(scraped as import("@/lib/scraping").ScrapedRace[], source);
+    const { imported } = await importScrapedRaces(scraped as import("@/lib/scraping").ScrapedRace[], source);
 
     await prisma.scrapeLog.create({
       data: { source, count: imported, status: "SUCCESS" },

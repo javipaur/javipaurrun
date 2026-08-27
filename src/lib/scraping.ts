@@ -8,11 +8,15 @@ export interface ScrapedRace {
   location: string;
   province: string;
   date: string;
+  endDate?: string;
   time?: string;
   description?: string;
   url?: string;
   image?: string;
   price?: string;
+  latitude?: number;
+  longitude?: number;
+  city?: string;
 }
 
 async function fetchWithTimeout(url: string, timeoutMs = 15000): Promise<Response> {
@@ -219,10 +223,10 @@ export async function scrapeFromRockTheSport(): Promise<ScrapedRace[]> {
     const sports = ["trail", "running", "ultra-trail"];
     let page = 1;
     let totalPages = 1;
-    const maxPages = 10;
+    const pageSize = 50;
 
-    while (page <= totalPages && page <= maxPages) {
-      const res = await fetch(`${API_BASE}/api/event/list?pageNumber=${page}&pageSize=20`, {
+    while (page <= totalPages) {
+      const res = await fetch(`${API_BASE}/api/event/list?pageNumber=${page}&pageSize=${pageSize}`, {
         method: "POST",
         headers: {
           "X-API-Key": API_KEY,
@@ -262,14 +266,24 @@ export async function scrapeFromRockTheSport(): Promise<ScrapedRace[]> {
 
         const slug = (item.slug as string) || "";
 
+        const cityRaw = (item.city as string) || "";
+        const location = cityRaw || "Por determinar";
+
+        const subsports = (item.subsports as string[]) || [];
+        let distance: string | undefined;
+        const distEntry = subsports.find((s) => /km/i.test(s));
+        if (distEntry) distance = normalizeDistanceLabel(distEntry);
+
         races.push({
           name,
           type,
-          location: "Por determinar",
-          province: detectProvince(name),
+          distance,
+          location,
+          province: normalizeProvince((item.province as string) || "") || detectProvince(name + " " + cityRaw),
           date: dateStr,
           url: slug ? `https://web.rockthesport.com/en/event/${slug}` : undefined,
           image: (item.urlImage as string) || undefined,
+          city: cityRaw || undefined,
         });
       }
 
@@ -282,14 +296,30 @@ export async function scrapeFromRockTheSport(): Promise<ScrapedRace[]> {
   return races;
 }
 
+function normalizeDistanceLabel(value: string): string {
+  const num = parseFloat(value.replace(",", "."));
+  const m = value.match(/(\d+[.,]?\d*)\s*(km|m)/i);
+  if (m) {
+    const n = parseFloat(m[1].replace(",", "."));
+    if (m[2].toLowerCase() === "m") {
+      if (n >= 1000) return `${(n / 1000).toFixed(1).replace(".", ",")} km`;
+      return `${Math.round(n)} m`;
+    }
+    return `${n.toLocaleString("es-ES", { maximumFractionDigits: 1 })} km`;
+  }
+  return isNaN(num) ? value : `${num} km`;
+}
+
 export async function scrapeFromSportmaniacs(): Promise<ScrapedRace[]> {
   const races: ScrapedRace[] = [];
+  const seen = new Set<string>();
 
   try {
-    const maxPages = 5;
-    const pageSize = 25;
+    const pageSize = 100;
+    let page = 1;
+    const maxPages = 200;
 
-    for (let page = 1; page <= maxPages; page++) {
+    while (page <= maxPages) {
       const res = await fetchWithTimeout(
         `https://sportmaniacs.com/api/races?page=${page}&limit=${pageSize}&raceType=1`,
         30000
@@ -319,21 +349,50 @@ export async function scrapeFromSportmaniacs(): Promise<ScrapedRace[]> {
         if (dateObj < new Date()) continue;
 
         const province = (item.province as string) || "";
-        const location = (item.city as string) || province || "Por determinar";
+        const city = (item.city as string) || "";
+        const location = city || province || "Por determinar";
 
         const type = detectRaceType(name);
 
         const slug = (item.slug as string) || "";
+        const url = slug ? `https://sportmaniacs.com/es/race/${slug}` : undefined;
+
+        if (url) {
+          if (seen.has(url)) continue;
+          seen.add(url);
+        }
+
+        const latRaw = item.latitude;
+        const lngRaw = item.longitude;
+        const latitude = latRaw != null && latRaw !== "" ? parseFloat(String(latRaw)) : undefined;
+        const longitude = lngRaw != null && lngRaw !== "" ? parseFloat(String(lngRaw)) : undefined;
+
+        let distance: string | undefined;
+        const distRaw = (item.distance as string) || "";
+        if (distRaw) {
+          distance = normalizeDistanceLabel(distRaw);
+        } else if (item.subtitle) {
+          const txt = String(item.subtitle);
+          const kmMatch = txt.match(/(\d+[.,]?\d*)\s*km/i);
+          if (kmMatch) distance = `${kmMatch[1].replace(",", ".")} km`;
+        }
 
         races.push({
           name,
           type,
+          distance,
           location,
-          province,
+          province: normalizeProvince(province),
           date: dateStr,
-          url: slug ? `https://sportmaniacs.com/es/race/${slug}` : undefined,
+          endDate: (item.end_date as string) || undefined,
+          url,
+          latitude,
+          longitude,
+          city,
         });
       }
+
+      page++;
     }
   } catch (error) {
     console.error("Error scraping Sportmaniacs:", error);
@@ -458,8 +517,108 @@ function detectProvince(text: string): string {
   return "Otra";
 }
 
-export async function importScrapedRaces(scrapedRaces: ScrapedRace[], source: string): Promise<number> {
+const PROVINCE_CANON: Array<{ canonical: string; aliases: string[] }> = [
+  { canonical: "Álava/Araba", aliases: ["alava", "álava", "araba"] },
+  { canonical: "Albacete", aliases: ["albacete"] },
+  { canonical: "Alicante", aliases: ["alicante", "alacant"] },
+  { canonical: "Almería", aliases: ["almería", "almeria"] },
+  { canonical: "Asturias", aliases: ["asturias"] },
+  { canonical: "Ávila", aliases: ["ávila", "avila"] },
+  { canonical: "Badajoz", aliases: ["badajoz"] },
+  { canonical: "Baleares", aliases: ["baleares", "illes balears", "illes", "balears", "mallorca", "menorca", "ibiza", "palma de mallorca"] },
+  { canonical: "Barcelona", aliases: ["barcelona"] },
+  { canonical: "Burgos", aliases: ["burgos"] },
+  { canonical: "Cáceres", aliases: ["cáceres", "caceres"] },
+  { canonical: "Cádiz", aliases: ["cádiz", "cadiz"] },
+  { canonical: "Cantabria", aliases: ["cantabria"] },
+  { canonical: "Castellón", aliases: ["castellón", "castellon", "castelló"] },
+  { canonical: "Ciudad Real", aliases: ["ciudad real"] },
+  { canonical: "Córdoba", aliases: ["córdoba", "cordoba"] },
+  { canonical: "A Coruña", aliases: ["coruña", "coruna", "a coruña", "la coruña", "a coruna"] },
+  { canonical: "Cuenca", aliases: ["cuenca"] },
+  { canonical: "Girona", aliases: ["girona", "gerona"] },
+  { canonical: "Granada", aliases: ["granada"] },
+  { canonical: "Guadalajara", aliases: ["guadalajara"] },
+  { canonical: "Gipuzkoa", aliases: ["gipuzkoa", "guipúzcoa", "guipuzcoa"] },
+  { canonical: "Huelva", aliases: ["huelva"] },
+  { canonical: "Huesca", aliases: ["huesca"] },
+  { canonical: "Jaén", aliases: ["jaén", "jaen"] },
+  { canonical: "León", aliases: ["león", "leon"] },
+  { canonical: "Lleida", aliases: ["lleida", "lérida", "lerida"] },
+  { canonical: "Lugo", aliases: ["lugo"] },
+  { canonical: "Madrid", aliases: ["madrid"] },
+  { canonical: "Málaga", aliases: ["málaga", "malaga"] },
+  { canonical: "Murcia", aliases: ["murcia"] },
+  { canonical: "Navarra", aliases: ["navarra", "nafarroa"] },
+  { canonical: "Ourense", aliases: ["ourense", "orense"] },
+  { canonical: "Palencia", aliases: ["palencia"] },
+  { canonical: "Las Palmas", aliases: ["las palmas", "gran canaria", "las palmas de gran canaria"] },
+  { canonical: "Pontevedra", aliases: ["pontevedra"] },
+  { canonical: "La Rioja", aliases: ["la rioja", "rioja", "logroño", "logrono"] },
+  { canonical: "Salamanca", aliases: ["salamanca"] },
+  { canonical: "Santa Cruz de Tenerife", aliases: ["santa cruz de tenerife", "tenerife"] },
+  { canonical: "Segovia", aliases: ["segovia"] },
+  { canonical: "Sevilla", aliases: ["sevilla"] },
+  { canonical: "Soria", aliases: ["soria"] },
+  { canonical: "Tarragona", aliases: ["tarragona"] },
+  { canonical: "Teruel", aliases: ["teruel"] },
+  { canonical: "Toledo", aliases: ["toledo"] },
+  { canonical: "Valencia", aliases: ["valencia", "valència"] },
+  { canonical: "Valladolid", aliases: ["valladolid"] },
+  { canonical: "Bizkaia", aliases: ["bizkaia", "vizcaya"] },
+  { canonical: "Zamora", aliases: ["zamora"] },
+  { canonical: "Zaragoza", aliases: ["zaragoza"] },
+  { canonical: "Ceuta", aliases: ["ceuta"] },
+  { canonical: "Melilla", aliases: ["melilla"] },
+];
+
+export function normalizeProvince(value: string): string {
+  if (!value) return "";
+  const lower = value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+  for (const { canonical, aliases } of PROVINCE_CANON) {
+    const canonLower = canonical.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (lower === canonLower) return canonical;
+    for (const alias of aliases) {
+      const a = alias.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (lower === a) return canonical;
+      if (lower.includes(a)) return canonical;
+    }
+  }
+
+  return value;
+}
+
+function normalizeNameKey(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\b(\d{4})\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export async function importScrapedRaces(scrapedRaces: ScrapedRace[], source: string): Promise<{ imported: number; updated: number }> {
   let imported = 0;
+  let updated = 0;
+
+  const existingByUrl = new Map<string, string>();
+  const existingByKey = new Map<string, { id: string; date: Date }>();
+
+  const allExisting = await prisma.race.findMany({
+    select: { id: true, url: true, name: true, date: true },
+  });
+  for (const race of allExisting) {
+    if (race.url) existingByUrl.set(race.url, race.id);
+    existingByKey.set(`${normalizeNameKey(race.name)}|${race.date.toISOString().split("T")[0]}`, {
+      id: race.id,
+      date: race.date,
+    });
+  }
+
+  const usedUrls = new Set<string>();
 
   for (const race of scrapedRaces) {
     const slug = race.name
@@ -469,30 +628,67 @@ export async function importScrapedRaces(scrapedRaces: ScrapedRace[], source: st
       .replace(/^-|-$/g, "")
       .slice(0, 100);
 
-    const exists = await prisma.race.findUnique({ where: { slug } });
-    if (exists) continue;
+    const dateStr = new Date(race.date).toISOString().split("T")[0];
+    const nameKey = normalizeNameKey(race.name);
+
+    let existingId: string | undefined;
+
+    if (race.url && existingByUrl.has(race.url)) {
+      existingId = existingByUrl.get(race.url);
+    }
+
+    if (!existingId) {
+      const keyM = existingByKey.get(`${nameKey}|${dateStr}`);
+      if (keyM) existingId = keyM.id;
+    }
+
+    const data = {
+      name: race.name,
+      type: race.type as "ASFALTO" | "MEDIA_MARATON" | "MARATON" | "TRAIL" | "MARCHA" | "ORIENTACION",
+      distance: race.distance,
+      location: race.location,
+      province: race.province,
+      date: new Date(race.date),
+      time: race.time,
+      description: race.description,
+      url: race.url,
+      image: race.image,
+      price: race.price,
+      source,
+    };
+
+    if (existingId) {
+      if (usedUrls.has(existingId)) continue;
+      await prisma.race.update({
+        where: { id: existingId },
+        data: {
+          ...data,
+          endDate: race.endDate ? new Date(race.endDate) : undefined,
+          latitude: race.latitude,
+          longitude: race.longitude,
+        },
+      });
+      usedUrls.add(existingId);
+      updated++;
+      continue;
+    }
+
+    if (race.url && usedUrls.has(race.url)) continue;
 
     await prisma.race.create({
       data: {
-        name: race.name,
+        ...data,
         slug,
-        type: race.type as "ASFALTO" | "MEDIA_MARATON" | "MARATON" | "TRAIL" | "MARCHA" | "ORIENTACION",
-        distance: race.distance,
-        location: race.location,
-        province: race.province,
-        date: new Date(race.date),
-        time: race.time,
-        description: race.description,
-        url: race.url,
-        image: race.image,
-        price: race.price,
-        source,
+        endDate: race.endDate ? new Date(race.endDate) : undefined,
+        latitude: race.latitude,
+        longitude: race.longitude,
       },
     });
+    usedUrls.add(race.url || slug);
     imported++;
   }
 
-  return imported;
+  return { imported, updated };
 }
 
 export interface ScrapeResult {
@@ -516,7 +712,7 @@ export async function runAllScrapers(): Promise<ScrapeResult[]> {
   for (const source of sources) {
     try {
       const scraped = await source.scrape();
-      const imported = await importScrapedRaces(scraped as ScrapedRace[], source.key);
+      const { imported } = await importScrapedRaces(scraped as ScrapedRace[], source.key);
 
       await prisma.scrapeLog.create({
         data: { source: source.key, count: imported, status: "SUCCESS" },
