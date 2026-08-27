@@ -67,13 +67,13 @@ Este script ejecuta todos los scrapers, imprime un resumen por fuente (encontrad
 
 ### Ejecución automática en el despliegue (Nixpacks)
 
-En producción, el arranque (`nixpacks.toml`) usa `scripts/start.sh`, que en cada despliegue:
+En producción, el arranque (`nixpacks.toml`) usa `scripts/start.sh`:
 
 1. Aplica el esquema con `prisma db push --skip-generate`.
-2. Ejecuta la importación de carreras (`tsx scripts/import-all.mts`) para poblar o actualizar la base de datos.
-3. Arranca `next start`.
+2. Arranca `next start` **inmediatamente** (la web queda disponible al momento).
+3. Lanza la importación de carreras (`tsx scripts/import-all.mts`) **en segundo plano** para poblar o actualizar la base de datos sin bloquear el servicio.
 
-El import no bloquea el arranque: si falla o excede el tiempo (9 minutos) se continúa sirviendo la app, y el cron diario se encarga del refresco.
+El import no afecta a la disponibilidad: Next ya está sirviendo mientras se rellena la BD. Si el despliegue se reinicia, el import vuelve a ejecutarse; el cron diario se encarga del refresco continuo.
 
 ### Variables de entorno
 
