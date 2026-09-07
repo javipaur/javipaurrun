@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import RaceCard from "@/components/RaceCard";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, MapPin } from "lucide-react";
 
 const provinceSlugs: Record<string, string> = {
@@ -115,6 +116,16 @@ export default async function ProvincePage({ params }: PageProps) {
     _count: true,
   });
 
+  const galleryRaces = await prisma.race.findMany({
+    where: {
+      province: { contains: dbProvince },
+      image: { not: null },
+    },
+    orderBy: { date: "desc" },
+    take: 6,
+    select: { name: true, slug: true, image: true },
+  });
+
   const allProvinceSlugs = Object.keys(provinceSlugs);
 
   return (
@@ -156,6 +167,30 @@ export default async function ProvincePage({ params }: PageProps) {
               <span className="font-semibold opacity-60">({t._count})</span>
             </Link>
           ))}
+        </div>
+      )}
+
+      {galleryRaces.length > 0 && (
+        <div className="mb-8">
+          <p className="section-eyebrow mb-3">Imágenes</p>
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+            {galleryRaces.map((g) => (
+              <Link
+                key={g.slug}
+                href={`/carrera/${g.slug}`}
+                className="relative aspect-square rounded-xl overflow-hidden group"
+              >
+                <Image
+                  src={g.image as string}
+                  alt={g.name}
+                  fill
+                  sizes="(max-width: 768px) 33vw, 15vw"
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Link>
+            ))}
+          </div>
         </div>
       )}
 

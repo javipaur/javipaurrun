@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Calendar, MapPin, Timer, ArrowUpRight, Tag, Clock, BarChart3, Share2 } from "lucide-react";
-import { formatDateShort, getRaceTypeLabel } from "@/lib/utils";
+import { formatDateShort, getRaceTypeLabel, daysUntilLabel } from "@/lib/utils";
 import RaceResultForm from "./RaceResultForm";
-import ShareButtons from "./ShareButtons";
 
 interface RaceCardProps {
   race: {
@@ -27,29 +27,28 @@ interface RaceCardProps {
   index?: number;
 }
 
-const typeConfig: Record<string, { bg: string; text: string }> = {
-  ASFALTO: { bg: "bg-orange-50", text: "text-orange-700" },
-  MEDIA_MARATON: { bg: "bg-purple-50", text: "text-purple-700" },
-  MARATON: { bg: "bg-red-50", text: "text-red-700" },
-  TRAIL: { bg: "bg-emerald-50", text: "text-emerald-700" },
-  MARCHA: { bg: "bg-amber-50", text: "text-amber-700" },
-  ORIENTACION: { bg: "bg-blue-50", text: "text-blue-700" },
-};
+function badgeClass(type: string): string {
+  return `type-badge type-${type}`;
+}
 
-const typeDot: Record<string, string> = {
-  ASFALTO: "bg-orange-500",
-  MEDIA_MARATON: "bg-purple-500",
-  MARATON: "bg-red-500",
-  TRAIL: "bg-emerald-500",
-  MARCHA: "bg-amber-500",
-  ORIENTACION: "bg-blue-500",
-};
+function dotClass(type: string): string {
+  return `type-dot dot-${type}`;
+}
+
+const knownTypes = ["ASFALTO", "MEDIA_MARATON", "MARATON", "TRAIL", "MARCHA", "ORIENTACION"];
+
+function badgeClassSafe(type: string): string {
+  return knownTypes.includes(type) ? badgeClass(type) : "type-badge type-ASFALTO";
+}
+
+function dotClassSafe(type: string): string {
+  return knownTypes.includes(type) ? dotClass(type) : "type-dot dot-ASFALTO";
+}
 
 export default function RaceCard({ race, index = 0 }: RaceCardProps) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [success, setSuccess] = useState(false);
-  const config = typeConfig[race.type] || typeConfig.ASFALTO;
 
   function handleShare(e: React.MouseEvent) {
     e.preventDefault();
@@ -90,76 +89,94 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
       >
         {race.image && (
           <div className="relative aspect-[16/9] bg-gray-100 dark:bg-gray-800 overflow-hidden">
-            <img
+            <Image
               src={race.image}
               alt={race.name}
-              loading="lazy"
-              className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+              className="object-cover group-hover:scale-[1.04] transition-transform duration-500"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/10" />
-            <span className={`absolute bottom-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold shadow-sm ${config.bg} ${config.text}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${typeDot[race.type] || "bg-gray-400"}`} />
+            <span className={`absolute bottom-3 left-3 ${badgeClassSafe(race.type)}`}>
+              <span className={dotClassSafe(race.type)} />
               {getRaceTypeLabel(race.type)}
             </span>
+            {race.url && (
+              <span className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/90 dark:bg-black/60 backdrop-blur text-emerald-600 dark:text-emerald-400 shadow-sm">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                </span>
+                Inscripciones abiertas
+              </span>
+            )}
           </div>
         )}
 
         <div className={race.image ? "p-5" : ""}>
         {!race.image && (
         <div className="flex items-center justify-between mb-3.5">
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${config.bg} ${config.text}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${typeDot[race.type] || "bg-gray-400"}`} />
+          <span className={`${badgeClassSafe(race.type)}`}>
+            <span className={dotClassSafe(race.type)} />
             {getRaceTypeLabel(race.type)}
           </span>
           {race.distance && (
-            <span className="text-xs font-semibold text-gray-400">{race.distance}</span>
+            <span className="text-xs font-semibold text-text-tertiary">{race.distance}</span>
           )}
         </div>
         )}
 
-        <h3 className="font-bold text-gray-900 dark:text-white text-[15px] leading-snug mb-4 line-clamp-2 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+        <h3 className="font-bold text-text-primary text-[15px] leading-snug mb-4 line-clamp-2 group-hover:text-primary-light transition-colors">
           {race.name}
         </h3>
 
         <div className="space-y-2 mb-5">
-          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-            <Calendar size={13} className="shrink-0 text-gray-400" />
+          <div className="flex items-center gap-2 text-xs text-text-secondary">
+            <Calendar size={13} className="shrink-0 text-text-tertiary" />
             <span className="font-medium">{formatDateShort(race.date)}</span>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary-50 text-primary text-[11px] font-semibold">
+              {daysUntilLabel(race.date)}
+            </span>
             {race.time && (
               <>
-                <span className="text-gray-300 dark:text-gray-600">·</span>
-                <Timer size={13} className="shrink-0 text-gray-400" />
+                <span className="text-text-tertiary">·</span>
+                <Timer size={13} className="shrink-0 text-text-tertiary" />
                 <span>{race.time}</span>
               </>
             )}
           </div>
-          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-            <MapPin size={13} className="shrink-0 text-gray-400" />
+          <div className="flex items-center gap-2 text-xs text-text-secondary">
+            <MapPin size={13} className="shrink-0 text-text-tertiary" />
             <span className="truncate">{race.location}</span>
           </div>
           {race.price && (
-            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-              <Tag size={13} className="shrink-0 text-gray-400" />
+<div className="flex items-center gap-2 text-xs text-text-secondary flex-wrap">
+              <Tag size={13} className="shrink-0 text-text-tertiary" />
               <span>{race.price}</span>
             </div>
           )}
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-3.5 border-t hairline">
-          <span className="text-xs font-medium text-gray-400">{race.province}</span>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <div className="flex items-center justify-between gap-2 pt-3.5 border-t hairline">
+          <span className="text-xs font-medium text-text-tertiary">{race.province}</span>
+          <div className="flex items-center gap-1">
             <button
               onClick={handleCompare}
-              className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 cursor-pointer transition-colors"
+              title="Comparar"
+              aria-label="Comparar"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-text-secondary hover:text-primary hover:bg-primary-50 dark:hover:bg-white/5 cursor-pointer transition-colors"
             >
-              <BarChart3 size={12} />
-              <span className="hidden sm:inline">Comparar</span>
+              <BarChart3 size={13} />
+              <span className="hidden md:inline">Comparar</span>
             </button>
             <button
               onClick={handleShare}
-              className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 cursor-pointer transition-colors"
+              title="Compartir"
+              aria-label="Compartir"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-text-secondary hover:text-primary hover:bg-primary-50 dark:hover:bg-white/5 cursor-pointer transition-colors"
             >
-              <Share2 size={12} />
+              <Share2 size={13} />
+              <span className="hidden md:inline">Compartir</span>
             </button>
             <span
               onClick={(e) => {
@@ -167,10 +184,11 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
                 e.stopPropagation();
                 setShowForm(true);
               }}
-              className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 cursor-pointer transition-colors"
+              title={success ? "Tiempo registrado" : "Registrar tiempo"}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-text-secondary hover:text-primary hover:bg-primary-50 dark:hover:bg-white/5 cursor-pointer transition-colors"
             >
-              <Clock size={12} />
-              {success ? "✅" : "Registrar tiempo"}
+              <Clock size={13} />
+              <span className="hidden md:inline">{success ? "Registrado ✓" : "Tiempo"}</span>
             </span>
             {race.url && (
               <a
@@ -178,10 +196,10 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="flex items-center gap-1 text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold text-white bg-brand-gradient shadow-sm hover:brightness-105 transition-all"
               >
-                <span className="hidden sm:inline">Inscríbete</span>
-                <ArrowUpRight size={12} />
+                <span className="hidden md:inline">Inscríbete</span>
+                <ArrowUpRight size={13} />
               </a>
             )}
           </div>

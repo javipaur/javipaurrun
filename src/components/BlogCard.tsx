@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { formatDate } from "@/lib/utils";
 import { ArrowRight, Calendar } from "lucide-react";
 
@@ -17,11 +18,13 @@ export default function BlogCard({ post }: BlogCardProps) {
   return (
     <article className="card-premium group overflow-hidden animate-fade-in-up">
       {post.image ? (
-        <div className="aspect-[16/9] bg-gray-100 overflow-hidden">
-          <img
+        <div className="relative aspect-[16/9] bg-gray-100 overflow-hidden">
+          <Image
             src={post.image}
             alt={post.title}
-            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+            className="object-cover group-hover:scale-[1.03] transition-transform duration-300"
           />
         </div>
       ) : (

@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   Share2, Check, Copy, ExternalLink,
 } from "lucide-react";
+import { useToast } from "@/components/Toast";
 
 const platforms = [
   {
@@ -22,7 +23,7 @@ const platforms = [
     id: "facebook",
     label: "Facebook",
     color: "bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50",
-    getUrl: (url: string, text: string) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+    getUrl: (url: string, text: string) => { void text; return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`; },
   },
   {
     id: "telegram",
@@ -51,6 +52,7 @@ export default function ShareButtons({
 }) {
   const [copied, setCopied] = useState(false);
   const [showMore, setShowMore] = useState(false);
+  const { toast } = useToast();
 
   const text = title + (description ? ` — ${description.slice(0, 100)}` : "");
 
@@ -67,6 +69,7 @@ export default function ShareButtons({
   function handleCopy() {
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
+      toast("Enlace copiado");
       setTimeout(() => setCopied(false), 2000);
     });
   }

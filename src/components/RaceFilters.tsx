@@ -1,9 +1,12 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Search, SlidersHorizontal, X, MapPin } from "lucide-react";
 import { raceTypes, provinces, autonomousCommunities, distanceRanges } from "@/lib/utils";
+
+const SAVED_TIPO = "jp-filtro-tipo";
+const SAVED_PROVINCIA = "jp-filtro-provincia";
 
 export default function RaceFilters() {
   const router = useRouter();
@@ -17,8 +20,31 @@ export default function RaceFilters() {
   const currentSearch = searchParams.get("buscar") || "";
   const hasFilters = currentType || currentProvince || currentComunidad || currentDistancia || currentSearch;
 
+  useEffect(() => {
+    if (currentType) localStorage.setItem(SAVED_TIPO, currentType);
+    if (currentProvince) localStorage.setItem(SAVED_PROVINCIA, currentProvince);
+  }, [currentType, currentProvince]);
+
+  const restoredRef = useRef(false);
+
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+    if (!currentType && !currentProvince && !currentComunidad && !currentDistancia && !currentSearch) {
+      const tipo = localStorage.getItem(SAVED_TIPO) || "";
+      const provincia = localStorage.getItem(SAVED_PROVINCIA) || "";
+      if (tipo || provincia) {
+        const params = new URLSearchParams();
+        if (tipo) params.set("tipo", tipo);
+        if (provincia) params.set("provincia", provincia);
+        router.replace(`/calendario?${params.toString()}`);
+      }
+    }
+  }, [currentType, currentProvince, currentComunidad, currentDistancia, currentSearch, router]);
+
   function updateFilter(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
+    params.delete("page");
     if (value) {
       params.set(key, value);
     } else {
@@ -56,13 +82,15 @@ export default function RaceFilters() {
   }
 
   function clearFilters() {
+    localStorage.removeItem(SAVED_TIPO);
+    localStorage.removeItem(SAVED_PROVINCIA);
     router.push("/calendario");
   }
 
   const filtersContent = (
     <div className="space-y-5">
       <div>
-        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Buscar</label>
+        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Buscar</label>
         <div className="relative">
           <input
             type="text"
@@ -76,7 +104,7 @@ export default function RaceFilters() {
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Tipo</label>
+        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Tipo</label>
         <select
           value={currentType}
           onChange={(e) => updateFilter("tipo", e.target.value)}
@@ -90,7 +118,7 @@ export default function RaceFilters() {
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Distancia</label>
+        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Distancia</label>
         <select
           value={currentDistancia}
           onChange={(e) => updateFilter("distancia", e.target.value)}
@@ -113,7 +141,7 @@ export default function RaceFilters() {
       </button>
 
       <div>
-        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Comunidad Autónoma</label>
+        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Comunidad Autónoma</label>
         <select
           value={currentComunidad}
           onChange={(e) => updateFilter("comunidad", e.target.value)}
@@ -127,7 +155,7 @@ export default function RaceFilters() {
       </div>
 
       <div>
-        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Provincia</label>
+        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Provincia</label>
         <select
           value={currentProvince}
           onChange={(e) => updateFilter("provincia", e.target.value)}

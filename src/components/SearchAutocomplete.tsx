@@ -76,8 +76,14 @@ export default function SearchAutocomplete() {
         )}
       </div>
 
-      {open && (races.length > 0 || posts.length > 0) && (
+      {open && (races.length > 0 || posts.length > 0 || loading) && (
         <div className="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl z-50 max-h-96 overflow-y-auto">
+          {loading && races.length === 0 && posts.length === 0 && (
+            <div className="flex items-center gap-2.5 px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+              <span className="inline-block w-4 h-4 rounded-full border-2 border-gray-200 dark:border-gray-700 border-t-orange-500 animate-spin" />
+              Buscando...
+            </div>
+          )}
           {races.length > 0 && (
             <div className="p-2">
               <p className="px-2 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">

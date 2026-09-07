@@ -26,6 +26,22 @@ export function formatDateShort(date: Date | string): string {
   });
 }
 
+export function daysUntil(date: Date | string): number {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const target = new Date(date);
+  target.setHours(0, 0, 0, 0);
+  return Math.round((target.getTime() - now.getTime()) / 86400000);
+}
+
+export function daysUntilLabel(date: Date | string): string {
+  const days = daysUntil(date);
+  if (days < 0) return "Celebrada";
+  if (days === 0) return "Hoy";
+  if (days === 1) return "Mañana";
+  return `En ${days} días`;
+}
+
 const autonomousCommunities = [
   { value: "andalucia", label: "Andalucía" },
   { value: "aragon", label: "Aragón" },

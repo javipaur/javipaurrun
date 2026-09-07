@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
-  ArrowLeft,
   Calendar,
   MapPin,
   Timer,
@@ -115,21 +115,16 @@ export default function RaceDetailClient({
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 md:py-8">
-      <Link
-        href="/calendario"
-        className="inline-flex items-center gap-1.5 text-sm text-orange-600 hover:text-orange-700 mb-6 transition-colors"
-      >
-        <ArrowLeft size={16} />
-        Volver al calendario
-      </Link>
-
       <div className="card-premium overflow-hidden">
         {race.image && (
           <div className="aspect-[2/1] sm:aspect-[3/1] bg-gray-100 relative overflow-hidden">
-            <img
+            <Image
               src={race.image}
               alt={race.name}
-              className="w-full h-full object-cover"
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 896px"
+              className="object-cover"
             />
           </div>
         )}

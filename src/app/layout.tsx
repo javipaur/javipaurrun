@@ -5,8 +5,10 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SessionProvider from "@/components/SessionProvider";
 import ThemeProvider from "@/components/ThemeProvider";
+import { ToastProvider } from "@/components/Toast";
 import { I18nProvider } from "@/lib/i18n/provider";
 import PWARegister from "@/components/PWARegister";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/JsonLd";
 import { auth } from "@/lib/auth";
 
@@ -50,15 +52,24 @@ export default async function RootLayout({
   return (
     <html lang="es" className={`${geistSans.variable}`}>
       <body className="min-h-dvh flex flex-col bg-[#fafafa] antialiased pt-16 pb-16 md:pb-0">
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[70] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-primary focus:text-white focus:font-semibold focus:text-sm"
+        >
+          Saltar al contenido
+        </a>
         <OrganizationJsonLd />
         <WebSiteJsonLd />
         <I18nProvider>
           <ThemeProvider>
             <SessionProvider>
-              <Header session={session} />
-              <main className="flex-1">{children}</main>
-              <Footer />
-              <PWARegister />
+              <ToastProvider>
+                <Header session={session} />
+                <main id="main" className="flex-1">{children}</main>
+                <Footer />
+                <PWARegister />
+                <PWAInstallPrompt />
+              </ToastProvider>
             </SessionProvider>
           </ThemeProvider>
         </I18nProvider>

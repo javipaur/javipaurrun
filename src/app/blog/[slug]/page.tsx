@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/utils";
-import Link from "next/link";
-import { ArrowLeft, Calendar } from "lucide-react";
+import Image from "next/image";
+import { Calendar } from "lucide-react";
 import { BlogPostJsonLd } from "@/components/JsonLd";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -42,15 +43,14 @@ export default async function BlogPostPage({ params }: PageProps) {
         image={post.image}
       />
 
-      <Link
-        href="/blog"
-        className="inline-flex items-center gap-1.5 text-sm text-orange-600 hover:text-orange-700 mb-6 transition-colors"
-      >
-        <ArrowLeft size={16} />
-        Volver al blog
-      </Link>
+      <Breadcrumbs
+        items={[
+          { href: "/blog", label: "Blog" },
+          { label: post.title },
+        ]}
+      />
 
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm">
+      <div className="bg-white dark:bg-[#131316] rounded-2xl border border-gray-100 dark:border-gray-800 p-6 md:p-8 shadow-sm">
         <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
           <Calendar size={14} />
           {formatDate(post.createdAt)}
@@ -61,10 +61,12 @@ export default async function BlogPostPage({ params }: PageProps) {
         </h1>
 
         {post.image && (
-          <img
+          <Image
             src={post.image}
             alt={post.title}
-            className="w-full rounded-xl mb-8"
+            width={1200}
+            height={630}
+            className="w-full h-auto rounded-xl mb-8"
           />
         )}
 

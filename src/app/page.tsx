@@ -5,8 +5,9 @@ import RaceCard from "@/components/RaceCard";
 import BlogCard from "@/components/BlogCard";
 import NewsletterForm from "@/components/NewsletterForm";
 import NearbyRaces from "@/components/NearbyRaces";
+import HeroParallax from "@/components/HeroParallax";
 import { EventJsonLd } from "@/components/JsonLd";
-import { ArrowRight, CalendarDays, ChevronRight, MapPin, Search } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronRight, Mail, MapPin, Search } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "JavipaurRun - Calendario de carreras populares en España",
@@ -44,6 +45,17 @@ export default async function Home() {
   });
 
   const totalRaces = await prisma.race.count();
+
+  const provinceStats = await prisma.race.groupBy({
+    by: ["province"],
+    _count: true,
+  });
+
+  const totalProvinces = provinceStats.length;
+
+  const openRaces = await prisma.race.count({
+    where: { date: { gte: new Date() }, url: { not: null } },
+  });
 
   const gpsRaces = await prisma.race.findMany({
     where: {
@@ -93,18 +105,10 @@ export default async function Home() {
       ))}
 
       {/* Hero */}
-      <section className="relative overflow-hidden isolate">
-        <div className="absolute inset-0 -z-10">
-          <img
-            src="https://images.unsplash.com/photo-1552674605-db6ffd4facb5?q=80&w=2000&auto=format&fit=crop"
-            alt="Corredores de trail al amanecer"
-            className="w-full h-full object-cover"
-            fetchPriority="high"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/55 to-[#f6f7fb] dark:to-[#09090b]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-orange-600/30 to-transparent" />
-        </div>
-
+      <HeroParallax
+        imageSrc="https://images.unsplash.com/photo-1552674605-db6ffd4facb5?q=80&w=2000&auto=format&fit=crop"
+        imageAlt="Corredores de trail al amanecer"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-20 md:pt-32 pb-24 md:pb-36">
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-white text-xs font-semibold mb-7 animate-fade-in-up">
@@ -149,6 +153,24 @@ export default async function Home() {
             </div>
           </div>
         </div>
+      </HeroParallax>
+
+      {/* Stats */}
+      <section className="relative -mt-10 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { value: totalRaces.toLocaleString("es-ES"), label: "Carreras en el calendario" },
+              { value: totalProvinces.toLocaleString("es-ES"), label: "Provincias cubiertas" },
+              { value: openRaces.toLocaleString("es-ES"), label: "Inscripciones abiertas" },
+            ].map((stat) => (
+              <div key={stat.label} className="stats-card text-center">
+                <p className="text-3xl md:text-4xl font-black text-brand-gradient">{stat.value}</p>
+                <p className="text-sm text-text-secondary mt-1.5">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* Categories */}
@@ -176,7 +198,7 @@ export default async function Home() {
             <div className="mb-6">
               <p className="section-eyebrow mb-1.5">Geolocalización</p>
               <h2 className="section-title">Carreras cerca de ti</h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1.5">
+              <p className="text-text-secondary text-sm mt-1.5">
                 Activa tu ubicación para ver los próximos eventos más próximos a tu posición.
               </p>
             </div>
@@ -192,7 +214,7 @@ export default async function Home() {
             <div>
               <p className="section-eyebrow mb-1.5">Calendario</p>
               <h2 className="section-title">Próximas carreras</h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1.5">Las más cercanas en tu zona</p>
+              <p className="text-text-secondary text-sm mt-1.5">Las más cercanas en tu zona</p>
             </div>
             <Link href="/calendario" className="btn-secondary hidden sm:inline-flex">
               Ver todas <ChevronRight size={15} />
@@ -205,8 +227,8 @@ export default async function Home() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-              <p className="text-gray-500 text-sm">No hay carreras próximas disponibles</p>
+            <div className="text-center py-12 card-premium">
+              <p className="text-text-secondary text-sm">No hay carreras próximas disponibles</p>
             </div>
           )}
           <div className="text-center mt-8 sm:hidden">
@@ -225,7 +247,7 @@ export default async function Home() {
               <div>
                 <p className="section-eyebrow mb-1.5">Blog</p>
                 <h2 className="section-title">Últimos del blog</h2>
-                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1.5">Noticias, consejos y más</p>
+                <p className="text-text-secondary text-sm mt-1.5">Noticias, consejos y más</p>
               </div>
               <Link href="/blog" className="btn-secondary hidden sm:inline-flex">
                 Ver blog <ChevronRight size={15} />
@@ -242,11 +264,28 @@ export default async function Home() {
 
       {/* Newsletter */}
       <section className="py-12 md:py-16">
-        <div className="max-w-lg mx-auto px-4 text-center">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">¿Quieres estar al día?</h2>
-          <p className="text-gray-500 text-sm mb-6">Recibe las últimas carreras directamente en tu correo.</p>
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <NewsletterForm />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="relative overflow-hidden rounded-3xl bg-brand-gradient px-6 py-12 md:px-12 md:py-16 text-center">
+            <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-2xl" />
+            <div className="absolute -bottom-20 -left-10 w-72 h-72 rounded-full bg-black/10 blur-2xl" />
+            <div className="relative max-w-xl mx-auto">
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 border border-white/25 backdrop-blur text-white text-xs font-semibold mb-5">
+                <Mail size={14} />
+                Newsletter semanal
+              </span>
+              <h2 className="text-2xl md:text-3xl font-black text-white mb-3">
+                No te pierdas ni una carrera
+              </h2>
+              <p className="text-white/85 text-sm md:text-base mb-7 leading-relaxed">
+                Recibe en tu correo las nuevas carreras, los plazos de inscripción que abren y consejos para correr mejor. Un email a la semana, sin spam.
+              </p>
+              <div className="bg-white/95 dark:bg-[#131316]/90 backdrop-blur rounded-2xl p-2 shadow-2xl">
+                <NewsletterForm />
+              </div>
+              <p className="text-white/60 text-xs mt-4">
+                Un solo email a la semana. Puedes darte de baja cuando quieras.
+              </p>
+            </div>
           </div>
         </div>
       </section>

@@ -5,6 +5,7 @@ import { formatDate } from "@/lib/utils";
 import { EventJsonLd } from "@/components/JsonLd";
 import RaceDetailClient from "./RaceDetailClient";
 import RelatedRaces from "@/components/RelatedRaces";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -78,6 +79,14 @@ export default async function RaceDetailPage({ params }: PageProps) {
       />
 
       <div className="max-w-4xl mx-auto">
+        <div className="px-4 sm:px-6 pt-6">
+          <Breadcrumbs
+            items={[
+              { href: "/calendario", label: "Calendario" },
+              { label: race.name },
+            ]}
+          />
+        </div>
         <RaceDetailClient race={race} typeColor={typeColor} typeLabel={typeLabel} formatDate={formatDate} />
         <div className="px-4 sm:px-6">
           <RelatedRaces races={related} />

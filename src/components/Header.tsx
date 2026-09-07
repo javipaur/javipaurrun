@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { Menu, X, Search, Calendar, Home, Newspaper, User, Shield, MapPin, Moon, Sun, Timer, Trophy } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import type { Session } from "next-auth";
+import { Menu, X, Calendar, Home, Newspaper, User, Shield, MapPin, Moon, Sun, Timer, Trophy } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { useI18n } from "@/lib/i18n/provider";
 import SearchAutocomplete from "./SearchAutocomplete";
@@ -32,16 +33,36 @@ const bottomNav = [
   { href: "/auth/login", label: "Cuenta", icon: User },
 ];
 
-export default function Header({ session }: { session: any }) {
+export default function Header({ session }: { session: Session | null }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const lastY = useRef(0);
+
+  useEffect(() => {
+    function onScroll() {
+      const y = window.scrollY;
+      if (y > lastY.current && y > 120) {
+        setHidden(true);
+      } else {
+        setHidden(false);
+      }
+      lastY.current = y;
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const { theme, toggle } = useTheme();
   const { lang } = useI18n();
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/85 dark:bg-[#09090b]/85 backdrop-blur-xl border-b border-gray-200/70 dark:border-gray-800/70 supports-[backdrop-filter]:bg-white/75">
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 bg-white/85 dark:bg-[#09090b]/85 backdrop-blur-xl border-b border-gray-200/70 dark:border-gray-800/70 supports-[backdrop-filter]:bg-white/75 transition-transform duration-300 ${
+          hidden && !menuOpen ? "-translate-y-full" : "translate-y-0"
+        }`}
+      >
         {/* Top Row */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14 sm:h-16">
@@ -182,7 +203,7 @@ export default function Header({ session }: { session: any }) {
       </header>
 
       {/* Bottom Nav - Mobile */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-white border-t border-gray-200 pb-[env(safe-area-inset-bottom)]">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-white/95 dark:bg-[#09090b]/95 backdrop-blur border-t border-gray-200 dark:border-gray-800 pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-center justify-around px-2 py-1">
           {bottomNav.map((item) => {
             const isActive = pathname === item.href;
@@ -191,12 +212,15 @@ export default function Header({ session }: { session: any }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center gap-0.5 px-3 py-2 text-xs font-medium transition-colors ${
-                  isActive ? "text-orange-500" : "text-gray-400 hover:text-gray-600"
+                className={`relative flex flex-col items-center gap-0.5 px-3 py-2 text-xs font-medium transition-colors ${
+                  isActive ? "text-primary" : "text-text-tertiary hover:text-text-secondary"
                 }`}
               >
                 <Icon size={20} />
                 <span>{item.label}</span>
+                {isActive && (
+                  <span className="absolute -top-px left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-brand-gradient" />
+                )}
               </Link>
             );
           })}
