@@ -20,22 +20,24 @@ function getFallbackGradient(type: string): string {
   return TYPE_GRADIENTS[type] || "from-gray-600 via-gray-500/50 to-gray-700";
 }
 
+export interface RaceCardRace {
+  id: string;
+  name: string;
+  slug: string;
+  type: string;
+  distance?: string | null;
+  location: string;
+  province: string;
+  date: Date | string;
+  time?: string | null;
+  description?: string | null;
+  url?: string | null;
+  price?: string | null;
+  image?: string | null;
+}
+
 interface RaceCardProps {
-  race: {
-    id: string;
-    name: string;
-    slug: string;
-    type: string;
-    distance?: string | null;
-    location: string;
-    province: string;
-    date: Date | string;
-    time?: string | null;
-    description?: string | null;
-    url?: string | null;
-    price?: string | null;
-    image?: string | null;
-  };
+  race: RaceCardRace;
   index?: number;
 }
 
@@ -61,6 +63,9 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  const showImage = race.image && !imageError;
 
   function handleShare(e: React.MouseEvent) {
     e.preventDefault();
@@ -99,14 +104,15 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
         className="card-premium group block overflow-hidden animate-fade-in-up"
         style={{ animationDelay: `${index * 60}ms` }}
       >
-        {race.image && (
+        {showImage && (
           <div className="relative aspect-[16/9] bg-gray-100 dark:bg-gray-800 overflow-hidden">
             <Image
-              src={race.image}
+              src={race.image as string}
               alt={race.name}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
               className="object-cover group-hover:scale-[1.04] transition-transform duration-500"
+              onError={() => setImageError(true)}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/10" />
             <span className={`absolute bottom-3 left-3 ${badgeClassSafe(race.type)}`}>
@@ -125,14 +131,14 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
           </div>
         )}
 
-        {!race.image && (
+        {!showImage && (
           <div className={`aspect-[21/6] bg-gradient-to-br ${getFallbackGradient(race.type)} opacity-90 flex items-center justify-center px-4`}>
             <span className="text-white/80 text-sm font-semibold tracking-wide truncate">{race.name}</span>
           </div>
         )}
 
-        <div className={race.image ? "p-5" : "px-5 pt-3 pb-5"}>
-        {!race.image && (
+        <div className={showImage ? "p-5" : "px-5 pt-3 pb-5"}>
+        {!showImage && (
         <div className="flex items-center justify-between mb-3.5">
           <span className={`${badgeClassSafe(race.type)}`}>
             <span className={dotClassSafe(race.type)} />

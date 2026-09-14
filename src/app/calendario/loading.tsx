@@ -1,3 +1,5 @@
+import RaceCardSkeleton from "@/components/RaceCardSkeleton";
+
 export default function CalendarLoading() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
@@ -10,23 +12,13 @@ export default function CalendarLoading() {
         <div className="hidden lg:block">
           <div className="card-premium p-5 sticky top-24 space-y-5">
             <div className="h-4 w-16 rounded-full bg-gray-200 dark:bg-gray-800 animate-pulse" />
-            {[0, 1, 2, 3].map((i) => (
+            {[0, 1, 2, 3, 4].map((i) => (
               <div key={i} className="h-10 rounded-xl bg-gray-200 dark:bg-gray-800 animate-pulse" />
             ))}
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="card-premium overflow-hidden animate-pulse">
-              <div className="aspect-[16/9] bg-gray-200 dark:bg-gray-800" />
-              <div className="p-5 space-y-3">
-                <div className="h-3 w-24 rounded-full bg-gray-200 dark:bg-gray-800" />
-                <div className="h-4 w-3/4 rounded-full bg-gray-200 dark:bg-gray-800" />
-                <div className="h-3 w-1/2 rounded-full bg-gray-200 dark:bg-gray-800" />
-                <div className="h-3 w-2/3 rounded-full bg-gray-200 dark:bg-gray-800" />
-              </div>
-            </div>
-          ))}
+          <RaceCardSkeleton count={4} />
         </div>
       </div>
     </div>

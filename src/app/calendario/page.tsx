@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import RaceCard from "@/components/RaceCard";
 import RaceFilters from "@/components/RaceFilters";
+import LoadMoreRaces from "@/components/LoadMoreRaces";
 import { Prisma, RaceType } from "@/generated/prisma/client";
 import { getAutonomousCommunity, parseKmFromDistance, distanceRanges } from "@/lib/utils";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { SearchX } from "lucide-react";
 
 const PAGE_SIZE = 12;
 
@@ -61,8 +61,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
   });
 
   const totalFiltered = allFiltered.length;
-  const totalPages = Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE));
-  const currentPage = Math.min(Math.max(1, parseInt(params.page || "1", 10)), totalPages);
+  const currentPage = Math.min(Math.max(1, parseInt(params.page || "1", 10)), Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE)));
   const paged = allFiltered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const baseParams = new URLSearchParams();
@@ -72,11 +71,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
   if (params.distancia) baseParams.set("distancia", params.distancia);
   if (params.buscar) baseParams.set("buscar", params.buscar);
 
-  function pageUrl(page: number) {
-    const p = new URLSearchParams(baseParams.toString());
-    if (page > 1) p.set("page", String(page));
-    return `/calendario?${p.toString()}`;
-  }
+  const queryString = baseParams.toString();
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
@@ -94,37 +89,25 @@ export default async function CalendarPage({ searchParams }: PageProps) {
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
         <RaceFilters />
         <div>
-          {paged.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {paged.map((race, i) => (
-                  <RaceCard key={race.id} race={race} index={i} />
-                ))}
-              </div>
-
-              {totalPages > 1 && (
-                <nav aria-label="Paginación" className="flex items-center justify-center gap-1.5 mt-10">
-                  {currentPage > 1 && (
-                    <Link href={pageUrl(currentPage - 1)} className="btn-secondary text-xs">
-                      <ChevronLeft size={14} /> Anterior
-                    </Link>
-                  )}
-                  <span className="px-3 py-1.5 text-xs font-semibold text-text-primary">
-                    {currentPage} / {totalPages}
-                  </span>
-                  {currentPage < totalPages && (
-                    <Link href={pageUrl(currentPage + 1)} className="btn-secondary text-xs">
-                      Siguiente <ChevronRight size={14} />
-                    </Link>
-                  )}
-                </nav>
-              )}
-            </>
+          {totalFiltered > 0 ? (
+            <LoadMoreRaces
+              races={paged}
+              total={totalFiltered}
+              page={currentPage}
+              query={queryString}
+            />
           ) : (
-            <div className="text-center py-20 card-premium px-6">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-primary-50 flex items-center justify-center text-3xl mb-4">🔍</div>
-              <p className="font-semibold text-text-primary mb-1.5">No hay carreras con esos filtros</p>
-              <p className="text-text-secondary text-sm">Prueba con otros criterios de búsqueda</p>
+            <div className="text-center py-20 card-premium px-6 animate-fade-in">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-primary-50 dark:bg-primary/10 flex items-center justify-center mb-4">
+                <SearchX size={28} className="text-primary" />
+              </div>
+              <p className="font-semibold text-text-primary mb-1.5 text-lg">No hay carreras con esos filtros</p>
+              <p className="text-text-secondary text-sm mb-6 max-w-sm mx-auto">
+                Prueba con otros criterios de búsqueda o vuelve a ver todas las carreras disponibles.
+              </p>
+              <Link href="/calendario" className="btn-primary inline-flex">
+                Ver todas las carreras
+              </Link>
             </div>
           )}
         </div>

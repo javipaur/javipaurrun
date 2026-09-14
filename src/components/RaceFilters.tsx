@@ -7,6 +7,7 @@ import { raceTypes, provinces, autonomousCommunities, distanceRanges } from "@/l
 
 const SAVED_TIPO = "jp-filtro-tipo";
 const SAVED_PROVINCIA = "jp-filtro-provincia";
+const SEARCH_DEBOUNCE_MS = 400;
 
 export default function RaceFilters() {
   const router = useRouter();
@@ -53,6 +54,17 @@ export default function RaceFilters() {
     router.push(`/calendario?${params.toString()}`);
   }
 
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleSearchChange(value: string) {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => updateFilter("buscar", value), SEARCH_DEBOUNCE_MS);
+  }
+
+  useEffect(() => () => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+  }, []);
+
   const [locating, setLocating] = useState(false);
 
   function detectLocation() {
@@ -96,7 +108,7 @@ export default function RaceFilters() {
             type="text"
             defaultValue={currentSearch}
             placeholder="Nombre, lugar..."
-            onChange={(e) => updateFilter("buscar", e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="field pl-10"
           />
           <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />

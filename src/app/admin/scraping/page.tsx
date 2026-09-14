@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useToast } from "@/components/Toast";
 
 interface LogEntry {
   id: string;
@@ -9,6 +10,13 @@ interface LogEntry {
   status: string;
   error: string | null;
   createdAt: string;
+}
+
+interface SourceResult {
+  source?: string;
+  found?: number;
+  imported?: number;
+  error?: string;
 }
 
 const sources = [
@@ -26,9 +34,10 @@ const sourceLabels: Record<string, string> = {
 };
 
 export default function ScrapingPage() {
+  const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
   const [loadingAll, setLoadingAll] = useState(false);
-  const [results, setResults] = useState<Record<string, any>>({});
+  const [results, setResults] = useState<Record<string, SourceResult>>({});
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [geocoding, setGeocoding] = useState(false);
   const [geocodeResult, setGeocodeResult] = useState<number | null>(null);
@@ -44,7 +53,16 @@ export default function ScrapingPage() {
   }
 
   useEffect(() => {
-    fetchLogs();
+    let active = true;
+    fetch("/api/scraping/logs")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (active && data) setLogs(data.logs || []);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
   }, []);
 
   async function handleScrape(sourceId: string) {
@@ -58,11 +76,19 @@ export default function ScrapingPage() {
       const data = await res.json();
       setResults((prev) => ({ ...prev, [sourceId]: data }));
       await fetchLogs();
+      if (data.error || !res.ok) {
+        toast(data.error || "Error al scrapear la fuente", "error");
+      } else if (data.imported > 0) {
+        toast(`${data.imported} carreras importadas de ${sourceLabels[sourceId] || sourceId}`, "success");
+      } else {
+        toast(`Sin carreras nuevas en ${sourceLabels[sourceId] || sourceId}`, "info");
+      }
     } catch {
       setResults((prev) => ({
         ...prev,
         [sourceId]: { error: "Error al conectar con el servidor" },
       }));
+      toast("Error al conectar con el servidor", "error");
     } finally {
       setLoading(null);
     }
@@ -79,11 +105,18 @@ export default function ScrapingPage() {
         }
       }
       await fetchLogs();
+      const total = data.results?.reduce((sum: number, r: SourceResult) => sum + (r.imported || 0), 0) || 0;
+      if (res.ok && !data.error) {
+        toast(`Scraping completado: ${total} carreras importadas`, "success");
+      } else {
+        toast(data.error || "Error al ejecutar scraping completo", "error");
+      }
     } catch {
       setResults((prev) => ({
         ...prev,
         all: { error: "Error al ejecutar scraping completo" },
       }));
+      toast("Error al ejecutar scraping completo", "error");
     } finally {
       setLoadingAll(false);
     }
@@ -97,9 +130,13 @@ export default function ScrapingPage() {
       if (res.ok) {
         const data = await res.json();
         setGeocodeResult(data.geocoded || 0);
+        toast(`${data.geocoded || 0} carreras geocodificadas`, "success");
+      } else {
+        toast("Error al geocodificar", "error");
       }
     } catch {
       setGeocodeResult(0);
+      toast("Error al geocodificar", "error");
     } finally {
       setGeocoding(false);
     }

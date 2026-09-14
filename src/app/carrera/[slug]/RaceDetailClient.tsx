@@ -6,7 +6,6 @@ import Image from "next/image";
 import {
   Calendar,
   MapPin,
-  Timer,
   Tag,
   ExternalLink,
   Clock,
@@ -71,6 +70,9 @@ export default function RaceDetailClient({
   const [success, setSuccess] = useState(false);
   const [results, setResults] = useState<Result[]>([]);
   const [reminder, setReminder] = useState<"none" | "loading" | "active" | "error">("none");
+  const [imageError, setImageError] = useState(false);
+
+  const showImage = race.image && !imageError;
 
   useEffect(() => {
     fetch(`/api/races/${race.id}/results`)
@@ -116,15 +118,16 @@ export default function RaceDetailClient({
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 md:py-8">
       <div className="card-premium overflow-hidden">
-        {race.image && (
+        {showImage && (
           <div className="aspect-[2/1] sm:aspect-[3/1] bg-gray-100 relative overflow-hidden">
             <Image
-              src={race.image}
+              src={race.image as string}
               alt={race.name}
               fill
               priority
               sizes="(max-width: 1024px) 100vw, 896px"
               className="object-cover"
+              onError={() => setImageError(true)}
             />
           </div>
         )}
