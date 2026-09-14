@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { formatDate } from "@/lib/utils";
+import { formatDate, getRaceDetailColor, getRaceTypeLabel } from "@/lib/utils";
 import { EventJsonLd } from "@/components/JsonLd";
 import RaceDetailClient from "./RaceDetailClient";
 import RelatedRaces from "@/components/RelatedRaces";
@@ -10,6 +10,8 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
+
+export const revalidate = 3600;
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -32,26 +34,6 @@ export default async function RaceDetailPage({ params }: PageProps) {
   const race = await prisma.race.findUnique({ where: { slug } });
 
   if (!race) notFound();
-
-  const typeColors: Record<string, string> = {
-    ASFALTO: "bg-orange-50 text-orange-700",
-    MEDIA_MARATON: "bg-purple-50 text-purple-700",
-    MARATON: "bg-red-50 text-red-700",
-    TRAIL: "bg-emerald-50 text-emerald-700",
-    MARCHA: "bg-amber-50 text-amber-700",
-    ORIENTACION: "bg-blue-50 text-blue-700",
-  };
-
-  const typeLabel: Record<string, string> = {
-    ASFALTO: "Asfalto",
-    MEDIA_MARATON: "Media Maratón",
-    MARATON: "Maratón",
-    TRAIL: "Trail",
-    MARCHA: "Marcha",
-    ORIENTACION: "Orientación",
-  };
-
-  const typeColor = typeColors[race.type] || typeColors.ASFALTO;
 
   const related = await prisma.race.findMany({
     where: {
@@ -87,7 +69,7 @@ export default async function RaceDetailPage({ params }: PageProps) {
             ]}
           />
         </div>
-        <RaceDetailClient race={race} typeColor={typeColor} typeLabel={typeLabel} formatDate={formatDate} />
+        <RaceDetailClient race={race} typeColor={getRaceDetailColor(race.type)} typeLabel={getRaceTypeLabel(race.type)} formatDate={formatDate} />
         <div className="px-4 sm:px-6">
           <RelatedRaces races={related} />
         </div>

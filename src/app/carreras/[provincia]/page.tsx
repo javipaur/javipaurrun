@@ -72,6 +72,8 @@ interface PageProps {
   params: Promise<{ provincia: string }>;
 }
 
+export const revalidate = 3600;
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { provincia } = await params;
   const slug = provincia.toLowerCase();

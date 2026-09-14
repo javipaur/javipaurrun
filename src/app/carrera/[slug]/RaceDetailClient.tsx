@@ -63,7 +63,7 @@ export default function RaceDetailClient({
 }: {
   race: Race;
   typeColor: string;
-  typeLabel: Record<string, string>;
+  typeLabel: string;
   formatDate: (d: Date | string) => string;
 }) {
   const [showForm, setShowForm] = useState(false);
@@ -135,7 +135,7 @@ export default function RaceDetailClient({
         <div className="p-6 md:p-8">
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${typeColor}`}>
-              {typeLabel[race.type] || race.type}
+              {typeLabel}
             </span>
             {race.distance && (
               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">

@@ -9,6 +9,8 @@ import HeroParallax from "@/components/HeroParallax";
 import { EventJsonLd } from "@/components/JsonLd";
 import { ArrowRight, CalendarDays, ChevronRight, Mail, MapPin, Search } from "lucide-react";
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: "JavipaurRun - Calendario de carreras populares en España",
   description:
@@ -24,60 +26,50 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const featuredRaces = await prisma.race.findMany({
-    where: { date: { gte: new Date() } },
-    orderBy: { date: "asc" },
-    take: 6,
-  });
-
-  const raceCounts = await prisma.race.groupBy({
-    by: ["type"],
-    _count: true,
-  });
+  const [featuredRaces, raceCounts, latestPosts, totalRaces, provinceStats, openRaces, gpsRaces] = await Promise.all([
+    prisma.race.findMany({
+      where: { date: { gte: new Date() } },
+      orderBy: { date: "asc" },
+      take: 6,
+    }),
+    prisma.race.groupBy({ by: ["type"], _count: true }),
+    prisma.blogPost.findMany({
+      where: { published: true },
+      orderBy: { createdAt: "desc" },
+      take: 3,
+    }),
+    prisma.race.count(),
+    prisma.race.groupBy({ by: ["province"], _count: true }),
+    prisma.race.count({
+      where: { date: { gte: new Date() }, url: { not: null } },
+    }),
+    prisma.race.findMany({
+      where: {
+        date: { gte: new Date() },
+        latitude: { not: null },
+        longitude: { not: null },
+        location: { not: "Por determinar" },
+      },
+      orderBy: { date: "asc" },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        type: true,
+        distance: true,
+        location: true,
+        province: true,
+        date: true,
+        latitude: true,
+        longitude: true,
+      },
+    }),
+  ]);
 
   const typeCountMap: Record<string, number> = {};
   raceCounts.forEach((r) => { typeCountMap[r.type] = r._count; });
 
-  const latestPosts = await prisma.blogPost.findMany({
-    where: { published: true },
-    orderBy: { createdAt: "desc" },
-    take: 3,
-  });
-
-  const totalRaces = await prisma.race.count();
-
-  const provinceStats = await prisma.race.groupBy({
-    by: ["province"],
-    _count: true,
-  });
-
   const totalProvinces = provinceStats.length;
-
-  const openRaces = await prisma.race.count({
-    where: { date: { gte: new Date() }, url: { not: null } },
-  });
-
-  const gpsRaces = await prisma.race.findMany({
-    where: {
-      date: { gte: new Date() },
-      latitude: { not: null },
-      longitude: { not: null },
-      location: { not: "Por determinar" },
-    },
-    orderBy: { date: "asc" },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      type: true,
-      distance: true,
-      location: true,
-      province: true,
-      date: true,
-      latitude: true,
-      longitude: true,
-    },
-  });
 
   const nearbyRaceData = gpsRaces.map((r) => ({
     id: r.id,

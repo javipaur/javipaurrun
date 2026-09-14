@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { formatDate } from "@/lib/utils";
+import { formatDate, getRaceTypeLabel } from "@/lib/utils";
 import Link from "next/link";
-import { Trophy, Calendar, MapPin, Timer, Medal, ArrowUpRight } from "lucide-react";
+import { Trophy, Calendar, MapPin, Medal, ArrowUpRight } from "lucide-react";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -59,15 +59,6 @@ export default async function AthletePage({ params }: PageProps) {
     }
   }
 
-  const typeLabels: Record<string, string> = {
-    ASFALTO: "Asfalto",
-    MEDIA_MARATON: "Media Maratón",
-    MARATON: "Maratón",
-    TRAIL: "Trail",
-    MARCHA: "Marcha",
-    ORIENTACION: "Orientación",
-  };
-
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 md:py-8">
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
@@ -109,7 +100,7 @@ export default async function AthletePage({ params }: PageProps) {
                     className="block bg-gray-50 dark:bg-gray-800 rounded-xl p-4 hover:shadow-sm transition-shadow"
                   >
                     <span className="text-xs font-semibold text-orange-600 dark:text-orange-400 uppercase">
-                      {typeLabels[type] || type}
+                      {getRaceTypeLabel(type)}
                     </span>
                     <p className="text-lg font-bold font-mono text-gray-900 dark:text-gray-100 mt-1">
                       {result.hours != null && result.hours > 0

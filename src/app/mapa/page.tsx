@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import MapClient from "./MapClient";
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: "Mapa de carreras populares - JavipaurRun",
   description:

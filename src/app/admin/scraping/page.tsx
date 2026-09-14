@@ -189,6 +189,7 @@ export default function ScrapingPage() {
         <button
           onClick={handleGeocode}
           disabled={geocoding}
+          aria-busy={geocoding}
           className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {geocoding ? "Geocodificando..." : "Geocodificar carreras sin ubicación"}
@@ -203,6 +204,7 @@ export default function ScrapingPage() {
         <button
           onClick={handleScrapeAll}
           disabled={loadingAll}
+          aria-busy={loadingAll}
           className="bg-gray-900 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loadingAll ? "Scrapeando todas..." : "Scrapear todas"}
@@ -224,6 +226,7 @@ export default function ScrapingPage() {
             <button
               onClick={() => handleScrape(source.id)}
               disabled={loading === source.id}
+              aria-busy={loading === source.id}
               className="w-full bg-orange-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading === source.id ? (

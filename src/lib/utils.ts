@@ -166,3 +166,56 @@ export function getAutonomousCommunity(province: string): string {
 export function getAutonomousCommunityLabel(value: string): string {
   return autonomousCommunities.find((c) => c.value === value)?.label || value;
 }
+
+const RACE_TYPE_KEYS = ["ASFALTO", "MEDIA_MARATON", "MARATON", "TRAIL", "MARCHA", "ORIENTACION"] as const;
+
+const RACE_TYPE_GRADIENTS: Record<string, string> = {
+  TRAIL: "from-emerald-600 via-emerald-500/50 to-teal-600",
+  MARATON: "from-violet-600 via-violet-500/50 to-indigo-600",
+  MEDIA_MARATON: "from-blue-600 via-blue-500/50 to-cyan-600",
+  ASFALTO: "from-slate-600 via-slate-500/50 to-zinc-600",
+  MARCHA: "from-amber-600 via-amber-500/50 to-orange-600",
+  ORIENTACION: "from-pink-600 via-pink-500/50 to-rose-600",
+};
+
+const RACE_TYPE_DETAIL_COLORS: Record<string, string> = {
+  ASFALTO: "bg-orange-50 text-orange-700",
+  MEDIA_MARATON: "bg-purple-50 text-purple-700",
+  MARATON: "bg-red-50 text-red-700",
+  TRAIL: "bg-emerald-50 text-emerald-700",
+  MARCHA: "bg-amber-50 text-amber-700",
+  ORIENTACION: "bg-blue-50 text-blue-700",
+};
+
+const RACE_TYPE_HEX_COLORS: Record<string, string> = {
+  ASFALTO: "#3b82f6",
+  MEDIA_MARATON: "#8b5cf6",
+  MARATON: "#ef4444",
+  TRAIL: "#22c55e",
+  MARCHA: "#f59e0b",
+  ORIENTACION: "#06b6d4",
+};
+
+export function isKnownRaceType(type: string): boolean {
+  return (RACE_TYPE_KEYS as readonly string[]).includes(type);
+}
+
+export function getRaceBadgeClass(type: string): string {
+  return isKnownRaceType(type) ? `type-badge type-${type}` : "type-badge type-ASFALTO";
+}
+
+export function getRaceDotClass(type: string): string {
+  return isKnownRaceType(type) ? `type-dot dot-${type}` : "type-dot dot-ASFALTO";
+}
+
+export function getRaceGradient(type: string): string {
+  return RACE_TYPE_GRADIENTS[type] || "from-gray-600 via-gray-500/50 to-gray-700";
+}
+
+export function getRaceDetailColor(type: string): string {
+  return RACE_TYPE_DETAIL_COLORS[type] || RACE_TYPE_DETAIL_COLORS.ASFALTO;
+}
+
+export function getRaceHexColor(type: string): string {
+  return RACE_TYPE_HEX_COLORS[type] || "#6b7280";
+}

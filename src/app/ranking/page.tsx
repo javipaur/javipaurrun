@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Trophy, Medal, MapPin, Timer, ArrowUpRight } from "lucide-react";
-import { provinces, getRaceTypeLabel } from "@/lib/utils";
+import { Trophy, Medal, MapPin, ArrowUpRight } from "lucide-react";
+import { provinces } from "@/lib/utils";
+import type { Prisma, RaceType } from "@/generated/prisma/client";
 
 export const metadata: Metadata = {
   title: "Ranking por provincias - JavipaurRun",
@@ -18,12 +19,18 @@ export default async function RankingPage({ searchParams }: PageProps) {
   const selectedProvince = params.provincia || "";
   const selectedType = params.tipo || "";
 
-  const where: Record<string, unknown> = { hours: { not: null }, minutes: { not: null }, seconds: { not: null } };
-  if (selectedProvince) where.race = { province: { contains: selectedProvince } };
-  if (selectedType) where.race = { ...(where.race as object || {}), type: selectedType };
+  const where: Prisma.RaceResultWhereInput = {
+    hours: { not: null },
+    minutes: { not: null },
+    seconds: { not: null },
+  };
+  const raceWhere: Prisma.RaceWhereInput = {};
+  if (selectedProvince) raceWhere.province = { contains: selectedProvince };
+  if (selectedType) raceWhere.type = selectedType as RaceType;
+  if (Object.keys(raceWhere).length > 0) where.race = raceWhere;
 
   const results = await prisma.raceResult.findMany({
-    where: where as any,
+    where,
     include: {
       user: { select: { id: true, name: true } },
       race: { select: { name: true, slug: true, type: true, province: true, date: true, location: true } },

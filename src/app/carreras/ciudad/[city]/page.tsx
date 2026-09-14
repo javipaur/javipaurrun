@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { formatDate, getRaceTypeLabel } from "@/lib/utils";
 import RaceCard from "@/components/RaceCard";
 import Link from "next/link";
 import { ArrowLeft, MapPin } from "lucide-react";
@@ -112,6 +111,8 @@ const cities: Record<string, { name: string; province: string; description: stri
 interface PageProps {
   params: Promise<{ city: string }>;
 }
+
+export const revalidate = 3600;
 
 export async function generateStaticParams() {
   return Object.keys(cities).map((city) => ({ city }));

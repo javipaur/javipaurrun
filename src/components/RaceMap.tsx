@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { getRaceHexColor } from "@/lib/utils";
 
 interface RaceMarker {
   id: string;
@@ -22,15 +23,6 @@ interface RaceMapProps {
   center?: [number, number];
   zoom?: number;
 }
-
-const typeColors: Record<string, string> = {
-  ASFALTO: "#3b82f6",
-  MEDIA_MARATON: "#8b5cf6",
-  MARATON: "#ef4444",
-  TRAIL: "#22c55e",
-  MARCHA: "#f59e0b",
-  ORIENTACION: "#06b6d4",
-};
 
 export default function RaceMap({
   races,
@@ -70,7 +62,7 @@ export default function RaceMap({
     const markers = L.featureGroup();
 
     for (const race of races) {
-      const color = typeColors[race.type] || "#6b7280";
+      const color = getRaceHexColor(race.type);
 
       const icon = L.divIcon({
         html: `<div style="
