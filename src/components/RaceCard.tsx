@@ -8,6 +8,18 @@ import { Calendar, MapPin, Timer, ArrowUpRight, Tag, Clock, BarChart3, Share2 } 
 import { formatDateShort, getRaceTypeLabel, daysUntilLabel } from "@/lib/utils";
 import RaceResultForm from "./RaceResultForm";
 
+const TYPE_GRADIENTS: Record<string, string> = {
+  TRAIL: "from-emerald-600 via-emerald-500/50 to-teal-600",
+  MARATON: "from-violet-600 via-violet-500/50 to-indigo-600",
+  MEDIA_MARATON: "from-blue-600 via-blue-500/50 to-cyan-600",
+  ASFALTO: "from-slate-600 via-slate-500/50 to-zinc-600",
+  MARCHA: "from-amber-600 via-amber-500/50 to-orange-600",
+  ORIENTACION: "from-pink-600 via-pink-500/50 to-rose-600",
+};
+function getFallbackGradient(type: string): string {
+  return TYPE_GRADIENTS[type] || "from-gray-600 via-gray-500/50 to-gray-700";
+}
+
 interface RaceCardProps {
   race: {
     id: string;
@@ -84,7 +96,7 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
     <>
       <Link
         href={`/carrera/${race.slug}`}
-        className={`card-premium group block overflow-hidden animate-fade-in-up ${race.image ? "" : "p-5"}`}
+        className="card-premium group block overflow-hidden animate-fade-in-up"
         style={{ animationDelay: `${index * 60}ms` }}
       >
         {race.image && (
@@ -113,7 +125,13 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
           </div>
         )}
 
-        <div className={race.image ? "p-5" : ""}>
+        {!race.image && (
+          <div className={`aspect-[21/6] bg-gradient-to-br ${getFallbackGradient(race.type)} opacity-90 flex items-center justify-center px-4`}>
+            <span className="text-white/80 text-sm font-semibold tracking-wide truncate">{race.name}</span>
+          </div>
+        )}
+
+        <div className={race.image ? "p-5" : "px-5 pt-3 pb-5"}>
         {!race.image && (
         <div className="flex items-center justify-between mb-3.5">
           <span className={`${badgeClassSafe(race.type)}`}>

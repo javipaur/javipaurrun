@@ -8,7 +8,8 @@ export async function geocodeLocation(
   location: string,
   province: string
 ): Promise<{ lat: number; lng: number } | null> {
-  const query = `${location}, ${province}, Spain`;
+  const parts = [location.trim(), province.trim().replace(/^Otra$/i, ""), "Spain"].filter(Boolean);
+  const query = parts.join(", ");
 
   try {
     const response = await fetch(
@@ -23,8 +24,10 @@ export async function geocodeLocation(
     const data = (await response.json()) as { lat: string; lon: string }[];
 
     if (data.length === 0) {
+      const fallbackParts = [province.trim().replace(/^Otra$/i, ""), "Spain"].filter(Boolean);
+      if (fallbackParts.length === 0) return null;
       const fallback = await fetch(
-        `${NOMINATIM_BASE}/search?q=${encodeURIComponent(province)}&format=json&limit=1`,
+        `${NOMINATIM_BASE}/search?q=${encodeURIComponent(fallbackParts.join(", "))}&format=json&limit=1`,
         {
           headers: { "User-Agent": "javipaurrun-app/1.0" },
         }
@@ -51,9 +54,12 @@ export async function geocodeUnlocatedRaces(): Promise<number> {
   const { prisma } = await import("./prisma");
 
   const races = await prisma.race.findMany({
-    where: { latitude: null },
-    orderBy: { date: "desc" },
-    take: 50,
+    where: {
+      latitude: null,
+      location: { not: "Por determinar" },
+    },
+    orderBy: [{ date: "asc" }, { createdAt: "asc" }],
+    take: 300,
   });
 
   let geocoded = 0;

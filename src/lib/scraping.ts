@@ -54,6 +54,17 @@ const PROVINCE_TAGS = new Set([
   "cantabria", "burgos", "rioja", "zamora",
 ]);
 
+// Lasterketak tags that describe the type of event, a series or a region
+// rather than a specific town/city. They must be excluded when deriving
+// the race location from the tag list (town tags usually come last).
+const NON_LOCATION_TAGS = new Set([
+  "san-silvestre", "mendi-lasterketa", "mendi-maratoia", "herri-krosa",
+  "mistoa", "maraton", "maratoia", "goierri-kopa-trail", "emf-rankinga-2019",
+  "txingudi", "nudista", "bertika", "bertikal", "km-bertikal", "kross",
+  "krosa", "txapelketa", "lineal", "koop-social", "olimpiada-rural",
+  "kilometrobertikal", "bailara", "zonako", "memoria", "cross", "carrera",
+]);
+
 function getProvinceFromTag(tagSlug: string): string {
   const map: Record<string, string> = {
     nafarroa: "Navarra",
@@ -121,13 +132,102 @@ function parseDistanceFromText(text: string): string | undefined {
   return undefined;
 }
 
+const MONTH_NAME_MAP: Record<string, number> = {
+  enero: 1, january: 1, janvier: 1, february: 2, febrero: 2, fevrier: 2,
+  marco: 3, martxo: 3, marzo: 3, mars: 3, april: 4, abril: 4, apiril: 4,
+  avril: 4, may: 5, mayo: 5, maiatz: 5, mai: 5, june: 6, junio: 6, ekain: 6,
+  juin: 6, july: 7, julio: 7, uztail: 7, juillet: 7, august: 8, agosto: 8,
+  abuztu: 8, aout: 8, août: 8, september: 9, septiembre: 9, setiembre: 9,
+  septembre: 9, irail: 9, october: 10, octubre: 10, urri: 10, octobre: 10,
+  november: 11, noviembre: 11, azaro: 11, novembre: 11, december: 12,
+  diciembre: 12, abendu: 12, decembre: 12, décembre: 12,
+};
+
+function parseEventDateFromText(text: string): { date: string; time?: string } | null {
+  const lower = text.toLowerCase();
+
+  const MONTHS_EU = "(urtarril|otsail|martxo|apiril|maiatz|ekain|uztail|abuztu|irail|urri|azaro|abendu)";
+  const MONTHS_ES = "(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre|janvier|février|fevrier|mars|avril|juin|juillet|août|aout|octobre|novembre|décembre|decembre)";
+
+  const patterns: Array<{ re: RegExp; date: (m: RegExpExecArray) => string }> = [
+    {
+      re: /(\d{4})\/(\d{1,2})\/(\d{1,2})/,
+      date: (m) => `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`,
+    },
+    {
+      re: /(\d{4})-(\d{1,2})-(\d{1,2})/,
+      date: (m) => `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`,
+    },
+    {
+      re: /(\d{4})\.(\d{1,2})\.(\d{1,2})/,
+      date: (m) => `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`,
+    },
+    {
+      re: /(\d{1,2})\/(\d{1,2})\/(\d{4})/,
+      date: (m) => `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`,
+    },
+    {
+      re: new RegExp(`(\\d{4})ko\\s+${MONTHS_EU}[a-z]*\\s+(\\d{1,2})`, "i"),
+      date: (m) => {
+        const month = MONTH_NAME_MAP[m[2]];
+        return month ? `${m[1]}-${String(month).padStart(2, "0")}-${m[3].padStart(2, "0")}` : "";
+      },
+    },
+    {
+      re: new RegExp(`(\\d{1,2})\\s+${MONTHS_EU}[a-z]*[a-z]\\s+(\\d{4})`, "i"),
+      date: (m) => {
+        const month = MONTH_NAME_MAP[m[2]];
+        return month ? `${m[3]}-${String(month).padStart(2, "0")}-${m[1].padStart(2, "0")}` : "";
+      },
+    },
+    {
+      re: new RegExp(`(\\d{1,2})\\s+${MONTHS_ES}[a-z]*\\s+(\\d{4})`, "i"),
+      date: (m) => {
+        const month = MONTH_NAME_MAP[m[2]];
+        return month ? `${m[3]}-${String(month).padStart(2, "0")}-${m[1].padStart(2, "0")}` : "";
+      },
+    },
+  ];
+
+  for (const { re, date } of patterns) {
+    const match = re.exec(lower);
+    if (!match) continue;
+    const dateStr = date(match);
+    if (!dateStr) continue;
+    return { date: dateStr };
+  }
+
+  return null;
+}
+
+function extractTimeFromText(text: string): string | undefined {
+  const lower = text.toLowerCase();
+  const timePatterns: RegExp[] = [
+    /(?:horario|ordutegia|irteera|salida|ordua|goizeko|arratsaldeko|eguerdian):?\s*(\d{1,2}):(\d{2})/i,
+    /(\d{1,2}):(\d{2})\s*(?:h|etan|tan|ean|atrekin|ak)?/i,
+  ];
+
+  for (const re of timePatterns) {
+    const match = re.exec(lower);
+    if (match) {
+      const hour = parseInt(match[1], 10);
+      const minute = parseInt(match[2], 10);
+      if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+        return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+      }
+    }
+  }
+
+  return undefined;
+}
+
 export async function scrapeFromLasterketak(): Promise<ScrapedRace[]> {
   const races: ScrapedRace[] = [];
 
   try {
     let page = 1;
     let totalPages = 1;
-    const maxPages = 1;
+    const maxPages = 50;
 
     while (page <= totalPages && page <= maxPages) {
       const response = await fetchWithTimeout(
@@ -145,13 +245,11 @@ export async function scrapeFromLasterketak(): Promise<ScrapedRace[]> {
         const content = (event.content as { rendered: string })?.rendered || "";
         const text = decodeHtmlEntities(content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
 
-        const dateTimeMatch = text.match(
-          /(\d{4})\/(\d{2})\/(\d{2})\s*[-–]\s*(\d{2}):(\d{2})/
-        );
+        const dateTimeMatch = parseEventDateFromText(text);
         if (!dateTimeMatch) continue;
 
-        const dateStr = `${dateTimeMatch[1]}-${dateTimeMatch[2]}-${dateTimeMatch[3]}`;
-        const timeStr = `${dateTimeMatch[4]}:${dateTimeMatch[5]}`;
+        const dateStr = dateTimeMatch.date;
+        const timeStr = extractTimeFromText(text);
 
         const distance = parseDistanceFromText(text);
 
@@ -175,7 +273,8 @@ export async function scrapeFromLasterketak(): Promise<ScrapedRace[]> {
           isTrail || isTxakurkros ? "trail" : undefined
         );
 
-        const locationTag = eventTags.find((tag) => !PROVINCE_TAGS.has(tag.slug));
+        const placeTags = eventTags.filter((tag) => !PROVINCE_TAGS.has(tag.slug) && !NON_LOCATION_TAGS.has(tag.slug));
+        const locationTag = placeTags.length > 0 ? placeTags[placeTags.length - 1] : undefined;
         const provinceTag = eventTags.find((tag) => PROVINCE_TAGS.has(tag.slug));
 
         const location = locationTag?.name || "Por determinar";
@@ -205,6 +304,10 @@ export async function scrapeFromLasterketak(): Promise<ScrapedRace[]> {
       }
 
       page++;
+
+      if (page <= totalPages && page <= maxPages) {
+        await new Promise((r) => setTimeout(r, 300));
+      }
     }
   } catch (error) {
     console.error("Error scraping Lasterketak via WP API:", error);
@@ -417,7 +520,8 @@ export async function scrapeFromBuscametas(): Promise<ScrapedRace[]> {
       JUL: "07", AGO: "08", SEP: "09", OCT: "10", NOV: "11", DIC: "12",
     };
 
-    const currentYear = new Date().getFullYear().toString();
+    const now = new Date();
+    const currentYear = now.getFullYear();
     const eventRegex = /<a\s+href="(\/evento\/\d+\/)"[^>]*>[\s\S]*?<span>(\d+)<\/span>\s*([A-Z]{3})[\s\S]*?item-calendar-data[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>\s*<\/a>/g;
     let match: RegExpExecArray | null;
 
@@ -426,7 +530,11 @@ export async function scrapeFromBuscametas(): Promise<ScrapedRace[]> {
       const month = MONTHS[monthAbbr];
       if (!month) continue;
 
-      const dateStr = `${currentYear}-${month}-${day.padStart(2, "0")}`;
+      const candidateYear = new Date(currentYear, parseInt(month, 10) - 1, parseInt(day, 10));
+      const sixMonthsAhead = new Date(now);
+      sixMonthsAhead.setMonth(sixMonthsAhead.getMonth() + 6);
+      const year = candidateYear > sixMonthsAhead ? currentYear - 1 : currentYear;
+      const dateStr = `${year}-${month}-${day.padStart(2, "0")}`;
       const text = dataHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
       const nameMatch = dataHtml.match(/<h[234][^>]*>(.*?)<\/h[234]>/);
@@ -438,12 +546,23 @@ export async function scrapeFromBuscametas(): Promise<ScrapedRace[]> {
       const distance = parseDistanceFromText(text);
       const type = detectRaceType(name, distance);
 
+      const locationMatch = dataHtml.match(
+        /item-calendar-data__location[\s\S]*?<span>([\s\S]*?)<\/span>(?:\s*\(([^)]*)\))?/
+      );
+      const city = locationMatch?.[1]?.replace(/<[^>]+>/g, "").trim();
+      const locProvinceStr = locationMatch?.[2]?.trim();
+
+      const location = city && city !== "Buscametas" ? city : "Por determinar";
+      const scrapeProvince = locProvinceStr
+        ? normalizeProvince(locProvinceStr)
+        : detectProvince(location);
+
       races.push({
         name,
         type,
         distance,
-        location: "Buscametas",
-        province: detectProvince(text),
+        location,
+        province: scrapeProvince,
         date: dateStr,
         url: `https://www.buscametas.com${href}`,
       });
@@ -518,14 +637,14 @@ function detectProvince(text: string): string {
 }
 
 const PROVINCE_CANON: Array<{ canonical: string; aliases: string[] }> = [
-  { canonical: "Álava/Araba", aliases: ["alava", "álava", "araba"] },
+  { canonical: "Araba", aliases: ["alava", "álava", "araba", "vitoria", "gasteiz"] },
   { canonical: "Albacete", aliases: ["albacete"] },
   { canonical: "Alicante", aliases: ["alicante", "alacant"] },
   { canonical: "Almería", aliases: ["almería", "almeria"] },
   { canonical: "Asturias", aliases: ["asturias"] },
   { canonical: "Ávila", aliases: ["ávila", "avila"] },
   { canonical: "Badajoz", aliases: ["badajoz"] },
-  { canonical: "Baleares", aliases: ["baleares", "illes balears", "illes", "balears", "mallorca", "menorca", "ibiza", "palma de mallorca"] },
+  { canonical: "Baleares (Illes)", aliases: ["baleares", "baleares (illes)", "illes balears", "illes", "balears", "mallorca", "menorca", "ibiza", "palma de mallorca"] },
   { canonical: "Barcelona", aliases: ["barcelona"] },
   { canonical: "Burgos", aliases: ["burgos"] },
   { canonical: "Cáceres", aliases: ["cáceres", "caceres"] },
@@ -600,6 +719,13 @@ function normalizeNameKey(name: string): string {
     .trim();
 }
 
+function isValidImageUrl(url?: string): string | undefined {
+  if (!url || url.trim() === "") return undefined;
+  const trimmed = url.trim();
+  if (!/^https?:\/\//i.test(trimmed)) return undefined;
+  return trimmed;
+}
+
 export async function importScrapedRaces(scrapedRaces: ScrapedRace[], source: string): Promise<{ imported: number; updated: number }> {
   let imported = 0;
   let updated = 0;
@@ -619,14 +745,28 @@ export async function importScrapedRaces(scrapedRaces: ScrapedRace[], source: st
   }
 
   const usedUrls = new Set<string>();
+  const usedSlugs = new Set<string>();
+
+  const existingSlugs = new Set(
+    (await prisma.race.findMany({ select: { slug: true } })).map((r) => r.slug)
+  );
 
   for (const race of scrapedRaces) {
-    const slug = race.name
+    let slug = race.name
       .toLowerCase()
       .replace(/[^a-z0-9áéíóúñü]+/g, "-")
       .replace(/-+/g, "-")
       .replace(/^-|-$/g, "")
       .slice(0, 100);
+
+    if (existingSlugs.has(slug) || usedSlugs.has(slug)) {
+      let suffix = 2;
+      while (existingSlugs.has(`${slug}-${suffix}`) || usedSlugs.has(`${slug}-${suffix}`)) {
+        suffix++;
+      }
+      slug = `${slug}-${suffix}`;
+    }
+    usedSlugs.add(slug);
 
     const dateStr = new Date(race.date).toISOString().split("T")[0];
     const nameKey = normalizeNameKey(race.name);
@@ -652,7 +792,7 @@ export async function importScrapedRaces(scrapedRaces: ScrapedRace[], source: st
       time: race.time,
       description: race.description,
       url: race.url,
-      image: race.image,
+      image: isValidImageUrl(race.image),
       price: race.price,
       source,
     };
@@ -663,6 +803,7 @@ export async function importScrapedRaces(scrapedRaces: ScrapedRace[], source: st
         where: { id: existingId },
         data: {
           ...data,
+          slug,
           endDate: race.endDate ? new Date(race.endDate) : undefined,
           latitude: race.latitude,
           longitude: race.longitude,
@@ -675,17 +816,36 @@ export async function importScrapedRaces(scrapedRaces: ScrapedRace[], source: st
 
     if (race.url && usedUrls.has(race.url)) continue;
 
-    await prisma.race.create({
-      data: {
-        ...data,
-        slug,
-        endDate: race.endDate ? new Date(race.endDate) : undefined,
-        latitude: race.latitude,
-        longitude: race.longitude,
-      },
-    });
-    usedUrls.add(race.url || slug);
-    imported++;
+    try {
+      await prisma.race.create({
+        data: {
+          ...data,
+          slug,
+          endDate: race.endDate ? new Date(race.endDate) : undefined,
+          latitude: race.latitude,
+          longitude: race.longitude,
+        },
+      });
+      usedUrls.add(race.url || slug);
+      imported++;
+    } catch (err) {
+      if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
+        const fallbackSlug = `${slug}-${Date.now()}`;
+        await prisma.race.create({
+          data: {
+            ...data,
+            slug: fallbackSlug,
+            endDate: race.endDate ? new Date(race.endDate) : undefined,
+            latitude: race.latitude,
+            longitude: race.longitude,
+          },
+        });
+        usedUrls.add(race.url || fallbackSlug);
+        imported++;
+      } else {
+        throw err;
+      }
+    }
   }
 
   return { imported, updated };

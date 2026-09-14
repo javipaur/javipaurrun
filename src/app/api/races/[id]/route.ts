@@ -28,7 +28,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const updateData: Record<string, unknown> = { ...data };
   if (data.date) updateData.date = new Date(data.date);
   if (data.endDate) updateData.endDate = new Date(data.endDate);
-  if (data.name) updateData.slug = slugify(data.name).slice(0, 100);
+  if (data.name) {
+    let slug = slugify(data.name).slice(0, 100);
+    const existing = await prisma.race.findFirst({ where: { slug, NOT: { id } }, select: { id: true } });
+    if (existing) slug = `${slug}-${Date.now()}`;
+    updateData.slug = slug;
+  }
 
   const race = await prisma.race.update({
     where: { id },

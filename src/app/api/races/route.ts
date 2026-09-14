@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-helpers";
-import { apiLimiter } from "@/lib/rate-limit";
 import { raceCreateSchema, getZodErrorMessage } from "@/lib/validation";
 import { slugify } from "@/lib/utils";
 
@@ -48,27 +47,55 @@ export async function POST(req: Request) {
     }
 
     const data = parsed.data;
-    const slug = slugify(data.name).slice(0, 100);
+    let slug = slugify(data.name).slice(0, 100);
 
-    const race = await prisma.race.create({
-      data: {
-        name: data.name,
-        type: data.type,
-        distance: data.distance,
-        location: data.location,
-        province: data.province,
-        date: new Date(data.date),
-        endDate: data.endDate ? new Date(data.endDate) : undefined,
-        time: data.time,
-        description: data.description,
-        url: data.url || undefined,
-        image: data.image,
-        price: data.price,
-        status: data.status || "PROXIMAMENTE",
-        featured: data.featured,
-        slug,
-      },
-    });
+    let race;
+    try {
+      race = await prisma.race.create({
+        data: {
+          name: data.name,
+          type: data.type,
+          distance: data.distance,
+          location: data.location,
+          province: data.province,
+          date: new Date(data.date),
+          endDate: data.endDate ? new Date(data.endDate) : undefined,
+          time: data.time,
+          description: data.description,
+          url: data.url || undefined,
+          image: data.image,
+          price: data.price,
+          status: data.status || "PROXIMAMENTE",
+          featured: data.featured,
+          slug,
+        },
+      });
+    } catch (err: unknown) {
+      if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
+        slug = `${slug}-${Date.now()}`;
+        race = await prisma.race.create({
+          data: {
+            name: data.name,
+            type: data.type,
+            distance: data.distance,
+            location: data.location,
+            province: data.province,
+            date: new Date(data.date),
+            endDate: data.endDate ? new Date(data.endDate) : undefined,
+            time: data.time,
+            description: data.description,
+            url: data.url || undefined,
+            image: data.image,
+            price: data.price,
+            status: data.status || "PROXIMAMENTE",
+            featured: data.featured,
+            slug,
+          },
+        });
+      } else {
+        throw err;
+      }
+    }
 
     return NextResponse.json(race);
   } catch {

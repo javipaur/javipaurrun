@@ -62,9 +62,21 @@ export default async function Home() {
       date: { gte: new Date() },
       latitude: { not: null },
       longitude: { not: null },
+      location: { not: "Por determinar" },
     },
     orderBy: { date: "asc" },
-    take: 60,
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      type: true,
+      distance: true,
+      location: true,
+      province: true,
+      date: true,
+      latitude: true,
+      longitude: true,
+    },
   });
 
   const nearbyRaceData = gpsRaces.map((r) => ({
