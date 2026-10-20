@@ -27,6 +27,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       title: `Carreras populares en ${info.name}`,
       description: info.description,
+      url: `/carreras/ciudad/${city}`,
     },
   };
 }

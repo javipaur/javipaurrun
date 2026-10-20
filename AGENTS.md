@@ -208,6 +208,39 @@ Ver `.env.example`:
   `postgresql://USUARIO:CLAVE@localhost:5432/javipaurrun`. Sin credenciales la app
   **no lanza**: las páginas devuelven 200 con contenido vacío, lo que hace el fallo
   muy difícil de detectar.
+
+### El dominio sale del host, no de una variable
+
+`src/lib/site-url.ts` (isomórfico) + `src/lib/site-url-server.ts` (usa `next/headers`).
+- `envSiteUrl()`: variable de entorno validada, con fallback al dominio real.
+- `siteUrl()`: **el host de la petición gana siempre**. Así una variable mal puesta
+  en producción ya no puede envenenar el sitemap, el robots ni los canonicals.
+- **No reintroducir `javipaurrun.com`**: ese dominio no resuelve en DNS. Pasó un
+  tiempo apuntando el sitemap entero a un dominio inexistente.
+- `site-url.ts` NO puede importar `next/headers` (acaba en el bundle del cliente
+  vía `ical.ts` -> `RaceDetailClient`). De ahi la separación en dos modulos.
+
+### El esquema se aplica con `scripts/apply-schema.sh`
+
+**El punto mas importante de operacion.** `prisma db push` necesita una *shadow
+database* para detectar perdida de datos, y el usuario de la BD gestionada de
+produccion no tiene permiso para crear bases: el push falla SIEMPRE. Como el
+error se tragaba con un `|| echo`, el esquema se quedaba atrasado en silencio y
+las columnas nuevas (`pendingReview`, `distanceKm`, `city`) nunca existian.
+
+Sintoma: la home vacia, el sitemap sin ninguna ficha de carrera y `/completitud`
+en estado degradado. **Un 200 con la pagina vacia no es un sitio sano.**
+
+`apply-schema.sh` intenta `db push` y, si falla, genera el SQL con
+`migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script`
+(compara el esquema real, sin shadow database) y lo aplica con `db execute`.
+Es idempotente y sale siempre con 0. Se ejecuta en la fase de build
+(`nixpacks.toml`) y en el arranque (`scripts/start.sh`).
+
+- `dotenv` es dependencia **explícita**: `prisma.config.ts` lo importa y, si solo
+  llega como transitiva, el CLI de Prisma no carga la configuracion.
+- `start.sh` **nunca** debe hacer `exit 1` por un fallo de esquema: deja el
+  contenedor muerto y el sitio entero en 502.
 - `AUTH_SECRET`: secreto de NextAuth.
 - `CRON_SECRET`: secreto de endpoints cron.
 - `RESEND_API_KEY`: email.

@@ -21,7 +21,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${post.title} - JavipaurRun`,
     description: post.excerpt || post.content.slice(0, 160),
-    openGraph: post.image ? { images: [post.image] } : undefined,
+    openGraph: {
+      url: `/blog/${post.slug}`,
+      ...(post.image ? { images: [post.image] } : {}),
+    },
   };
 }
 

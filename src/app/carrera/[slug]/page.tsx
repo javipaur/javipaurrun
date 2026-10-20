@@ -23,9 +23,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description:
       race.description?.slice(0, 160) ||
       `${race.name} el ${formatDate(race.date)} en ${race.location}, ${race.province}. ${race.distance ? `Distancia: ${race.distance}.` : ""} ${race.type}`,
-    openGraph: race.image
-      ? { images: [{ url: race.image, width: 1200, height: 630 }] }
-      : undefined,
+    openGraph: {
+      url: `/carrera/${race.slug}`,
+      ...(race.image ? { images: [{ url: race.image, width: 1200, height: 630 }] } : {}),
+    },
   };
 }
 

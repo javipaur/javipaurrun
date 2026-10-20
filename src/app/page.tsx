@@ -31,6 +31,7 @@ export const metadata: Metadata = {
     title: "JavipaurRun — Calendario de carreras populares en España",
     description:
       "Running, trail, medias maratones, maratones y marchas en toda España. Filtra por provincia, distancia y mes.",
+    url: "/",
     siteName: "JavipaurRun",
     type: "website",
     locale: "es_ES",

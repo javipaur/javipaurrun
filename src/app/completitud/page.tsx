@@ -16,6 +16,7 @@ export const metadata: Metadata = {
     title: "Estado y calidad de los datos | JavipaurRun",
     description:
       "Transparencia total: fuentes, sincronización y completitud de los datos del calendario de carreras de España.",
+    url: "/completitud",
     siteName: "JavipaurRun",
     type: "website",
     locale: "es_ES",

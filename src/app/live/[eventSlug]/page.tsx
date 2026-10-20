@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title,
     description,
-    openGraph: { title, description },
+    openGraph: { title, description, url: `/live/${eventSlug}` },
     robots: { index: false, follow: false },
   };
 }
