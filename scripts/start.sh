@@ -2,13 +2,12 @@
 set -euo pipefail
 
 echo "[start.sh] Aplicando esquema de base de datos..."
-# Si el push falla, el arranque CONTINUA con un schema viejo: cualquier consulta
-# que use columnas nuevas (pendingReview, distanceKm, city...) revienta y el
-# sitio entero cae con errores 500 sin explicacion. Es peor abortar el
-# despliegue y que la plataforma conserve la version anterior.
+# NO abortar el arranque si esto falla: la disponibilidad manda. Un 'exit 1'
+# dejaba el contenedor muerto (502 en todo el sitio) cuando la BD gestionada no
+# permite crear la shadow database que usa 'db push'.
 if ! timeout 180 npx prisma db push --skip-generate; then
-  echo "[start.sh] ERROR: no se pudo aplicar el esquema. Abortando el arranque para no dejar el sitio con el schema anterior." >&2
-  exit 1
+  echo "[start.sh] AVISO: 'prisma db push' no pudo aplicarse (revisa permisos de la BD)." >&2
+  echo "[start.sh] El sitio arranca igualmente." >&2
 fi
 
 echo "[start.sh] Arrancando Realtime Gateway (WS+SSE)..."
