@@ -2,13 +2,9 @@
 set -euo pipefail
 
 echo "[start.sh] Aplicando esquema de base de datos..."
-# NO abortar el arranque si esto falla: la disponibilidad manda. Un 'exit 1'
-# dejaba el contenedor muerto (502 en todo el sitio) cuando la BD gestionada no
-# permite crear la shadow database que usa 'db push'.
-if ! timeout 180 npx prisma db push --skip-generate; then
-  echo "[start.sh] AVISO: 'prisma db push' no pudo aplicarse (revisa permisos de la BD)." >&2
-  echo "[start.sh] El sitio arranca igualmente." >&2
-fi
+# El esquema se aplica tambien en la fase de build (nixpacks.toml) para que
+# Next no prerenderice paginas con un schema viejo. Ver scripts/apply-schema.sh.
+bash "$(dirname "$0")/apply-schema.sh"
 
 echo "[start.sh] Arrancando Realtime Gateway (WS+SSE)..."
 nohup npx tsx services/realtime/gateway.mts > /tmp/live-gateway.log 2>&1 </dev/null &

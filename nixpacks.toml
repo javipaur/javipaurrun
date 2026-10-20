@@ -5,7 +5,10 @@ nixPkgs = ["nodejs_20", "npm-10_x"]
 cmd = "npm ci"
 
 [phases.build]
-cmd = "npm run build"
+# El esquema se aplica ANTES de construir: Next prerenderiza paginas en el
+# build y, si la BD va atrasada, las consultas con columnas nuevas (pendingReview,
+# distanceKm...) lanzan y se guardan paginas vacias en el cache.
+cmd = "bash scripts/apply-schema.sh && npm run build"
 
 [start]
 cmd = "bash scripts/start.sh"
