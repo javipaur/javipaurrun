@@ -2,8 +2,17 @@
 set -euo pipefail
 
 echo "[start.sh] Aplicando esquema de base de datos..."
-# No bloquear el arranque si el push fallase o se colgara.
-timeout 180 npx prisma db push --skip-generate || echo "[start.sh] prisma db push falló (se continúa con el arranque)."
+# Si el push falla, el arranque CONTINUA con un schema viejo: cualquier consulta
+# que use columnas nuevas (pendingReview, distanceKm, city...) revienta y el
+# sitio entero cae con errores 500 sin explicacion. Es peor abortar el
+# despliegue y que la plataforma conserve la version anterior.
+if ! timeout 180 npx prisma db push --skip-generate; then
+  echo "[start.sh] ERROR: no se pudo aplicar el esquema. Abortando el arranque para no dejar el sitio con el schema anterior." >&2
+  exit 1
+fi
+
+echo "[start.sh] Arrancando Realtime Gateway (WS+SSE)..."
+nohup npx tsx services/realtime/gateway.mts > /tmp/live-gateway.log 2>&1 </dev/null &
 
 echo "[start.sh] Arrancando Next.js..."
 npm run start &

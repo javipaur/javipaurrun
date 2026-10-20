@@ -40,6 +40,7 @@ model User {
   results       RaceResult[]
   reviews       Review[]
   reminders     RaceReminder[]
+  memberships   OrganizerMembership[]
 }
 
 model Account {
@@ -99,11 +100,23 @@ model Race {
   status        RaceStatus     @default(PROXIMAMENTE)
   source        String?
   featured      Boolean        @default(false)
+  distanceKm    Float?
+  community     String?
+  city          String?
+  registrationUrl String?
+  pendingReview Boolean        @default(false)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   results       RaceResult[]
   reviews       Review[]
   raceReminders RaceReminder[]
+  events        Event[]
+
+  @@index([date, province])
+  @@index([date, type])
+  @@index([community])
+  @@index([province, city])
+  @@index([pendingReview])
 }
 
 model RaceResult {
@@ -162,6 +175,23 @@ model RaceReminder {
   @@unique([raceId, userId])
 }
 
+model RaceAlert {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  province   String?
+  community  String?
+  type       RaceType?
+  minKm      Float?
+  maxKm      Float?
+  active     Boolean  @default(true)
+  lastSentAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([active])
+  @@index([email])
+}
+
 model Review {
   id        String   @id @default(cuid())
   raceId    String
@@ -183,4 +213,126 @@ model ScrapeLog {
   status    String   @default("SUCCESS")
   error     String?
   createdAt DateTime @default(now())
+}
+
+enum RunnerStatus {
+  REGISTRADO
+  EN_CURSO
+  FINALIZADO
+  NO_PARTIR
+  DESCALIFICADO
+}
+
+enum PassSource {
+  QR
+  GEOFENCE
+  MANUAL
+  RFID
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     OrganizerMembership[]
+  events    Event[]
+}
+
+model OrganizerMembership {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String
+  role           String       @default("ADMIN")
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([organizationId, userId])
+}
+
+model Event {
+  id             String      @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String      @unique
+  description    String?
+  date           DateTime
+  raceId         String?
+  route          Json?
+  status         String      @default("DRAFT")
+  liveOpen       Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  race           Race?       @relation(fields: [raceId], references: [id])
+  checkpoints    Checkpoint[]
+  runners        EventRunner[]
+  positions      LivePosition[]
+  passes         CheckpointPass[]
+}
+
+model Checkpoint {
+  id               String           @id @default(cuid())
+  eventId          String
+  order            Int
+  name             String
+  km               Float
+  lat              Float?
+  lng              Float?
+  radius           Int              @default(50)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  event            Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  passes           CheckpointPass[]
+
+  @@unique([eventId, order])
+}
+
+model EventRunner {
+  id         String       @id @default(cuid())
+  eventId    String
+  bib        Int
+  name       String
+  category   String?
+  token      String       @unique
+  status     RunnerStatus @default(REGISTRADO)
+  startTime  DateTime?
+  finishTime DateTime?
+  createdAt  DateTime     @default(now())
+  event      Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  positions  LivePosition[]
+  passes     CheckpointPass[]
+
+  @@unique([eventId, bib])
+}
+
+model LivePosition {
+  id        String   @id @default(cuid())
+  runnerId  String
+  eventId   String
+  lat       Float
+  lng       Float
+  km        Float?
+  speed     Float?
+  heading   Float?
+  createdAt DateTime @default(now())
+  runner    EventRunner @relation(fields: [runnerId], references: [id], onDelete: Cascade)
+  event     Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, createdAt])
+}
+
+model CheckpointPass {
+  id           String     @id @default(cuid())
+  runnerId     String
+  checkpointId String
+  eventId      String
+  time         DateTime   @default(now())
+  source       PassSource @default(QR)
+  runner       EventRunner @relation(fields: [runnerId], references: [id], onDelete: Cascade)
+  checkpoint   Checkpoint  @relation(fields: [checkpointId], references: [id], onDelete: Cascade)
+  event        Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([runnerId, checkpointId])
 }

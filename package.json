@@ -7,8 +7,27 @@
     "build": "next build",
     "start": "next start",
     "import:races": "tsx scripts/import-all.mts",
+    "backfill:races": "tsx scripts/backfill-races.mts",
+    "smoke:scraping": "tsx scripts/smoke-scraping.mts",
+    "smoke:buscametas": "tsx scripts/smoke-buscametas.mts",
+    "smoke:sources": "tsx scripts/smoke-sources.mts",
+    "smoke:all-sources": "tsx scripts/smoke-all-sources.mts",
+    "smoke:extra-sources": "tsx scripts/smoke-extra-sources.mts",
+    "test:utils": "tsx scripts/test-utils.mts",
+    "test:filters": "tsx scripts/test-filters.mts",
+    "test:data-quality": "tsx scripts/test-data-quality.mts",
+    "test:submission": "tsx scripts/test-submission.mts",
+    "test:alerts": "tsx scripts/test-alerts.mts",
+    "test:visitor": "tsx scripts/test-visitor-location.mts",
+    "test:provinces": "tsx scripts/test-province-normalization.mts",
+    "test:ical": "tsx scripts/test-ical.mts",
+    "live:gateway": "tsx services/realtime/gateway.mts",
+    "seed:live": "tsx scripts/seed-live.mts",
     "lint": "eslint",
-    "postinstall": "npx prisma generate"
+    "postinstall": "npx prisma generate",
+    "icons": "tsx scripts/generate-icons.mts",
+    "test:province-slugs": "tsx scripts/test-province-slugs.mts",
+    "test:province-detection": "tsx scripts/test-province-detection.mts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
@@ -28,7 +47,9 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.83.0",
+    "redis": "^6.2.1",
     "resend": "^6.18.1",
+    "ws": "^8.21.3",
     "zod": "^4.4.3"
   },
   "engines": {

@@ -1,0 +1,59 @@
+/**
+ * Genera los iconos PWA (192 y 512) en PNG a partir del SVG del logo.
+ * Ejecutar con: npm run icons
+ */
+import fs from "node:fs";
+import path from "node:path";
+import sharp from "sharp";
+
+const OUT_DIR = path.join(process.cwd(), "public", "icons");
+
+const SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF4D00"/>
+      <stop offset="0.55" stop-color="#FF7A47"/>
+      <stop offset="1" stop-color="#FFB08C"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="62" height="62" rx="18" fill="url(#g)"/>
+  <path d="M11 54 L28 16" stroke="white" stroke-opacity="0.32" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M23 56 L34 16" stroke="white" stroke-opacity="0.22" stroke-width="2.6" stroke-linecap="round"/>
+  <rect x="45" y="10" width="9" height="44" rx="2" fill="white" fill-opacity="0.95"/>
+  <g fill="#FF4D00">
+    <rect x="45" y="10" width="4.5" height="7.4" rx="1"/>
+    <rect x="49.5" y="17.4" width="4.5" height="7.4" rx="1"/>
+    <rect x="45" y="24.8" width="4.5" height="7.4" rx="1"/>
+    <rect x="49.5" y="32.2" width="4.5" height="7.4" rx="1"/>
+    <rect x="45" y="39.6" width="4.5" height="7.4" rx="1"/>
+    <rect x="49.5" y="47" width="4.5" height="7" rx="1"/>
+  </g>
+  <g stroke="white" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="32" cy="15" r="3" fill="white" stroke="none"/>
+    <path d="M31.5 19 L36 27"/>
+    <path d="M36 27 L43 36 L45 45"/>
+    <path d="M34 30 L26 37 L23 44"/>
+    <path d="M33 22 L42 19"/>
+    <path d="M34 24 L28 31"/>
+  </g>
+</svg>`;
+
+async function main() {
+  fs.mkdirSync(OUT_DIR, { recursive: true });
+  fs.writeFileSync(path.join(OUT_DIR, "icon.svg"), SVG);
+
+  for (const size of [192, 512]) {
+    await sharp(Buffer.from(SVG)).resize(size, size).png().toFile(path.join(OUT_DIR, `icon-${size}.png`));
+    console.log(`  icon-${size}.png`);
+  }
+
+  // Favicon cuadrado sin padding extra.
+  await sharp(Buffer.from(SVG)).resize(32, 32).png().toFile(path.join(OUT_DIR, "favicon-32.png"));
+  await sharp(Buffer.from(SVG)).resize(16, 16).png().toFile(path.join(OUT_DIR, "favicon-16.png"));
+  console.log("Iconos generados en public/icons");
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});
