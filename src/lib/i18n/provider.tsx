@@ -24,9 +24,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("lang") as Lang | null;
-    if (stored === "es" || stored === "eu") setLangState(stored);
-    setMounted(true);
+    queueMicrotask(() => {
+      const stored = localStorage.getItem("lang") as Lang | null;
+      if (stored === "es" || stored === "eu") setLangState(stored);
+      setMounted(true);
+    });
   }, []);
 
   function setLang(l: Lang) {

@@ -11,6 +11,7 @@ interface PageProps {
 export default function EditRacePage({ params }: PageProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [race, setRace] = useState<any>(null);
   const [id, setId] = useState<string>("");
 

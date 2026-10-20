@@ -23,21 +23,12 @@ export default function MyResultsPage() {
   const [results, setResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(true);
 
-  async function fetchResults() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/me/results");
-      const data = await res.json();
-      setResults(data.results || []);
-    } catch {
-      setResults([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
-    fetchResults();
+    fetch("/api/me/results")
+      .then((res) => res.json())
+      .then((data) => setResults(data.results || []))
+      .catch(() => setResults([]))
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) {

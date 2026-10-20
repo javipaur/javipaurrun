@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import MapClient from "./MapClient";
+import { publicRaces } from "@/lib/race-filters";
 
 export const revalidate = 3600;
 
@@ -12,11 +13,11 @@ export const metadata: Metadata = {
 
 export default async function MapaPage() {
   const races = await prisma.race.findMany({
-    where: {
+    where: publicRaces({
       latitude: { not: null },
       longitude: { not: null },
       date: { gte: new Date() },
-    },
+    }),
     orderBy: { date: "asc" },
     take: 500,
   });
@@ -35,7 +36,7 @@ export default async function MapaPage() {
   }));
 
   const noCoords = await prisma.race.count({
-    where: { latitude: null, date: { gte: new Date() } },
+    where: publicRaces({ latitude: null, date: { gte: new Date() } }),
   });
 
   return (

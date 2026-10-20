@@ -9,6 +9,7 @@ interface PageProps {
 export default function EditBlogPostPage({ params }: PageProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [post, setPost] = useState<any>(null);
   const [id, setId] = useState<string>("");
 

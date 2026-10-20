@@ -10,7 +10,14 @@ export default async function AdminRacesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Carreras</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Carreras</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            <Link href="/admin/races/pending" className="text-orange-500 hover:underline">
+              Revisar propuestas pendientes
+            </Link>
+          </p>
+        </div>
         <Link
           href="/admin/races/new"
           className="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-600"

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+import { publicRaces } from "@/lib/race-filters";
 import { formatDate, getRaceTypeLabel } from "@/lib/utils";
 import Link from "next/link";
 import { ArrowLeft, Calendar, MapPin, Tag, Timer, Star } from "lucide-react";
@@ -32,7 +33,7 @@ export default async function ComparePage({ searchParams }: PageProps) {
     const idList = ids.split(",").filter(Boolean);
     if (idList.length >= 2) {
       const raw = await prisma.race.findMany({
-        where: { id: { in: idList } },
+        where: publicRaces({ id: { in: idList } }),
         include: { _count: { select: { results: true } } },
       });
 

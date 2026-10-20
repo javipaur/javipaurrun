@@ -48,6 +48,42 @@ export const raceCreateSchema = z.object({
 
 export const raceUpdateSchema = raceCreateSchema.partial();
 
+/**
+ * Formulario público de alta de carreras.
+ * Campos pensados para que un organizadorrellene en 1 minuto.
+ * `location` es opcional: si no viene, se deriva de `city` o `province`.
+ */
+export const raceAlertSchema = z.object({
+  email: z.string().email("Email inválido").max(255),
+  province: z.string().max(100).optional().nullable(),
+  community: z.string().max(50).optional().nullable(),
+  type: RaceTypeEnum.optional().nullable(),
+  minKm: z.coerce.number().min(0).max(300).optional().nullable(),
+  maxKm: z.coerce.number().min(0).max(300).optional().nullable(),
+}).refine(
+  (v) => v.minKm == null || v.maxKm == null || v.minKm <= v.maxKm,
+  { message: "La distancia mínima no puede ser mayor que la máxima", path: ["minKm"] }
+);
+
+export const raceSubmissionSchema = z.object({
+  name: z.string().min(4, "El nombre debe tener al menos 4 caracteres").max(200),
+  type: RaceTypeEnum,
+  distance: z.string().max(50).optional(),
+  city: z.string().max(100).optional(),
+  province: z.string().min(2, "Indica la provincia").max(100),
+  date: z
+    .string()
+    .refine((v) => !isNaN(Date.parse(v)), "Fecha inválida")
+    .refine((v) => new Date(v).getTime() >= Date.now() - 86_400_000, "La fecha no puede estar en el pasado"),
+  time: z.string().max(10).optional(),
+  description: z.string().max(2000).optional(),
+  url: z.string().url("URL oficial inválida").max(500).optional().or(z.literal("")),
+  registrationUrl: z.string().url("URL de inscripción inválida").max(500).optional().or(z.literal("")),
+  image: z.string().url("URL de imagen inválida").max(500).optional().or(z.literal("")),
+  price: z.string().max(50).optional(),
+  contactEmail: z.string().email("Email de contacto inválido").max(255).optional().or(z.literal("")),
+});
+
 export const blogCreateSchema = z.object({
   title: z.string().min(1).max(200),
   excerpt: z.string().max(500).optional(),
@@ -63,5 +99,19 @@ export const newsletterSchema = z.object({
 });
 
 export const scrapingSchema = z.object({
-  source: z.enum(["lasterketak", "rockthesport", "sportmaniacs", "buscametas"]),
+  source: z.enum(["lasterketak", "rockthesport", "sportmaniacs", "buscametas", "carreraspopulares"]),
+});
+
+export const livePositionSchema = z.object({
+  lat: z.coerce.number().min(-90).max(90),
+  lng: z.coerce.number().min(-180).max(180),
+  km: z.coerce.number().min(0).max(2000).optional(),
+  speed: z.coerce.number().min(0).max(100).optional(),
+  heading: z.coerce.number().min(0).max(360).optional(),
+  timestamp: z.coerce.number().int().optional(),
+});
+
+export const checkpointPassSchema = z.object({
+  bib: z.coerce.number().int().min(1),
+  source: z.enum(["QR", "MANUAL"]).default("MANUAL"),
 });

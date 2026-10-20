@@ -1,16 +1,19 @@
 import type { MetadataRoute } from "next";
+import { siteUrl } from "@/lib/site-url-server";
 
-export default function robots(): MetadataRoute.Robots {
-  const base = process.env.NEXT_PUBLIC_APP_URL || "https://javipaurrun.com";
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const base = await siteUrl();
 
   return {
     rules: [
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin/", "/api/"],
+        // Rutas privadas o sin valor para el buscador.
+        disallow: ["/admin/", "/api/", "/auth/", "/offline", "/enviar-carrera"],
       },
     ],
     sitemap: `${base}/sitemap.xml`,
+    host: base,
   };
 }

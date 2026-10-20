@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import type { Session } from "next-auth";
-import { Menu, X, Calendar, Home, Newspaper, User, Shield, MapPin, Moon, Sun, Timer, Trophy } from "lucide-react";
+import { Menu, X, Calendar, Home, Newspaper, User, Shield, MapPin, Moon, Sun, Timer, Trophy, Plus } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { useI18n } from "@/lib/i18n/provider";
 import SearchAutocomplete from "./SearchAutocomplete";
@@ -19,6 +19,7 @@ const categories = [
   { href: "/calendario?tipo=MARATON", label: "Maratón" },
   { href: "/calendario?tipo=MARCHA", label: "Marcha" },
   { href: "/calendario?tipo=ORIENTACION", label: "Orientación" },
+  { href: "/carreras", label: "Por provincia" },
   { href: "/mapa", label: "Mapa" },
   { href: "/calculadora-ritmo", label: "Calculadora" },
   { href: "/ranking", label: "Ranking" },
@@ -35,6 +36,8 @@ const bottomNav = [
 
 export default function Header({ session }: { session: Session | null }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeType = searchParams.get("tipo");
   const [menuOpen, setMenuOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const lastY = useRef(0);
@@ -129,7 +132,7 @@ export default function Header({ session }: { session: Session | null }) {
             <div className="flex items-center gap-1.5 overflow-x-auto py-2.5 scrollbar-none">
               {categories.map((cat) => {
                 const isActive = pathname === "/calendario" && cat.href.includes("tipo=")
-                  ? new URLSearchParams(window.location.search).get("tipo") === cat.href.split("=")[1]
+                  ? activeType === cat.href.split("=")[1]
                   : pathname === cat.href;
                 return (
                   <Link
@@ -163,6 +166,9 @@ export default function Header({ session }: { session: Session | null }) {
               </Link>
               <Link href="/calendario" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
                 <Calendar size={18} /> Calendario
+              </Link>
+              <Link href="/enviar-carrera" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <Plus size={18} /> Añadir carrera
               </Link>
               <Link href="/mapa" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
                 <MapPin size={18} /> Mapa

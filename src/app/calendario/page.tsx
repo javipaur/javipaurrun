@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import RaceFilters from "@/components/RaceFilters";
 import LoadMoreRaces from "@/components/LoadMoreRaces";
 import { Prisma, RaceType } from "@/generated/prisma/client";
-import { getAutonomousCommunity, parseKmFromDistance, distanceRanges } from "@/lib/utils";
+import { haversineKm } from "@/lib/utils";
+import { buildCalendarWhere, buildCalendarOrder, parseCalendarFilters } from "@/lib/race-filters";
 import { SearchX } from "lucide-react";
+import AutoLocationFilter from "@/components/AutoLocationFilter";
+import ActiveFilterChips from "@/components/ActiveFilterChips";
 
 const PAGE_SIZE = 12;
 
@@ -23,46 +27,69 @@ interface PageProps {
     distancia?: string;
     buscar?: string;
     page?: string;
+    mes?: string;
+    orden?: string;
+    lat?: string;
+    lng?: string;
+    radio?: string;
   }>;
 }
 
 export default async function CalendarPage({ searchParams }: PageProps) {
   const params = await searchParams;
 
-  const where: Prisma.RaceWhereInput = {};
-  where.date = { gte: new Date() };
+  const now = new Date();
+  const { near } = parseCalendarFilters(params);
+  const where = buildCalendarWhere(params, now);
+  const orderBy = buildCalendarOrder(params);
 
-  if (params.tipo && Object.values(RaceType).includes(params.tipo as RaceType)) where.type = params.tipo as RaceType;
-  if (params.provincia) where.province = params.provincia;
-  if (params.buscar) {
-    where.OR = [
-      { name: { contains: params.buscar } },
-      { location: { contains: params.buscar } },
-    ];
+  let totalFiltered: number;
+  let currentPage: number;
+  let paged: Awaited<ReturnType<typeof prisma.race.findMany>>;
+
+  if (near) {
+    const delta = Math.min(Math.max(near.radius / 111, 0.1), 2);
+    const nearWhere = {
+      ...where,
+      latitude: { not: null, gte: near.lat - delta, lte: near.lat + delta },
+      longitude: { not: null, gte: near.lng - delta, lte: near.lng + delta },
+    };
+
+    const candidates = await prisma.race.findMany({
+      where: nearWhere,
+      orderBy: { date: "asc" },
+      take: 1000,
+    });
+
+    const nearRaces = candidates
+      .filter((race) => race.latitude != null && race.longitude != null)
+      .map((race) => ({
+        race,
+        distance: haversineKm(near.lat, near.lng, race.latitude as number, race.longitude as number),
+      }))
+      .filter(({ distance }) => distance <= near.radius)
+      .sort((a, b) => a.distance - b.distance || new Date(a.race.date).getTime() - new Date(b.race.date).getTime())
+      .map(({ race }) => race);
+
+    totalFiltered = nearRaces.length;
+    currentPage = Math.min(
+      Math.max(1, parseInt(params.page || "1", 10)),
+      Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE))
+    );
+    paged = nearRaces.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  } else {
+    totalFiltered = await prisma.race.count({ where });
+    currentPage = Math.min(
+      Math.max(1, parseInt(params.page || "1", 10)),
+      Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE))
+    );
+    paged = await prisma.race.findMany({
+      where,
+      orderBy,
+      skip: (currentPage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    });
   }
-
-  const races = await prisma.race.findMany({
-    where,
-    orderBy: { date: "asc" },
-  });
-
-  // Memory filters (comunidad + distancia)
-  const allFiltered = races.filter((r) => {
-    if (params.comunidad && getAutonomousCommunity(r.province) !== params.comunidad) return false;
-    if (params.distancia) {
-      const distanceRange = distanceRanges.find((d) => d.value === params.distancia);
-      if (distanceRange) {
-        const km = parseKmFromDistance(r.distance);
-        if (km == null) return params.distancia === "sin-distancia";
-        if (!(km > distanceRange.min && km <= distanceRange.max)) return false;
-      }
-    }
-    return true;
-  });
-
-  const totalFiltered = allFiltered.length;
-  const currentPage = Math.min(Math.max(1, parseInt(params.page || "1", 10)), Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE)));
-  const paged = allFiltered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const baseParams = new URLSearchParams();
   if (params.tipo) baseParams.set("tipo", params.tipo);
@@ -70,6 +97,13 @@ export default async function CalendarPage({ searchParams }: PageProps) {
   if (params.comunidad) baseParams.set("comunidad", params.comunidad);
   if (params.distancia) baseParams.set("distancia", params.distancia);
   if (params.buscar) baseParams.set("buscar", params.buscar);
+  if (params.mes) baseParams.set("mes", params.mes);
+  if (params.orden) baseParams.set("orden", params.orden);
+  if (params.lat && params.lng) {
+    baseParams.set("lat", params.lat);
+    baseParams.set("lng", params.lng);
+    baseParams.set("radio", params.radio || "25");
+  }
 
   const queryString = baseParams.toString();
 
@@ -85,6 +119,13 @@ export default async function CalendarPage({ searchParams }: PageProps) {
           )}
         </p>
       </div>
+
+      {/* Suspense obligatorio: ActiveFilterChips lee useSearchParams(). */}
+      <Suspense fallback={null}>
+        <ActiveFilterChips total={totalFiltered} />
+      </Suspense>
+
+      <AutoLocationFilter />
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
         <RaceFilters />

@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { getAutonomousCommunity, parseKmFromDistance } from "./utils";
 import { geocodeUnlocatedRaces } from "./geocode";
 
 export interface ScrapedRace {
@@ -28,6 +29,14 @@ async function fetchWithTimeout(url: string, timeoutMs = 15000): Promise<Respons
   } finally {
     clearTimeout(timeout);
   }
+}
+
+function stripAccents(text: string): string {
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function decodeHtmlEntities(text: string): string {
@@ -88,7 +97,7 @@ function detectRaceType(name: string, distance?: string, sport?: string): string
 
   if (lower.includes("marcha") && !lower.includes("media maratón") && !lower.includes("media maraton")) return "MARCHA";
 
-  if (lower.includes("trail") || lower.includes("txakurkros")) return "TRAIL";
+  if (lower.includes("trail") || lower.includes("txakurkros") || lower.includes("montaña") || lower.includes("montana") || lower.includes("carrera por mont") || lower.includes("mendi")) return "TRAIL";
 
   if (
     lower.includes("maratón") || lower.includes("marathon") ||
@@ -227,7 +236,7 @@ export async function scrapeFromLasterketak(): Promise<ScrapedRace[]> {
   try {
     let page = 1;
     let totalPages = 1;
-    const maxPages = 50;
+    const maxPages = Math.min(20, Number(process.env.SCRAPER_MAX_PAGES) || 20);
 
     while (page <= totalPages && page <= maxPages) {
       const response = await fetchWithTimeout(
@@ -420,7 +429,7 @@ export async function scrapeFromSportmaniacs(): Promise<ScrapedRace[]> {
   try {
     const pageSize = 100;
     let page = 1;
-    const maxPages = 200;
+    const maxPages = Math.min(20, Number(process.env.SCRAPER_MAX_PAGES) || 20);
 
     while (page <= maxPages) {
       const res = await fetchWithTimeout(
@@ -574,7 +583,147 @@ export async function scrapeFromBuscametas(): Promise<ScrapedRace[]> {
   return races;
 }
 
-function detectProvince(text: string): string {
+const INE_PROVINCE_MAP: Record<string, string> = {
+  "1": "Araba",
+  "2": "Albacete",
+  "3": "Alicante",
+  "4": "Almería",
+  "5": "Ávila",
+  "6": "Badajoz",
+  "7": "Baleares (Illes)",
+  "8": "Barcelona",
+  "9": "Burgos",
+  "10": "Cáceres",
+  "11": "Cádiz",
+  "12": "Castellón",
+  "13": "Ciudad Real",
+  "14": "Córdoba",
+  "15": "A Coruña",
+  "16": "Cuenca",
+  "17": "Girona",
+  "18": "Granada",
+  "19": "Guadalajara",
+  "20": "Gipuzkoa",
+  "21": "Huelva",
+  "22": "Huesca",
+  "23": "Jaén",
+  "24": "León",
+  "25": "Lleida",
+  "26": "La Rioja",
+  "27": "Lugo",
+  "28": "Madrid",
+  "29": "Málaga",
+  "30": "Murcia",
+  "31": "Navarra",
+  "32": "Ourense",
+  "33": "Asturias",
+  "34": "Palencia",
+  "35": "Las Palmas",
+  "36": "Pontevedra",
+  "37": "Salamanca",
+  "38": "Santa Cruz de Tenerife",
+  "39": "Cantabria",
+  "40": "Segovia",
+  "41": "Sevilla",
+  "42": "Soria",
+  "43": "Tarragona",
+  "44": "Teruel",
+  "45": "Toledo",
+  "46": "Valencia",
+  "47": "Valladolid",
+  "48": "Bizkaia",
+  "49": "Zamora",
+  "50": "Zaragoza",
+  "51": "Ceuta",
+  "52": "Melilla",
+};
+
+export async function scrapeFromCarrerasPopulares(): Promise<ScrapedRace[]> {
+  const races: ScrapedRace[] = [];
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000);
+    let response: Response;
+    try {
+      response = await fetch(
+        "https://carreraspopulares.com/api/calendario_carreras/getCarreras/es",
+        {
+          signal: controller.signal,
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
+            Accept: "application/json",
+            Referer:
+              "https://carreraspopulares.com/calendario_carreras/lista/CuVPow/carreras_espa%C3%B1a_proximos_30_dias",
+          },
+        }
+      );
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (!response.ok) {
+      console.error(`CarrerasPopulares API error: ${response.status}`);
+      return races;
+    }
+
+    const data = (await response.json()) as {
+      data?: { ediciones?: Record<string, unknown>[] };
+    };
+    const ediciones = data.data?.ediciones || [];
+
+    for (const ed of ediciones) {
+      const name = decodeHtmlEntities(
+        (ed.titulo as string || "").trim()
+      );
+      if (!name || name.length < 3) continue;
+
+      const fechaRaw = (ed.fechaED as string) || "";
+      const dateMatch = fechaRaw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (!dateMatch) continue;
+      const dateStr = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
+
+      const dateObj = new Date(`${dateStr}T12:00:00`);
+      if (dateObj < new Date()) continue;
+
+      const distance = parseDistanceFromText((ed.distanciaTxt as string) || "");
+      const type = detectRaceType(name, distance);
+
+      const poblacion = (ed.poblacion as string || "").trim();
+      const city = poblacion
+        .replace(/\s*\([^)]*\)\s*$/, "")
+        .replace(/\s+/g, " ")
+        .trim() || "Por determinar";
+
+      const ineCode = String(ed.idProv ?? "");
+      const province = INE_PROVINCE_MAP[ineCode] || detectProvince(poblacion);
+
+      const organiza = (ed.organiza as string || "").trim();
+      const descParts = ["Organiza: " + organiza].filter((p) => p.length > "Organiza: ".length);
+
+      races.push({
+        name,
+        type,
+        distance,
+        location: city,
+        province,
+        date: dateStr,
+        time: (ed.horaTxt as string)?.trim() || undefined,
+        description: descParts.length > 0 ? descParts.join(". ") : undefined,
+        url: (ed.url_amigable as string) || (ed.url_FC as string) || undefined,
+        image: isValidImageUrl(ed.cartel as string),
+        city: city !== "Por determinar" ? city : undefined,
+      });
+    }
+  } catch (error) {
+    console.error("Error scraping CarrerasPopulares:", error);
+  }
+
+  return races;
+}
+
+export function detectProvince(text: string): string {
   const provinceMap: Record<string, string[]> = {
     Araba: ["álava", "araba", "vitoria", "gasteiz", "llodio", "amurrio", "laudio"],
     Bizkaia: ["bizkaia", "vizcaya", "bilbao", "bilbo", "barakaldo", "getxo", "portugalete", "durango", "gernika", "leioa", "basauri", "mungia"],
@@ -626,14 +775,53 @@ function detectProvince(text: string): string {
     Guadalajara: ["guadalajara"],
     Ávila: ["ávila", "avila"],
     Cáceres: ["cáceres", "caceres"],
+    Ceuta: ["ceuta"],
+    Melilla: ["melilla"],
   };
 
-  const lower = text.toLowerCase();
+  const lower = stripAccents(text).toLowerCase();
   for (const [province, keywords] of Object.entries(provinceMap)) {
-    if (keywords.some((kw) => lower.includes(kw))) return province;
+    if (
+      keywords.some((kw) => {
+        const needle = stripAccents(kw).toLowerCase();
+        if (!needle) return false;
+        // Límites de palabra: evita falsos positivos como "marcelona" -> "barcelona".
+        const pattern = new RegExp(`(^|[^a-z0-9])${escapeRegExp(needle)}([^a-z0-9]|$)`, "i");
+        return pattern.test(lower);
+      })
+    ) {
+      return province;
+    }
   }
 
+  // Segundo intento: la tabla canónica de alias (PROVINCE_CANON). Cubre
+  // topónimos que `provinceMap` no lista y que antes acababan en "Otra".
+  const aliasHit = matchProvinceAlias(lower);
+  if (aliasHit) return aliasHit;
+
   return "Otra";
+}
+
+/**
+ * Busca la provincia en un texto usando la tabla canónica de alias.
+ *
+ * Usa limites de palabra: `includes()` a pelo daria falsos positivos (por
+ * ejemplo el alias "illes" de Baleares dentro de cualquier palabra que lo
+ * contenga). El texto debe venir ya normalizado (sin acentos, en minusculas).
+ */
+export function matchProvinceAlias(normalizedText: string): string | null {
+  if (!normalizedText) return null;
+
+  for (const { canonical, aliases } of PROVINCE_CANON) {
+    for (const alias of aliases) {
+      const needle = stripAccents(alias).toLowerCase().trim();
+      if (!needle) continue;
+      const pattern = new RegExp(`(^|[^a-z0-9])${escapeRegExp(needle)}([^a-z0-9]|$)`, "i");
+      if (pattern.test(normalizedText)) return canonical;
+    }
+  }
+
+  return null;
 }
 
 const PROVINCE_CANON: Array<{ canonical: string; aliases: string[] }> = [
@@ -786,8 +974,11 @@ export async function importScrapedRaces(scrapedRaces: ScrapedRace[], source: st
       name: race.name,
       type: race.type as "ASFALTO" | "MEDIA_MARATON" | "MARATON" | "TRAIL" | "MARCHA" | "ORIENTACION",
       distance: race.distance,
+      distanceKm: parseKmFromDistance(race.distance),
       location: race.location,
       province: race.province,
+      community: getAutonomousCommunity(race.province),
+      city: race.city,
       date: new Date(race.date),
       time: race.time,
       description: race.description,
@@ -795,6 +986,7 @@ export async function importScrapedRaces(scrapedRaces: ScrapedRace[], source: st
       image: isValidImageUrl(race.image),
       price: race.price,
       source,
+      registrationUrl: race.url,
     };
 
     if (existingId) {
@@ -864,6 +1056,7 @@ const sources = [
   { key: "rockthesport", label: "RockTheSport", scrape: scrapeFromRockTheSport },
   { key: "sportmaniacs", label: "Sportmaniacs", scrape: scrapeFromSportmaniacs },
   { key: "buscametas", label: "Buscametas", scrape: scrapeFromBuscametas },
+  { key: "carreraspopulares", label: "CarrerasPopulares", scrape: scrapeFromCarrerasPopulares },
 ] as const;
 
 export async function runAllScrapers(): Promise<ScrapeResult[]> {

@@ -2,8 +2,9 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { Search, SlidersHorizontal, X, MapPin } from "lucide-react";
+import { Search, SlidersHorizontal, X, MapPin, Download } from "lucide-react";
 import { raceTypes, provinces, autonomousCommunities, distanceRanges } from "@/lib/utils";
+import AlertSignup from "./AlertSignup";
 
 const SAVED_TIPO = "jp-filtro-tipo";
 const SAVED_PROVINCIA = "jp-filtro-provincia";
@@ -93,6 +94,26 @@ export default function RaceFilters() {
     );
   }
 
+  function findNearby() {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete("page");
+        params.set("lat", String(pos.coords.latitude));
+        params.set("lng", String(pos.coords.longitude));
+        params.set("radio", "25");
+        params.delete("provincia");
+        params.delete("comunidad");
+        router.push(`/calendario?${params.toString()}`);
+        setLocating(false);
+      },
+      () => setLocating(false),
+      { timeout: 10000 }
+    );
+  }
+
   function clearFilters() {
     localStorage.removeItem(SAVED_TIPO);
     localStorage.removeItem(SAVED_PROVINCIA);
@@ -143,6 +164,40 @@ export default function RaceFilters() {
         </select>
       </div>
 
+      <div>
+        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Mes</label>
+        <select
+          value={searchParams.get("mes") || ""}
+          onChange={(e) => updateFilter("mes", e.target.value)}
+          className="field"
+        >
+          <option value="">Todos</option>
+          {Array.from({ length: 12 }, (_, i) => {
+            const d = new Date();
+            d.setDate(1);
+            d.setMonth(d.getMonth() + i);
+            return (
+              <option key={i} value={`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`}>
+                {d.toLocaleDateString("es-ES", { month: "long", year: "numeric" })}
+              </option>
+            );
+          })}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Ordenar por</label>
+        <select
+          value={searchParams.get("orden") || ""}
+          onChange={(e) => updateFilter("orden", e.target.value)}
+          className="field"
+        >
+          <option value="">Fecha (más próximas)</option>
+          <option value="distancia-asc">Distancia (menor a mayor)</option>
+          <option value="distancia-desc">Distancia (mayor a menor)</option>
+        </select>
+      </div>
+
       <button
         onClick={detectLocation}
         disabled={locating}
@@ -150,6 +205,15 @@ export default function RaceFilters() {
       >
         <MapPin size={14} />
         {locating ? "Detectando ubicación..." : "Usar mi ubicación"}
+      </button>
+
+      <button
+        onClick={findNearby}
+        disabled={locating}
+        className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-full border border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-300 text-sm font-semibold hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors disabled:opacity-60"
+      >
+        <MapPin size={14} />
+        Carreras cerca de mi
       </button>
 
       <div>
@@ -189,6 +253,19 @@ export default function RaceFilters() {
           Limpiar filtros
         </button>
       )}
+
+      <AlertSignup compact />
+
+      <a
+        href={`/api/calendario/export?${searchParams.toString()}`}
+        className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-full border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+      >
+        <Download size={14} />
+        Exportar a calendario
+      </a>
+      <p className="text-[11px] text-text-secondary leading-snug -mt-3">
+        Descarga un archivo .ics con las carreras que estás viendo (máx. 500).
+      </p>
     </div>
   );
 

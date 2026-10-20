@@ -1,7 +1,10 @@
 import Link from "next/link";
 import Logo from "./Logo";
+import { getLastSync, timeAgo } from "@/lib/data-quality";
 
-export default function Footer() {
+export default async function Footer() {
+  const lastSync = await getLastSync();
+
   return (
     <footer className="bg-[#0d0e13] dark:bg-[#0a0a0c] border-t border-white/5 mt-auto text-gray-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
@@ -43,6 +46,7 @@ export default function Footer() {
               <li><Link href="/about" className="text-sm text-gray-400 hover:text-white transition-colors">Sobre mí</Link></li>
               <li><Link href="/calculadora-ritmo" className="text-sm text-gray-400 hover:text-white transition-colors">Calculadora de ritmo</Link></li>
               <li><Link href="/ranking" className="text-sm text-gray-400 hover:text-white transition-colors">Ranking</Link></li>
+              <li><Link href="/completitud" className="text-sm text-gray-400 hover:text-white transition-colors">Estado de los datos</Link></li>
               <li><Link href="/auth/register" className="text-sm text-gray-400 hover:text-white transition-colors">Crear cuenta</Link></li>
             </ul>
           </div>
@@ -64,7 +68,16 @@ export default function Footer() {
           </p>
           <p className="text-xs text-gray-600 flex items-center gap-1.5">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Calendario actualizado a diario
+            {lastSync ? (
+              <>
+                Datos sincronizados {timeAgo(lastSync)} ·{" "}
+                <Link href="/completitud" className="hover:text-gray-400 transition-colors">
+                  ver cobertura
+                </Link>
+              </>
+            ) : (
+              "Calendario actualizado a diario"
+            )}
           </p>
         </div>
       </div>

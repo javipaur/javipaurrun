@@ -5,6 +5,7 @@ import Link from "next/link";
 const adminLinks = [
   { href: "/admin", label: "Dashboard", icon: "📊" },
   { href: "/admin/races", label: "Carreras", icon: "🏃" },
+  { href: "/admin/races/pending", label: "Propuestas", icon: "📥" },
   { href: "/admin/blog", label: "Blog", icon: "📝" },
   { href: "/admin/scraping", label: "Scraping", icon: "🤖" },
   { href: "/admin/results", label: "Mis resultados", icon: "⏱️" },

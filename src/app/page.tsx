@@ -8,48 +8,65 @@ import NearbyRaces from "@/components/NearbyRaces";
 import HeroParallax from "@/components/HeroParallax";
 import { EventJsonLd } from "@/components/JsonLd";
 import { ArrowRight, CalendarDays, ChevronRight, Mail, MapPin, Search } from "lucide-react";
+import { publicRaces } from "@/lib/race-filters";
 
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "JavipaurRun - Calendario de carreras populares en España",
+  title: "Carreras populares en España | Calendario 2026 | JavipaurRun",
   description:
-    "Encuentra tu próxima carrera popular en toda España. Calendario actualizado de carreras de asfalto, trail, marchas y orientación. Scraping automático desde rockthesport.com, sportmaniacs.com y más fuentes.",
+    "Encuentra tu próxima carrera de running, trail, media maratón, maratón, marcha u orientación. Más de 1.000 carreras en toda España, filtradas por provincia, comunidad, distancia y mes. Actualizado a diario.",
+  keywords: [
+    "carreras populares",
+    "calendario de carreras",
+    "carreras de running",
+    "carreras de trail",
+    "media maratón",
+    "maratón",
+    "carreras en España",
+    "inscripciones carreras",
+  ],
+  alternates: { canonical: "/" },
   openGraph: {
-    title: "JavipaurRun - Calendario de carreras populares",
+    title: "JavipaurRun — Calendario de carreras populares en España",
     description:
-      "Encuentra tu próxima carrera popular en toda España",
+      "Running, trail, medias maratones, maratones y marchas en toda España. Filtra por provincia, distancia y mes.",
     siteName: "JavipaurRun",
     type: "website",
     locale: "es_ES",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "JavipaurRun — Calendario de carreras populares en España",
+    description: "Running, trail y maratón en toda España, actualizado a diario.",
   },
 };
 
 export default async function Home() {
   const [featuredRaces, raceCounts, latestPosts, totalRaces, provinceStats, openRaces, gpsRaces] = await Promise.all([
     prisma.race.findMany({
-      where: { date: { gte: new Date() } },
+      where: publicRaces({ date: { gte: new Date() } }),
       orderBy: { date: "asc" },
       take: 6,
     }),
-    prisma.race.groupBy({ by: ["type"], _count: true }),
+    prisma.race.groupBy({ by: ["type"], where: publicRaces(), _count: true }),
     prisma.blogPost.findMany({
       where: { published: true },
       orderBy: { createdAt: "desc" },
       take: 3,
     }),
-    prisma.race.count(),
-    prisma.race.groupBy({ by: ["province"], _count: true }),
+    prisma.race.count({ where: publicRaces() }),
+    prisma.race.groupBy({ by: ["province"], where: publicRaces({ date: { gte: new Date() } }), _count: true }),
     prisma.race.count({
-      where: { date: { gte: new Date() }, url: { not: null } },
+      where: publicRaces({ date: { gte: new Date() }, url: { not: null } }),
     }),
     prisma.race.findMany({
-      where: {
+      where: publicRaces({
         date: { gte: new Date() },
         latitude: { not: null },
         longitude: { not: null },
         location: { not: "Por determinar" },
-      },
+      }),
       orderBy: { date: "asc" },
       select: {
         id: true,

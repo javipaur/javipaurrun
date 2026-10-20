@@ -4,109 +4,8 @@ import { prisma } from "@/lib/prisma";
 import RaceCard from "@/components/RaceCard";
 import Link from "next/link";
 import { ArrowLeft, MapPin } from "lucide-react";
+import { cities, cityWhere } from "@/lib/cities";
 
-const cities: Record<string, { name: string; province: string; description: string }> = {
-  bilbao: {
-    name: "Bilbao",
-    province: "Bizkaia",
-    description: "Carreras populares en Bilbao y alrededores. Running, trail y marchas en la capital de Bizkaia.",
-  },
-  "vitoria-gasteiz": {
-    name: "Vitoria-Gasteiz",
-    province: "Araba",
-    description: "Carreras populares en Vitoria-Gasteiz. Running, trail y marchas en la capital de Álava/Araba.",
-  },
-  gasteiz: {
-    name: "Vitoria-Gasteiz",
-    province: "Araba",
-    description: "Carreras populares en Vitoria-Gasteiz. Running, trail y marchas en la capital de Álava/Araba.",
-  },
-  donostia: {
-    name: "Donostia-San Sebastián",
-    province: "Gipuzkoa",
-    description: "Carreras populares en Donostia-San Sebastián. Running, trail y marchas en la capital de Gipuzkoa.",
-  },
-  "san-sebastian": {
-    name: "Donostia-San Sebastián",
-    province: "Gipuzkoa",
-    description: "Carreras populares en Donostia-San Sebastián. Running, trail y marchas en la capital de Gipuzkoa.",
-  },
-  santander: {
-    name: "Santander",
-    province: "Cantabria",
-    description: "Carreras populares en Santander. Running, trail y marchas en la capital de Cantabria.",
-  },
-  logrono: {
-    name: "Logroño",
-    province: "La Rioja",
-    description: "Carreras populares en Logroño. Running, trail y marchas en la capital de La Rioja.",
-  },
-  pamplona: {
-    name: "Pamplona-Iruña",
-    province: "Navarra",
-    description: "Carreras populares en Pamplona-Iruña. Running, trail y marchas en la capital de Navarra.",
-  },
-  "pamplona-iruna": {
-    name: "Pamplona-Iruña",
-    province: "Navarra",
-    description: "Carreras populares en Pamplona-Iruña. Running, trail y marchas en la capital de Navarra.",
-  },
-  burgos: {
-    name: "Burgos",
-    province: "Burgos",
-    description: "Carreras populares en Burgos. Running, trail y marchas en la capital burgalesa.",
-  },
-  zamora: {
-    name: "Zamora",
-    province: "Zamora",
-    description: "Carreras populares en Zamora. Running, trail y marchas en la capital zamorana.",
-  },
-  getxo: {
-    name: "Getxo",
-    province: "Bizkaia",
-    description: "Carreras populares en Getxo. Running y trail en la costa de Bizkaia.",
-  },
-  durango: {
-    name: "Durango",
-    province: "Bizkaia",
-    description: "Carreras populares en Durango. Running y trail en el Duranguesado.",
-  },
-  eibar: {
-    name: "Eibar",
-    province: "Gipuzkoa",
-    description: "Carreras populares en Eibar. Running y trail en el corazón de Gipuzkoa.",
-  },
-  irun: {
-    name: "Irun",
-    province: "Gipuzkoa",
-    description: "Carreras populares en Irun. Running y trail en la frontera de Gipuzkoa.",
-  },
-  "torrelavega": {
-    name: "Torrelavega",
-    province: "Cantabria",
-    description: "Carreras populares en Torrelavega. Running y trail en Cantabria.",
-  },
-  tudela: {
-    name: "Tudela",
-    province: "Navarra",
-    description: "Carreras populares en Tudela. Running y trail en la Ribera de Navarra.",
-  },
-  "barakaldo": {
-    name: "Barakaldo",
-    province: "Bizkaia",
-    description: "Carreras populares en Barakaldo. Running en la Margen Izquierda de Bizkaia.",
-  },
-  portugalete: {
-    name: "Portugalete",
-    province: "Bizkaia",
-    description: "Carreras populares en Portugalete. Running en la Margen Izquierda de Bizkaia.",
-  },
-  "santurtzi": {
-    name: "Santurtzi",
-    province: "Bizkaia",
-    description: "Carreras populares en Santurtzi. Running en la Margen Izquierda de Bizkaia.",
-  },
-};
 
 interface PageProps {
   params: Promise<{ city: string }>;
@@ -138,10 +37,7 @@ export default async function CityPage({ params }: PageProps) {
   if (!info) notFound();
 
   const races = await prisma.race.findMany({
-    where: {
-      location: { contains: info.name },
-      date: { gte: new Date() },
-    },
+    where: cityWhere(info),
     orderBy: { date: "asc" },
   });
 

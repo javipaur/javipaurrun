@@ -5,7 +5,9 @@ export function cn(...inputs: (string | boolean | undefined | null)[]) {
 export function slugify(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[^a-z0-9áéíóúñü]+/g, "-")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 }
@@ -121,7 +123,77 @@ const provinceToCommunity: Record<string, string> = {
   "Illes Balears": "baleares",
 };
 
-const provinces = Object.keys(provinceToCommunity).sort();
+export const PROVINCE_SLUGS: Record<string, string> = {
+  "a-coruna": "A Coruña",
+  alava: "Álava/Araba",
+  arabako: "Álava/Araba",
+  albacete: "Albacete",
+  alicante: "Alicante",
+  almeria: "Almería",
+  asturias: "Asturias",
+  avila: "Ávila",
+  badajoz: "Badajoz",
+  baleares: "Baleares",
+  barcelona: "Barcelona",
+  bizkaia: "Bizkaia",
+  burgos: "Burgos",
+  caceres: "Cáceres",
+  cadiz: "Cádiz",
+  cantabria: "Cantabria",
+  castellon: "Castellón",
+  "ciudad-real": "Ciudad Real",
+  cordoba: "Córdoba",
+  cuenca: "Cuenca",
+  girona: "Girona",
+  granada: "Granada",
+  guadalajara: "Guadalajara",
+  gipuzkoa: "Gipuzkoa",
+  huelva: "Huelva",
+  huesca: "Huesca",
+  jaen: "Jaén",
+  leon: "León",
+  lleida: "Lleida",
+  lugo: "Lugo",
+  madrid: "Madrid",
+  malaga: "Málaga",
+  murcia: "Murcia",
+  navarra: "Navarra",
+  ourense: "Ourense",
+  palencia: "Palencia",
+  "las-palmas": "Las Palmas",
+  pontevedra: "Pontevedra",
+  "la-rioja": "La Rioja",
+  salamanca: "Salamanca",
+  "santa-cruz-de-tenerife": "Santa Cruz de Tenerife",
+  segovia: "Segovia",
+  sevilla: "Sevilla",
+  soria: "Soria",
+  tarragona: "Tarragona",
+  teruel: "Teruel",
+  toledo: "Toledo",
+  valencia: "Valencia",
+  valladolid: "Valladolid",
+  zamora: "Zamora",
+  zaragoza: "Zaragoza",
+  ceuta: "Ceuta",
+  melilla: "Melilla",
+};
+
+/**
+ * Alias de cada provincia hacia el nombre canónico que se guarda en la BD.
+ * Sin esto "Álava" y "Araba" aparecen como dos provincias distintas.
+ */
+const PROVINCE_CANONICAL: Record<string, string> = {
+  "Álava": "Araba",
+  "Guipúzcoa": "Gipuzkoa",
+  "Illes Balears": "Baleares (Illes)",
+  Vizcaya: "Bizkaia",
+};
+
+/** Provincias únicas y canónicas (las que existen en `Race.province`). */
+const provinces = Array.from(
+  new Set(Object.keys(provinceToCommunity).map((p) => PROVINCE_CANONICAL[p] ?? p))
+).sort();
 
 const raceTypes = [
   { value: "ASFALTO", label: "Asfalto" },
@@ -133,7 +205,7 @@ const raceTypes = [
 ] as const;
 
 const distanceRanges = [
-  { value: "corto", label: "Corta (≤ 5 km)", min: 0, max: 5 },
+  { value: "corto", label: "Corta (\u2264 5 km)", min: 0, max: 5 },
   { value: "medio", label: "Media (5-15 km)", min: 5, max: 15 },
   { value: "largo", label: "Larga (15-42 km)", min: 15, max: 42 },
   { value: "ultra", label: "Ultra (> 42 km)", min: 42, max: Infinity },
@@ -154,6 +226,11 @@ export function getProvinceLabel(value: string): string {
 
 export function getRaceTypeLabel(value: string): string {
   return raceTypes.find((t) => t.value === value)?.label || value;
+}
+
+export function getProvincesByCommunity(community: string): string[] {
+  if (!community) return [];
+  return Object.keys(provinceToCommunity).filter((province) => provinceToCommunity[province] === community);
 }
 
 export function getAutonomousCommunity(province: string): string {
@@ -218,4 +295,143 @@ export function getRaceDetailColor(type: string): string {
 
 export function getRaceHexColor(type: string): string {
   return RACE_TYPE_HEX_COLORS[type] || "#6b7280";
+}
+
+/**
+ * Nombres alternativos que acabamos usando en distintas fuentes para la misma
+ * provincia. La clave canónica es la que realmente se guarda en `Race.province`.
+ */
+const PROVINCE_ALIASES: Record<string, string> = {
+  alava: "Araba",
+  "alava/araba": "Araba",
+  araba: "Araba",
+  vizcaya: "Bizkaia",
+  bizkaia: "Bizkaia",
+  guipuzcoa: "Gipuzkoa",
+  gipuzkoa: "Gipuzkoa",
+  "illes balears": "Baleares (Illes)",
+  baleares: "Baleares (Illes)",
+  "baleares (illes)": "Baleares (Illes)",
+  "la rioja": "La Rioja",
+  "rioja": "La Rioja",
+  "las palmas": "Las Palmas",
+  "santa cruz de tenerife": "Santa Cruz de Tenerife",
+  "a coruna": "A Coruña",
+  coruna: "A Coruña",
+  "san sebastian": "Gipuzkoa",
+};
+
+function stripAccentsLoose(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Convierte cualquier variante de nombre de provincia (acentos, mayúsculas,
+ * nombres alternativos) a la forma canónica usada en la base de datos.
+ */
+export function normalizeProvinceName(value?: string | null): string | null {
+  if (!value) return null;
+  const flat = stripAccentsLoose(value);
+  if (!flat) return null;
+
+  if (PROVINCE_ALIASES[flat]) return PROVINCE_ALIASES[flat];
+
+  const exact = provinces.find((p) => stripAccentsLoose(p) === flat);
+  if (exact) return exact;
+
+  const canonicalOnly = PROVINCE_ALIASES[flat];
+  if (canonicalOnly) return canonicalOnly;
+
+  // Última resort: la provincia canónica aparece dentro del texto.
+  const contained = provinces.find(
+    (p) => stripAccentsLoose(p).length >= 5 && flat.includes(stripAccentsLoose(p))
+  );
+  if (contained) return contained;
+
+  return null;
+}
+
+/**
+ * Slug de URL para un nombre de provincia tal y como vive en `Race.province`.
+ *
+ * Inverso de getProvinceDbNames. Necesario porque los tres sitios donde se
+ * guarda el nombre no hablan el mismo idioma:
+ *   - `PROVINCE_SLUGS` usa el nombre visible: "Álava/Araba", "Baleares"
+ *   - el scraper escribe:                     "Araba", "Baleares (Illes)"
+ * Con igualdad estricta, esas provincias no enlazan a su pagina y quedan
+ * fuera del sitemap.
+ */
+export function slugForProvinceName(province: string): string | null {
+  if (!province) return null;
+  const flat = stripAccentsLoose(province.trim());
+  if (!flat) return null;
+
+  // 1. Coincidencia directa (la mayoria de los casos).
+  for (const [slug, display] of Object.entries(PROVINCE_SLUGS)) {
+    if (stripAccentsLoose(display) === flat) return slug;
+  }
+
+  // 2. Alguna de las partes del nombre visible ("Álava/Araba" -> "araba").
+  for (const [slug, display] of Object.entries(PROVINCE_SLUGS)) {
+    const parts = display.split(/[\/·]/).map((p) => stripAccentsLoose(p)).filter(Boolean);
+    if (parts.includes(flat)) return slug;
+  }
+
+  // 3. El nombre de la BD contiene el visible o al reves ("Baleares (Illes)").
+  for (const [slug, display] of Object.entries(PROVINCE_SLUGS)) {
+    const d = stripAccentsLoose(display);
+    if (flat.includes(d) || d.includes(flat)) return slug;
+  }
+
+  // 4. Coincidencia contra los nombres reales de provincia.
+  const inList = provinces.find((p) => stripAccentsLoose(p) === flat);
+  if (inList) {
+    for (const [slug, display] of Object.entries(PROVINCE_SLUGS)) {
+      if (getProvinceDbNames(slug).some((n) => stripAccentsLoose(n) === flat)) return slug;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Nombres de provincia tal y como están en `Race.province` para un slug de URL.
+ *
+ * Hace falta porque el nombre visible y el de la BD no siempre coinciden:
+ * el slug "alava" se muestra como "Álava/Araba" pero en la BD solo existe "Araba".
+ * Filtrar por el nombre visible devolvía 0 resultados.
+ */
+export function getProvinceDbNames(slug: string): string[] {
+  const display = PROVINCE_SLUGS[slug];
+  if (!display) return [];
+
+  const parts = display.split("/").map((p) => stripAccentsLoose(p)).filter(Boolean);
+
+  const matches = provinces.filter((p) => {
+    const flat = stripAccentsLoose(p);
+    return parts.some((part) => flat === part || (part.length >= 4 && flat.includes(part)));
+  });
+
+  return matches.length > 0 ? matches : [display];
+}
+
+/** Provincia canónica (la que existe en la BD) a partir de un slug de URL. */
+export function getProvinceFromSlug(slug: string): string | null {
+  return getProvinceDbNames(slug)[0] ?? null;
+}
+
+export function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
 }

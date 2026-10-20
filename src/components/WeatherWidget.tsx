@@ -55,7 +55,7 @@ export default function WeatherWidget({
     const diffDays = Math.ceil((raceDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0 || diffDays > 16) {
-      setLoading(false);
+      queueMicrotask(() => setLoading(false));
       return;
     }
 

@@ -1,44 +1,42 @@
-export function OrganizationJsonLd() {
+import { siteUrl } from "@/lib/site-url-server";
+
+export async function OrganizationJsonLd() {
+  const SITE_URL = await siteUrl();
   const json = {
     "@context": "https://schema.org",
-    "@type": "SportsOrganization",
+    "@type": "Organization",
+    "@id": `${SITE_URL}/#organization`,
     name: "JavipaurRun",
-    url: process.env.NEXT_PUBLIC_APP_URL || "https://javipaurrun.com",
+    alternateName: "Javipaur Run",
+    url: SITE_URL,
     description:
-      "Calendario de carreras populares en Euskadi, Cantabria, Burgos, La Rioja, Navarra y Zamora",
-    sport: "Running",
-    knowsAbout: ["Atletismo", "Trail running", "Carreras populares", "Maratones"],
-    areaServed: [
-      "Euskadi",
-      "Cantabria",
-      "Burgos",
-      "La Rioja",
-      "Navarra",
-      "Zamora",
+      "Directorio y calendario de carreras populares en toda España: running, trail, media maratón, maratón, marcha y orientación.",
+    inLanguage: "es-ES",
+    logo: {
+      "@type": "ImageObject",
+      url: `${SITE_URL}/icons/icon-512.png`,
+      width: 512,
+      height: 512,
+    },
+    image: `${SITE_URL}/icons/icon-512.png`,
+    knowsAbout: [
+      "Atletismo",
+      "Trail running",
+      "Carreras populares",
+      "Medias maratones",
+      "Maratones",
+      "Marchas atléticas",
+      "Orientación",
     ],
-  };
-
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(json) }}
-    />
-  );
-}
-
-export function WebSiteJsonLd() {
-  const json = {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: "JavipaurRun",
-    url: process.env.NEXT_PUBLIC_APP_URL || "https://javipaurrun.com",
+    areaServed: {
+      "@type": "Country",
+      name: "España",
+    },
     potentialAction: {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: `${
-          process.env.NEXT_PUBLIC_APP_URL || "https://javipaurrun.com"
-        }/calendario?buscar={search_term_string}`,
+        urlTemplate: `${SITE_URL}/calendario?buscar={search_term_string}`,
       },
       "query-input": "required name=search_term_string",
     },
@@ -52,7 +50,58 @@ export function WebSiteJsonLd() {
   );
 }
 
-export function EventJsonLd({
+export async function WebSiteJsonLd() {
+  const SITE_URL = await siteUrl();
+  const json = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${SITE_URL}/#website`,
+    name: "JavipaurRun",
+    url: SITE_URL,
+    inLanguage: "es-ES",
+    publisher: { "@id": `${SITE_URL}/#organization` },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(json) }}
+    />
+  );
+}
+
+/** Listado de elementos de un ItemList (usado en home y calendario). */
+export function ItemListJsonLd({
+  items,
+  name,
+}: {
+  items: { name: string; url: string }[];
+  name: string;
+}) {
+  if (items.length === 0) return null;
+
+  const json = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name,
+    numberOfItems: items.length,
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: item.url,
+      name: item.name,
+    })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(json) }}
+    />
+  );
+}
+
+export async function EventJsonLd({
   name,
   date,
   location,
@@ -69,13 +118,17 @@ export function EventJsonLd({
   description?: string | null;
   image?: string | null;
 }) {
+  const SITE_URL = await siteUrl();
   const json: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "SportsEvent",
     name,
     startDate: date,
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     location: {
       "@type": "Place",
+      name: location,
       address: {
         "@type": "PostalAddress",
         addressLocality: location,
@@ -84,9 +137,20 @@ export function EventJsonLd({
       },
     },
     sport: "Running",
+    organizer: { "@id": `${SITE_URL}/#organization` },
   };
 
-  if (url) json.url = url;
+  if (url) {
+    json.url = url;
+    json.offers = {
+      "@type": "Offer",
+      url,
+      availability: "https://schema.org/InStock",
+      price: "0",
+      priceCurrency: "EUR",
+      validFrom: date,
+    };
+  }
   if (description) json.description = description;
   if (image) json.image = image;
 

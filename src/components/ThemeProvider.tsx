@@ -18,14 +18,16 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("theme") as Theme | null;
-    if (stored) {
-      setTheme(stored);
-    } else {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      setTheme(prefersDark ? "dark" : "light");
-    }
-    setMounted(true);
+    queueMicrotask(() => {
+      const stored = localStorage.getItem("theme") as Theme | null;
+      if (stored) {
+        setTheme(stored);
+      } else {
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        setTheme(prefersDark ? "dark" : "light");
+      }
+      setMounted(true);
+    });
   }, []);
 
   useEffect(() => {

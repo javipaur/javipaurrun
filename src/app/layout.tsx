@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -11,30 +12,63 @@ import PWARegister from "@/components/PWARegister";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/JsonLd";
 import { auth } from "@/lib/auth";
+import { siteUrl } from "@/lib/site-url-server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "JavipaurRun - Calendario de carreras populares",
-  description:
-    "Encuentra tu próxima carrera popular en Euskadi, Cantabria, Burgos, La Rioja, Navarra y Zamora. Calendario actualizado de carreras de asfalto, trail, marchas y orientación.",
-  applicationName: "JavipaurRun",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "JavipaurRun",
-  },
-  icons: {
-    icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
-    apple: [{ url: "/icons/icon-192.png", sizes: "192x192" }],
-  },
-  formatDetection: {
-    telephone: false,
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const base = new URL(await siteUrl());
+
+  return {
+    metadataBase: base,
+    alternates: { canonical: "/" },
+    openGraph: {
+      url: base.origin,
+      siteName: "JavipaurRun",
+      locale: "es_ES",
+      type: "website",
+    },
+    twitter: { card: "summary_large_image" },
+    title: {
+      default: "JavipaurRun — Calendario de carreras populares en España",
+      template: "%s | JavipaurRun",
+    },
+    description:
+      "Directorio y calendario de carreras populares en toda España: running, trail, media maratón, maratón, marcha y orientación. Filtra por provincia, comunidad, distancia y mes. Actualizado cada día.",
+    applicationName: "JavipaurRun",
+    generator: "Next.js",
+    keywords: [
+      "carreras populares España",
+      "calendario carreras",
+      "carreras running",
+      "carreras trail",
+      "media maratón",
+      "maratón",
+      "marchas",
+      "orientación",
+      "inscripciones carreras",
+    ],
+    category: "sports",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: "JavipaurRun",
+    },
+    icons: {
+      icon: [
+        { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      ],
+      apple: [{ url: "/icons/icon-192.png", sizes: "192x192" }],
+    },
+    formatDetection: {
+      telephone: false,
+    },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#ff4d00",
@@ -64,7 +98,9 @@ export default async function RootLayout({
           <ThemeProvider>
             <SessionProvider>
               <ToastProvider>
-                <Header session={session} />
+                <Suspense fallback={<div className="h-16" />}>
+                  <Header session={session} />
+                </Suspense>
                 <main id="main" className="flex-1">{children}</main>
                 <Footer />
                 <PWARegister />

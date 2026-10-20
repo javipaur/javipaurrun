@@ -1,3 +1,54 @@
+import { envSiteUrl } from "@/lib/site-url";
+function escapeICS(text: string): string {
+  return text
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\r?\n/g, "\\n");
+}
+
+function formatICSDate(d: Date): string {
+  return d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+}
+
+export interface ICALEventInput {
+  name: string;
+  description?: string | null;
+  location: string;
+  startDate: Date;
+  endDate?: Date | null;
+  url?: string | null;
+}
+
+/** Genera únicamente el bloque VEVENT (sin cabecera VCALENDAR). */
+export function generateICSVevent({
+  name,
+  description,
+  location,
+  startDate,
+  endDate,
+  url,
+}: ICALEventInput): string {
+  const start = formatICSDate(startDate);
+  const end = formatICSDate(endDate || new Date(startDate.getTime() + 3600000));
+
+  const desc = escapeICS(description || "");
+  const descLine = url ? `${desc}\\n\\nMás info: ${url}` : desc;
+
+  return [
+    "BEGIN:VEVENT",
+    `UID:${escapeICS(name)}-${start}@${envSiteUrl().replace(/^https?:\/\//, "")}`,
+    `DTSTAMP:${start}`,
+    `DTSTART:${start}`,
+    `DTEND:${end}`,
+    `SUMMARY:${escapeICS(name)}`,
+    `DESCRIPTION:${descLine}`,
+    `LOCATION:${escapeICS(location)}`,
+    "TRANSP:OPAQUE",
+    "END:VEVENT",
+  ].join("\r\n");
+}
+
 export function generateICalEvent({
   name,
   description,

@@ -5,68 +5,9 @@ import RaceCard from "@/components/RaceCard";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, MapPin } from "lucide-react";
+import { PROVINCE_SLUGS, getProvinceDbNames } from "@/lib/utils";
 
-const provinceSlugs: Record<string, string> = {
-  "a-coruna": "A Coruña",
-  alava: "Álava/Araba",
-  arabako: "Álava/Araba",
-  albacete: "Albacete",
-  alicante: "Alicante",
-  almeria: "Almería",
-  asturias: "Asturias",
-  avila: "Ávila",
-  badajoz: "Badajoz",
-  baleares: "Baleares",
-  barcelona: "Barcelona",
-  bizkaia: "Bizkaia",
-  burgos: "Burgos",
-  caceres: "Cáceres",
-  cadiz: "Cádiz",
-  cantabria: "Cantabria",
-  castellon: "Castellón",
-  "ciudad-real": "Ciudad Real",
-  cordoba: "Córdoba",
-  cuenca: "Cuenca",
-  girona: "Girona",
-  granada: "Granada",
-  guadalajara: "Guadalajara",
-  gipuzkoa: "Gipuzkoa",
-  huelva: "Huelva",
-  huesca: "Huesca",
-  jaen: "Jaén",
-  leon: "León",
-  lleida: "Lleida",
-  lugo: "Lugo",
-  madrid: "Madrid",
-  malaga: "Málaga",
-  murcia: "Murcia",
-  navarra: "Navarra",
-  ourense: "Ourense",
-  palencia: "Palencia",
-  "las-palmas": "Las Palmas",
-  pontevedra: "Pontevedra",
-  "la-rioja": "La Rioja",
-  salamanca: "Salamanca",
-  "santa-cruz-de-tenerife": "Santa Cruz de Tenerife",
-  segovia: "Segovia",
-  sevilla: "Sevilla",
-  soria: "Soria",
-  tarragona: "Tarragona",
-  teruel: "Teruel",
-  toledo: "Toledo",
-  valencia: "Valencia",
-  valladolid: "Valladolid",
-  zamora: "Zamora",
-  zaragoza: "Zaragoza",
-  ceuta: "Ceuta",
-  melilla: "Melilla",
-};
-
-const canonicalDisplay: Record<string, string> = {
-  "Álava/Araba": "Álava/Araba",
-  Bizkaia: "Bizkaia",
-  Gipuzkoa: "Gipuzkoa",
-};
+const provinceSlugs = PROVINCE_SLUGS;
 
 interface PageProps {
   params: Promise<{ provincia: string }>;
@@ -82,7 +23,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!name) return { title: "Provincia no encontrada - JavipaurRun" };
 
   const title = `Carreras populares en ${name} - JavipaurRun`;
-  const description = `Calendario de carreras populares en ${name}. Running, trail, media maratón y marchas. Encuentra tu próxima carrera.`;
+  const description = `Calendario de carreras populares en ${name}. Running, trail, media maratÃ³n y marchas. Encuentra tu prÃ³xima carrera.`;
 
   return {
     title,
@@ -92,7 +33,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 function displayName(canonical: string): string {
-  return canonicalDisplay[canonical] || canonical;
+  return canonical;
 }
 
 export default async function ProvincePage({ params }: PageProps) {
@@ -102,11 +43,14 @@ export default async function ProvincePage({ params }: PageProps) {
 
   if (!name) notFound();
 
-  const dbProvince = name;
+  // Nombres exactos tal y como estÃ¡n en la BD (p.ej. slug "alava" -> ["Araba"]).
+  const dbProvinces = getProvinceDbNames(slug);
+  const dbProvince = dbProvinces[0] ?? name;
 
   const races = await prisma.race.findMany({
     where: {
-      province: { contains: dbProvince },
+      province: { in: dbProvinces },
+      pendingReview: false,
       date: { gte: new Date() },
     },
     orderBy: { date: "asc" },
@@ -114,13 +58,14 @@ export default async function ProvincePage({ params }: PageProps) {
 
   const typeCounts = await prisma.race.groupBy({
     by: ["type"],
-    where: { province: { contains: dbProvince } },
+    where: { province: { in: dbProvinces }, pendingReview: false },
     _count: true,
   });
 
   const galleryRaces = await prisma.race.findMany({
     where: {
-      province: { contains: dbProvince },
+      province: { in: dbProvinces },
+      pendingReview: false,
       image: { not: null },
     },
     orderBy: { date: "desc" },
@@ -148,12 +93,12 @@ export default async function ProvincePage({ params }: PageProps) {
           <div>
             <p className="section-eyebrow mb-0.5">Por provincia</p>
             <h1 className="section-title">
-              Carreras en {displayName(name)}
+              Carreras en {name}
             </h1>
           </div>
         </div>
         <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
-          {races.length} carrera{races.length !== 1 ? "s" : ""} próxima{races.length !== 1 ? "s" : ""} en {displayName(name)}
+          {races.length} carrera{races.length !== 1 ? "s" : ""} prÃ³xima{races.length !== 1 ? "s" : ""} en {name}
         </p>
       </div>
 
@@ -174,7 +119,7 @@ export default async function ProvincePage({ params }: PageProps) {
 
       {galleryRaces.length > 0 && (
         <div className="mb-8">
-          <p className="section-eyebrow mb-3">Imágenes</p>
+          <p className="section-eyebrow mb-3">ImÃ¡genes</p>
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
             {galleryRaces.map((g) => (
               <Link
@@ -207,7 +152,7 @@ export default async function ProvincePage({ params }: PageProps) {
           <div className="w-16 h-16 mx-auto rounded-2xl bg-orange-50 dark:bg-orange-950/40 flex items-center justify-center mb-4">
             <MapPin size={28} className="text-gray-300 dark:text-gray-600" />
           </div>
-          <p className="font-semibold text-gray-900 dark:text-white mb-1">No hay carreras próximas en {displayName(name)}</p>
+          <p className="font-semibold text-gray-900 dark:text-white mb-1">No hay carreras prÃ³ximas en {name}</p>
           <p className="text-gray-500 text-sm mb-5">Prueba a buscar en otras provincias cercanas</p>
           <div className="flex flex-wrap gap-2 justify-center">
             {allProvinceSlugs
