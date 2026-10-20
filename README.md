@@ -49,6 +49,39 @@ GET {TU_URL}/api/cron/reminders
 
 (autenticado con `Authorization: Bearer {CRON_SECRET}`).
 
+Y un endpoint que envía el digest de carreras nuevas a las alertas activas:
+
+```
+GET {TU_URL}/api/cron/alerts
+```
+
+(misma autenticación `Authorization: Bearer {CRON_SECRET}`). Revisa carreras creadas en las
+últimas 48 h y envía un email a cada suscriptor cuya alerta (`provincia`, `comunidad`, `tipo`,
+rango de distancia) coincide con alguna de ellas.
+
+### Exportar a calendario (iCal)
+
+Desde el calendario se puede descargar un `.ics` con las carreras que se están viendo:
+
+```
+GET {TU_URL}/api/calendario/export?tipo=TRAIL&provincia=Araba
+```
+
+Respuesta `text/calendar` con máximo 500 eventos, respetando los filtros del calendario.
+
+### Alta manual de carreras
+
+- Página pública: `/enviar-carrera`
+- Endpoint: `POST /api/races/submit` (rate limit 5/hora por IP)
+- Las propuestas se guardan con `source: "manual"` y `pendingReview: true`.
+- No aparecen en el calendario hasta aprobarse en `/admin/races/pending`.
+
+### Alertas de carreras nuevas
+
+- Endpoint: `POST /api/alerts` (crear/actualizar), `DELETE /api/alerts?email=...` (desactivar),
+  `GET /api/alerts?email=...` (consultar).
+- El digest se envía con el cron de alertas (ver arriba).
+
 ### Importación manual (sincronización inicial / puntual)
 
 Si quieres poblar o refrescar la base de datos sin depender del cron, ejecuta el script desde el servidor que tenga acceso a la base de datos:
