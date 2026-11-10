@@ -7,8 +7,9 @@ import { ArrowLeft, Calendar, MapPin, Tag, Timer, Star } from "lucide-react";
 import CompareButton from "./CompareButton";
 
 export const metadata: Metadata = {
-  title: "Comparar carreras - JavipaurRun",
+  title: "Comparar carreras",
   description: "Compara dos o más carreras populares lado a lado: distancia, precio, fecha, tipo y más.",
+  alternates: { canonical: "/comparar" },
 };
 
 interface PageProps {

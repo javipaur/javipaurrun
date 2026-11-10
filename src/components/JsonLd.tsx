@@ -1,7 +1,7 @@
-import { siteUrl } from "@/lib/site-url-server";
+import { envSiteUrl } from "@/lib/site-url";
 
-export async function OrganizationJsonLd() {
-  const SITE_URL = await siteUrl();
+export function OrganizationJsonLd() {
+  const SITE_URL = envSiteUrl();
   const json = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -50,8 +50,8 @@ export async function OrganizationJsonLd() {
   );
 }
 
-export async function WebSiteJsonLd() {
-  const SITE_URL = await siteUrl();
+export function WebSiteJsonLd() {
+  const SITE_URL = envSiteUrl();
   const json = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -101,30 +101,54 @@ export function ItemListJsonLd({
   );
 }
 
-export async function EventJsonLd({
+/**
+ * Precio declarado en la ficha. Devuelve null cuando no hay un numero fiable:
+ * inventar `price: "0"` hacia que Google mostrase carreras de pago como gratis.
+ */
+function parsePrice(price?: string | null): number | null {
+  if (!price) return null;
+  const normalized = price.toLowerCase().trim();
+  if (/gratis|gratuit|free|0\s*€/.test(normalized)) return 0;
+  const match = normalized.match(/(\d+(?:[.,]\d+)?)/);
+  if (!match) return null;
+  const value = Number(match[1].replace(",", "."));
+  return Number.isFinite(value) ? value : null;
+}
+
+export function EventJsonLd({
   name,
   date,
+  endDate,
   location,
   province,
   url,
   description,
   image,
+  status,
+  price,
 }: {
   name: string;
   date: string;
+  endDate?: string | null;
   location: string;
   province: string;
   url?: string | null;
   description?: string | null;
   image?: string | null;
+  status?: string | null;
+  price?: string | null;
 }) {
-  const SITE_URL = await siteUrl();
+  const SITE_URL = envSiteUrl();
+  const isCancelled = status === "CANCELADA";
+
   const json: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "SportsEvent",
     name,
     startDate: date,
-    eventStatus: "https://schema.org/EventScheduled",
+    eventStatus: isCancelled
+      ? "https://schema.org/EventCancelled"
+      : "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     location: {
       "@type": "Place",
@@ -140,17 +164,34 @@ export async function EventJsonLd({
     organizer: { "@id": `${SITE_URL}/#organization` },
   };
 
-  if (url) {
-    json.url = url;
-    json.offers = {
+  if (endDate) json.endDate = endDate;
+
+  const priceValue = parsePrice(price);
+  const isOpen = status === "INSCRIPCIONES_ABIERTAS";
+  const isSoldOut = status === "COMPLETADA" || isCancelled;
+
+  if (url) json.url = url;
+
+  // Solo se declara oferta si hay precio real o la inscripcion esta abierta.
+  // Si no, es preferible no emitir `offers` a emitir datos falsos.
+  if (url && (priceValue !== null || isOpen)) {
+    const offer: Record<string, unknown> = {
       "@type": "Offer",
       url,
-      availability: "https://schema.org/InStock",
-      price: "0",
-      priceCurrency: "EUR",
-      validFrom: date,
+      availability: isSoldOut
+        ? "https://schema.org/SoldOut"
+        : isOpen
+          ? "https://schema.org/InStock"
+          : "https://schema.org/PreOrder",
+      validFrom: new Date().toISOString(),
     };
+    if (priceValue !== null) {
+      offer.price = String(priceValue);
+      offer.priceCurrency = "EUR";
+    }
+    json.offers = offer;
   }
+
   if (description) json.description = description;
   if (image) json.image = image;
 

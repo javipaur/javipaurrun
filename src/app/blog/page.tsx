@@ -7,9 +7,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 const PAGE_SIZE = 9;
 
 export const metadata: Metadata = {
-  title: "Blog de running - JavipaurRun",
+  title: "Blog de running",
   description:
     "Artículos sobre carreras populares, trail, entrenamiento y próximos eventos en Euskadi y norte de España.",
+  alternates: { canonical: "/blog" },
 };
 
 interface PageProps {

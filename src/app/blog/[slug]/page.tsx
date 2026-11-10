@@ -11,6 +11,19 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+export async function generateStaticParams() {
+  try {
+    const posts = await prisma.blogPost.findMany({
+      where: { published: true },
+      select: { slug: true },
+      take: 1000,
+    });
+    return posts.map((post) => ({ slug: post.slug }));
+  } catch {
+    return [];
+  }
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const post = await prisma.blogPost.findUnique({
@@ -19,8 +32,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!post) return { title: "Post no encontrado" };
 
   return {
-    title: `${post.title} - JavipaurRun`,
+    title: post.title,
     description: post.excerpt || post.content.slice(0, 160),
+    alternates: { canonical: `/blog/${post.slug}` },
     openGraph: {
       url: `/blog/${post.slug}`,
       ...(post.image ? { images: [post.image] } : {}),

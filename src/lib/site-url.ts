@@ -28,6 +28,15 @@ export function envSiteUrl(): string {
   if (raw) {
     try {
       const url = new URL(raw);
+      const host = url.hostname;
+      const isLocal = host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0";
+
+      // Un `.env.production` olvidado con localhost envenenaria canonicals,
+      // sitemap y JSON-LD. En produccion ese valor no es utilizable.
+      if (isLocal && process.env.NODE_ENV === "production") {
+        return FALLBACK_SITE_URL;
+      }
+
       if (url.protocol === "https:" || url.protocol === "http:") {
         return url.origin;
       }

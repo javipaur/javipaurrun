@@ -6,9 +6,10 @@ import { publicRaces } from "@/lib/race-filters";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Mapa de carreras populares - JavipaurRun",
+  title: "Mapa de carreras populares",
   description:
     "Explora las próximas carreras populares en un mapa interactivo. Encuentra eventos de running, trail, maratones y más cerca de ti.",
+  alternates: { canonical: "/mapa" },
 };
 
 export default async function MapaPage() {

@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import PaceCalculator from "./PaceCalculator";
 
 export const metadata: Metadata = {
-  title: "Calculadora de ritmo - JavipaurRun",
+  title: "Calculadora de ritmo",
   description:
     "Calcula tu ritmo por km, velocidad media y predice tiempos para distintas distancias. Ideal para runners y corredores populares.",
+  alternates: { canonical: "/calculadora-ritmo" },
 };
 
 export default function Page() {

@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
-import { Suspense } from "react";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -11,22 +10,21 @@ import { I18nProvider } from "@/lib/i18n/provider";
 import PWARegister from "@/components/PWARegister";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/JsonLd";
-import { auth } from "@/lib/auth";
-import { siteUrl } from "@/lib/site-url-server";
+import { envSiteUrl } from "@/lib/site-url";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
-export async function generateMetadata(): Promise<Metadata> {
-  const base = new URL(await siteUrl());
+export function generateMetadata(): Metadata {
+  // Sin `headers()` aqui: leer el host en el layout convertia las 2.600 paginas
+  // del sitemap en dinamicas (no-store) y anulaba el ISR.
+  const base = new URL(envSiteUrl());
 
   return {
     metadataBase: base,
-    alternates: { canonical: "/" },
     openGraph: {
-      url: base.origin,
       siteName: "JavipaurRun",
       locale: "es_ES",
       type: "website",
@@ -76,13 +74,11 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
-
   return (
     <html lang="es" className={`${geistSans.variable}`}>
       <body className="min-h-dvh flex flex-col bg-[#fafafa] antialiased pt-16 pb-16 md:pb-0">
@@ -98,9 +94,7 @@ export default async function RootLayout({
           <ThemeProvider>
             <SessionProvider>
               <ToastProvider>
-                <Suspense fallback={<div className="h-16" />}>
-                  <Header session={session} />
-                </Suspense>
+                <Header />
                 <main id="main" className="flex-1">{children}</main>
                 <Footer />
                 <PWARegister />

@@ -14,9 +14,10 @@ import ActiveFilterChips from "@/components/ActiveFilterChips";
 const PAGE_SIZE = 12;
 
 export const metadata: Metadata = {
-  title: "Calendario de carreras populares - JavipaurRun",
+  title: "Calendario de carreras populares",
   description:
     "Calendario actualizado con todas las carreras populares en España. Filtra por tipo, provincia, comunidad autónoma o busca tu próxima carrera.",
+  alternates: { canonical: "/calendario" },
 };
 
 interface PageProps {

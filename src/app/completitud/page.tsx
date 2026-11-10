@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getDataQuality, timeAgo } from "@/lib/data-quality";
 import { slugForProvinceName } from "@/lib/utils";
-import { siteUrl } from "@/lib/site-url-server";
+import { envSiteUrl } from "@/lib/site-url";
 import { ArrowRight, CheckCircle2, Database, MapPinned, Radio } from "lucide-react";
 
 export const revalidate = 3600;
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     "Cuántas carreras hay en JavipaurRun, de qué fuentes proceden, cuándo se sincronizaron por última vez y qué porcentaje de campos (ciudad, precio, distancia, coordenadas) está completo. Transparencia total sobre el calendario de carreras de España.",
   alternates: { canonical: "/completitud" },
   openGraph: {
-    title: "Estado y calidad de los datos | JavipaurRun",
+    title: "Estado y calidad de los datos",
     description:
       "Transparencia total: fuentes, sincronización y completitud de los datos del calendario de carreras de España.",
     url: "/completitud",
@@ -32,7 +32,9 @@ function statusTone(status: string | null) {
 }
 
 export default async function CompletitudPage() {
-  const SITE_URL = await siteUrl();
+  // `envSiteUrl()` en vez del host de la peticion: con `headers()` esta pagina
+  // ignoraba su `revalidate` y se renderizaba en cada visita.
+  const SITE_URL = envSiteUrl();
   const dq = await getDataQuality();
 
   // Estado degradado: preferimos decirlo a renderizar una página vacía.

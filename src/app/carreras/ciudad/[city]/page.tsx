@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import RaceCard from "@/components/RaceCard";
 import Link from "next/link";
 import { ArrowLeft, MapPin } from "lucide-react";
-import { cities, cityWhere } from "@/lib/cities";
+import { cities, cityWhere, canonicalCitySlug } from "@/lib/cities";
+import { slugForProvinceName } from "@/lib/utils";
 
 
 interface PageProps {
@@ -20,14 +21,16 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { city } = await params;
   const info = cities[city.toLowerCase()];
-  if (!info) return { title: "Ciudad no encontrada - JavipaurRun" };
+  if (!info) return { title: "Ciudad no encontrada", robots: { index: false, follow: false } };
+  const canonical = `/carreras/ciudad/${canonicalCitySlug(city)}`;
   return {
-    title: `Carreras populares en ${info.name} - JavipaurRun`,
+    title: `Carreras populares en ${info.name}`,
     description: info.description,
+    alternates: { canonical },
     openGraph: {
       title: `Carreras populares en ${info.name}`,
       description: info.description,
-      url: `/carreras/ciudad/${city}`,
+      url: canonical,
     },
   };
 }
@@ -36,6 +39,8 @@ export default async function CityPage({ params }: PageProps) {
   const { city } = await params;
   const info = cities[city.toLowerCase()];
   if (!info) notFound();
+  const provinceSlug =
+    slugForProvinceName(info.province) ?? info.province.toLowerCase().replace(/[^a-z]/g, "");
 
   const races = await prisma.race.findMany({
     where: cityWhere(info),
@@ -63,7 +68,7 @@ export default async function CityPage({ params }: PageProps) {
           {races.length} carrera{races.length !== 1 ? "s" : ""} próxima{races.length !== 1 ? "s" : ""} en {info.name}
           {races.length === 0 && (
             <span className="ml-1">
-              · <Link href={`/carreras/${info.province.toLowerCase().replace(/[^a-z]/g, "")}`} className="text-orange-600 hover:text-orange-700">
+              · <Link href={`/carreras/${provinceSlug}`} className="text-orange-600 hover:text-orange-700">
                 Ver carreras en {info.province}
               </Link>
             </span>
@@ -83,7 +88,7 @@ export default async function CityPage({ params }: PageProps) {
           <p className="text-gray-500 font-medium mb-1">No hay carreras próximas en {info.name}</p>
           <p className="text-gray-400 text-sm mb-4">Prueba a buscar en la provincia</p>
           <Link
-            href={`/carreras/${info.province.toLowerCase().replace(/[^a-z]/g, "")}`}
+            href={`/carreras/${provinceSlug}`}
             className="px-5 py-2.5 rounded-lg bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium"
           >
             Ver carreras en {info.province}

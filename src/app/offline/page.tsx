@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sin conexión - JavipaurRun",
+  title: "Sin conexión",
+  robots: { index: false, follow: false },
 };
 
 import Link from "next/link";

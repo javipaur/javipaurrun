@@ -1,8 +1,11 @@
 import type { MetadataRoute } from "next";
-import { siteUrl } from "@/lib/site-url-server";
+import { envSiteUrl } from "@/lib/site-url";
 
-export default async function robots(): Promise<MetadataRoute.Robots> {
-  const base = await siteUrl();
+// `robots.txt` es identico para todos los visitantes: si se genera con el host
+// de la peticion acaba siendo dinamico y, detras de un proxy sin
+// `x-forwarded-proto`, publica `http://` en la linea `Sitemap`.
+export default function robots(): MetadataRoute.Robots {
+  const base = envSiteUrl();
 
   return {
     rules: [
@@ -14,6 +17,5 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
       },
     ],
     sitemap: `${base}/sitemap.xml`,
-    host: base,
   };
 }

@@ -84,6 +84,31 @@ export const cities: Record<string, CityInfo> = Object.fromEntries(
 );
 
 /**
+ * Slug canonico de cada ciudad. Hay alias que apuntan a la misma ficha
+ * (`gasteiz` y `vitoria-gasteiz`), asi que sin canonico las dos URLs sirven
+ * el mismo contenido y compiten entre si en Google.
+ */
+export const CANONICAL_CITY_SLUG: Record<string, string> = (() => {
+  const byName = new Map<string, string>();
+  const map: Record<string, string> = {};
+  for (const [slug, info] of Object.entries(cities)) {
+    const canonical = byName.get(info.name);
+    if (canonical) {
+      map[slug] = canonical;
+    } else {
+      byName.set(info.name, slug);
+      map[slug] = slug;
+    }
+  }
+  return map;
+})();
+
+export function canonicalCitySlug(slug: string): string {
+  const key = slug.toLowerCase();
+  return CANONICAL_CITY_SLUG[key] ?? key;
+}
+
+/**
  * Filtro de Prisma que cubre las variantes con las que aparece una ciudad.
  * Usa `city` exacto cuando existe y `location` como plan B, siempre
  * case-insensitive: en PostgreSQL `contains` es sensible a mayúsculas.

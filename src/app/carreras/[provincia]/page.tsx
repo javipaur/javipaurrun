@@ -15,19 +15,29 @@ interface PageProps {
 
 export const revalidate = 3600;
 
+/**
+ * Sin `generateStaticParams` la ruta se renderiza en cada peticion y Next
+ * responde `Cache-Control: private, no-store`: el ISR de `revalidate` no llega
+ * a aplicarse. Con la lista de provincias, las 30 landings se prerenderizan.
+ */
+export async function generateStaticParams() {
+  return Object.keys(provinceSlugs).map((provincia) => ({ provincia }));
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { provincia } = await params;
   const slug = provincia.toLowerCase();
   const name = provinceSlugs[slug];
 
-  if (!name) return { title: "Provincia no encontrada - JavipaurRun" };
+  if (!name) return { title: "Provincia no encontrada" };
 
-  const title = `Carreras populares en ${name} - JavipaurRun`;
-  const description = `Calendario de carreras populares en ${name}. Running, trail, media maratÃ³n y marchas. Encuentra tu prÃ³xima carrera.`;
+  const title = `Carreras populares en ${name}`;
+  const description = `Calendario de carreras populares en ${name}. Running, trail, media maratón y marchas. Encuentra tu próxima carrera.`;
 
   return {
     title,
     description,
+    alternates: { canonical: `/carreras/${slug}` },
     openGraph: { title, description, url: `/carreras/${slug}` },
   };
 }
@@ -43,7 +53,7 @@ export default async function ProvincePage({ params }: PageProps) {
 
   if (!name) notFound();
 
-  // Nombres exactos tal y como estÃ¡n en la BD (p.ej. slug "alava" -> ["Araba"]).
+  // Nombres exactos tal y como están en la BD (p.ej. slug "alava" -> ["Araba"]).
   const dbProvinces = getProvinceDbNames(slug);
   const dbProvince = dbProvinces[0] ?? name;
 
@@ -98,7 +108,7 @@ export default async function ProvincePage({ params }: PageProps) {
           </div>
         </div>
         <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
-          {races.length} carrera{races.length !== 1 ? "s" : ""} prÃ³xima{races.length !== 1 ? "s" : ""} en {name}
+          {races.length} carrera{races.length !== 1 ? "s" : ""} próxima{races.length !== 1 ? "s" : ""} en {name}
         </p>
       </div>
 
@@ -119,7 +129,7 @@ export default async function ProvincePage({ params }: PageProps) {
 
       {galleryRaces.length > 0 && (
         <div className="mb-8">
-          <p className="section-eyebrow mb-3">ImÃ¡genes</p>
+          <p className="section-eyebrow mb-3">Imágenes</p>
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
             {galleryRaces.map((g) => (
               <Link
@@ -152,7 +162,7 @@ export default async function ProvincePage({ params }: PageProps) {
           <div className="w-16 h-16 mx-auto rounded-2xl bg-orange-50 dark:bg-orange-950/40 flex items-center justify-center mb-4">
             <MapPin size={28} className="text-gray-300 dark:text-gray-600" />
           </div>
-          <p className="font-semibold text-gray-900 dark:text-white mb-1">No hay carreras prÃ³ximas en {name}</p>
+          <p className="font-semibold text-gray-900 dark:text-white mb-1">No hay carreras próximas en {name}</p>
           <p className="text-gray-500 text-sm mb-5">Prueba a buscar en otras provincias cercanas</p>
           <div className="flex flex-wrap gap-2 justify-center">
             {allProvinceSlugs

@@ -5,9 +5,10 @@ import { PROVINCE_SLUGS, getAutonomousCommunity, getAutonomousCommunityLabel, ge
 import { MapPin, ChevronRight } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Carreras por provincia - Directorio de carreras populares - JavipaurRun",
+  title: "Carreras por provincia",
   description:
     "Encuentra carreras populares en tu provincia: running, trail, media maratón y marchas. Directorio de carreras por provincia en toda España.",
+  alternates: { canonical: "/carreras" },
 };
 
 const communityOrder = [

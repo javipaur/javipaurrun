@@ -20,9 +20,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     select: { name: true, description: true, organization: { select: { name: true } } },
   });
 
-  if (!event) return { title: "Evento no encontrado - JavipaurRun" };
+  if (!event) return { title: "Evento no encontrado" };
 
-  const title = `${event.name} · Seguimiento en vivo - JavipaurRun`;
+  const title = `${event.name} · Seguimiento en vivo`;
   const description =
     event.description || `Sigue en vivo a los corredores de ${event.name} (${event.organization.name}). Posiciones, ritmo y clasificación en tiempo real.`;
 

@@ -2,22 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import {
-  Calendar,
-  MapPin,
-  Tag,
-  ExternalLink,
-  Clock,
-  Share2,
-  Trophy,
-} from "lucide-react";
+import { Calendar, Share2, Trophy } from "lucide-react";
 import dynamic from "next/dynamic";
 import RaceResultForm from "@/components/RaceResultForm";
 import ReviewSection from "@/components/ReviewSection";
 import WeatherWidget from "@/components/WeatherWidget";
 import ShareButtons from "@/components/ShareButtons";
 import { downloadICal } from "@/lib/ical";
+import { formatDate } from "@/lib/utils";
 
 const RaceMap = dynamic(
   () => import("@/components/RaceMap"),
@@ -55,24 +47,23 @@ interface Result {
   user: { id: string; name: string | null };
 }
 
+/**
+ * Islas interactivas de la ficha de carrera.
+ *
+ * El contenido indexable (titulo, fecha, lugar, precio, descripcion y CTA) se
+ * renderiza en `page.tsx`, en servidor. Aqui solo queda lo que necesita estado
+ * de cliente: registrar tiempo, recordatorio, iCal, clima, mapa, compartir,
+ * resultados y resenas.
+ */
 export default function RaceDetailClient({
   race,
-  typeColor,
-  typeLabel,
-  formatDate,
 }: {
   race: Race;
-  typeColor: string;
-  typeLabel: string;
-  formatDate: (d: Date | string) => string;
 }) {
   const [showForm, setShowForm] = useState(false);
   const [success, setSuccess] = useState(false);
   const [results, setResults] = useState<Result[]>([]);
   const [reminder, setReminder] = useState<"none" | "loading" | "active" | "error">("none");
-  const [imageError, setImageError] = useState(false);
-
-  const showImage = race.image && !imageError;
 
   useEffect(() => {
     fetch(`/api/races/${race.id}/results`)
@@ -112,214 +103,116 @@ export default function RaceDetailClient({
       }]
     : [];
 
-  const dateObj = new Date(race.date);
-  const isPast = dateObj < new Date();
-
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 md:py-8">
-      <div className="card-premium overflow-hidden">
-        {showImage && (
-          <div className="aspect-[2/1] sm:aspect-[3/1] bg-gray-100 relative overflow-hidden">
-            <Image
-              src={race.image as string}
-              alt={race.name}
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 896px"
-              className="object-cover"
-              onError={() => setImageError(true)}
-            />
+    <>
+      <div className="flex flex-wrap gap-3 mb-8">
+        <button
+          onClick={() => setShowForm(true)}
+          className="btn-secondary"
+        >
+          <Trophy size={16} />
+          {success ? "✅ Tiempo registrado" : "Registrar mi tiempo"}
+        </button>
+        <button
+          onClick={() =>
+            downloadICal({
+              name: race.name,
+              description: race.description,
+              location: `${race.location}, ${race.province}`,
+              startDate: new Date(race.date),
+              endDate: race.endDate ? new Date(race.endDate) : undefined,
+              url: race.url,
+            })
+          }
+          className="btn-secondary"
+        >
+          <Calendar size={16} />
+          Añadir a calendario
+        </button>
+        <button
+          onClick={handleRemind}
+          disabled={reminder === "loading" || reminder === "active"}
+          className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {reminder === "active" ? "✅ Recordatorio activo" : reminder === "loading" ? "..." : "🔔 Recordar"}
+        </button>
+      </div>
+
+      {race.latitude && race.longitude && (
+        <div className="mb-6">
+          <WeatherWidget
+            latitude={race.latitude}
+            longitude={race.longitude}
+            date={race.date instanceof Date ? race.date.toISOString() : race.date}
+            raceLocation={`${race.location}, ${race.province}`}
+          />
+        </div>
+      )}
+
+      {mapMarkers.length > 0 && (
+        <div className="mb-8">
+          <p className="section-eyebrow mb-3">Ubicación</p>
+          <RaceMap races={mapMarkers} zoom={12} />
+        </div>
+      )}
+
+      <div className="border-t border-gray-100 dark:border-gray-700 pt-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-1.5">
+              <Share2 size={14} />
+              Compartir
+            </h2>
+            <p className="text-xs text-gray-400">
+              {results.length} resultado{results.length !== 1 ? "s" : ""}
+            </p>
           </div>
-        )}
-
-        <div className="p-6 md:p-8">
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${typeColor}`}>
-              {typeLabel}
-            </span>
-            {race.distance && (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-                {race.distance}
-              </span>
-            )}
-            {race.status === "INSCRIPCIONES_ABIERTAS" && (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse" />
-                Inscripciones abiertas
-              </span>
-            )}
-          </div>
-
-          <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white mb-7 leading-tight tracking-tight">
-            {race.name}
-          </h1>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 text-sm text-gray-600">
-                <Calendar size={16} className="shrink-0 text-gray-400" />
-                <span>{formatDate(race.date)}</span>
-                {race.endDate && (
-                  <span className="text-gray-400">— {formatDate(race.endDate)}</span>
-                )}
-              </div>
-              {race.time && (
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <Clock size={16} className="shrink-0 text-gray-400" />
-                  <span>{race.time}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-3 text-sm text-gray-600">
-                <MapPin size={16} className="shrink-0 text-gray-400" />
-                <span>{race.location}, {race.province}</span>
-              </div>
-            </div>
-            <div className="space-y-3">
-              {race.price && (
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <Tag size={16} className="shrink-0 text-gray-400" />
-                  <span>{race.price}</span>
-                </div>
-              )}
-              {race.source && (
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <ExternalLink size={16} className="shrink-0 text-gray-400" />
-                  <span>Fuente: {race.source}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-3 mb-8">
-            {race.url && (
-              <a
-                href={race.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-primary"
-              >
-                <ExternalLink size={16} />
-                {isPast ? "Ver resultado" : "Inscribirme"}
-              </a>
-            )}
-            <button
-              onClick={() => setShowForm(true)}
-              className="btn-secondary"
-            >
-              <Trophy size={16} />
-              {success ? "✅ Tiempo registrado" : "Registrar mi tiempo"}
-            </button>
-            <button
-              onClick={() =>
-                downloadICal({
-                  name: race.name,
-                  description: race.description,
-                  location: `${race.location}, ${race.province}`,
-                  startDate: new Date(race.date),
-                  endDate: race.endDate ? new Date(race.endDate) : undefined,
-                  url: race.url,
-                })
-              }
-              className="btn-secondary"
-            >
-              <Calendar size={16} />
-              Añadir a calendario
-            </button>
-            <button
-              onClick={handleRemind}
-              disabled={reminder === "loading" || reminder === "active"}
-              className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {reminder === "active" ? "✅ Recordatorio activo" : reminder === "loading" ? "..." : "🔔 Recordar"}
-            </button>
-          </div>
-
-          {race.description && (
-            <div className="mb-8">
-              <p className="section-eyebrow mb-2">Descripción</p>
-              <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed whitespace-pre-wrap">
-                {race.description}
-              </p>
-            </div>
-          )}
-
-          {race.latitude && race.longitude && (
-            <div className="mb-6">
-              <WeatherWidget
-                latitude={race.latitude}
-                longitude={race.longitude}
-                date={race.date instanceof Date ? race.date.toISOString() : race.date}
-                raceLocation={`${race.location}, ${race.province}`}
-              />
-            </div>
-          )}
-
-          {mapMarkers.length > 0 && (
-            <div className="mb-8">
-              <p className="section-eyebrow mb-3">Ubicación</p>
-              <RaceMap races={mapMarkers} zoom={12} />
-            </div>
-          )}
-
-          <div className="border-t border-gray-100 dark:border-gray-700 pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1 flex items-center gap-1.5">
-                  <Share2 size={14} />
-                  Compartir
-                </h2>
-                <p className="text-xs text-gray-400">
-                  {results.length} resultado{results.length !== 1 ? "s" : ""}
-                </p>
-              </div>
-              <ShareButtons
-                url={typeof window !== "undefined" ? window.location.href : ""}
-                title={race.name}
-                description={`${formatDate(race.date)} en ${race.location}`}
-              />
-            </div>
-          </div>
-
-          {results.length > 0 && (
-            <div className="border-t border-gray-100 dark:border-gray-700 pt-6 mt-6">
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                Resultados ({results.length})
-              </h2>
-              <div className="space-y-2">
-                {results.map((r, i) => (
-                  <div
-                    key={r.id}
-                    className="flex items-center gap-4 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm"
-                  >
-                    <span className="text-gray-400 font-mono w-6 text-center">
-                      {i + 1}
-                    </span>
-                    <div className="flex-1">
-                      <span className="font-semibold text-gray-900 dark:text-gray-100 font-mono">
-                        {r.time}
-                      </span>
-                      {r.category && (
-                        <span className="text-gray-500 ml-2">· {r.category}</span>
-                      )}
-                      {r.position && (
-                        <span className="text-gray-500 ml-2">· Puesto #{r.position}</span>
-                      )}
-                    </div>
-                    <Link
-                      href={`/atleta/${r.user.id}`}
-                      className="text-gray-400 text-xs hover:text-orange-500 transition-colors"
-                    >
-                      {r.user.name || "Anónimo"}
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <ReviewSection raceId={race.id} />
+          <ShareButtons
+            url={typeof window !== "undefined" ? window.location.href : ""}
+            title={race.name}
+            description={`${formatDate(race.date)} en ${race.location}`}
+          />
         </div>
       </div>
+
+      {results.length > 0 && (
+        <div className="border-t border-gray-100 dark:border-gray-700 pt-6 mt-6">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+            Resultados ({results.length})
+          </h2>
+          <div className="space-y-2">
+            {results.map((r, i) => (
+              <div
+                key={r.id}
+                className="flex items-center gap-4 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm"
+              >
+                <span className="text-gray-400 font-mono w-6 text-center">
+                  {i + 1}
+                </span>
+                <div className="flex-1">
+                  <span className="font-semibold text-gray-900 dark:text-gray-100 font-mono">
+                    {r.time}
+                  </span>
+                  {r.category && (
+                    <span className="text-gray-500 ml-2">· {r.category}</span>
+                  )}
+                  {r.position && (
+                    <span className="text-gray-500 ml-2">· Puesto #{r.position}</span>
+                  )}
+                </div>
+                <Link
+                  href={`/atleta/${r.user.id}`}
+                  className="text-gray-400 text-xs hover:text-orange-500 transition-colors"
+                >
+                  {r.user.name || "Anónimo"}
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <ReviewSection raceId={race.id} />
 
       {showForm && (
         <RaceResultForm
@@ -334,6 +227,6 @@ export default function RaceDetailClient({
           }}
         />
       )}
-    </div>
+    </>
   );
 }

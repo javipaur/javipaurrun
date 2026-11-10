@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import type { Session } from "next-auth";
+import { useSession } from "next-auth/react";
 import { Menu, X, Calendar, Home, Newspaper, User, Shield, MapPin, Moon, Sun, Timer, Trophy, Plus } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { useI18n } from "@/lib/i18n/provider";
@@ -34,17 +34,20 @@ const bottomNav = [
   { href: "/auth/login", label: "Cuenta", icon: User },
 ];
 
-export default function Header({ session }: { session: Session | null }) {
+export default function Header() {
+  const { data: session } = useSession();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const activeType = searchParams.get("tipo");
+  // `useSearchParams()` obliga a envolver el Header en un <Suspense>, y ese
+  // Suspense en el layout raiz hace que Next envie el shell con 200 antes de
+  // que la pagina resuelva: los `notFound()` acababan en "soft 404" (HTML de
+  // error con codigo 200). Leer la query en cliente evita esa restriccion.
+  const [activeType, setActiveType] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const lastY = useRef(0);
 
   useEffect(() => {
-    function onScroll() {
-      const y = window.scrollY;
+    function onScroll() {      const y = window.scrollY;
       if (y > lastY.current && y > 120) {
         setHidden(true);
       } else {
@@ -55,6 +58,13 @@ export default function Header({ session }: { session: Session | null }) {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    const read = () => setActiveType(new URLSearchParams(window.location.search).get("tipo"));
+    read();
+    window.addEventListener("popstate", read);
+    return () => window.removeEventListener("popstate", read);
+  }, [pathname]);
 
   const { theme, toggle } = useTheme();
   const { lang } = useI18n();

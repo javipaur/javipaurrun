@@ -1,5 +1,13 @@
+import type { Metadata } from "next";
 import { User, Heart } from "lucide-react";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Sobre nosotros",
+  description:
+    "Qué es JavipaurRun, de dónde salen los datos del calendario de carreras populares y cómo puedes proponer o corregir una prueba.",
+  alternates: { canonical: "/about" },
+};
 
 export default function AboutPage() {
   return (

@@ -6,8 +6,9 @@ import { provinces } from "@/lib/utils";
 import type { Prisma, RaceType } from "@/generated/prisma/client";
 
 export const metadata: Metadata = {
-  title: "Ranking por provincias - JavipaurRun",
+  title: "Ranking por provincias",
   description: "Clasificación de corredores por provincias: Álava, Bizkaia, Gipuzkoa, Cantabria, Burgos, Navarra, La Rioja y Zamora.",
+  alternates: { canonical: "/ranking" },
 };
 
 interface PageProps {

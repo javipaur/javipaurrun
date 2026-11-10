@@ -13,7 +13,8 @@ import { publicRaces } from "@/lib/race-filters";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Carreras populares en España | Calendario 2026 | JavipaurRun",
+  // El sufijo "| JavipaurRun" lo añade la plantilla del layout raíz.
+  title: "Carreras populares en España | Calendario 2026",
   description:
     "Encuentra tu próxima carrera de running, trail, media maratón, maratón, marcha u orientación. Más de 1.000 carreras en toda España, filtradas por provincia, comunidad, distancia y mes. Actualizado a diario.",
   keywords: [

@@ -15,10 +15,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     where: { id },
     select: { name: true },
   });
-  if (!user) return { title: "Atleta no encontrado - JavipaurRun" };
+  if (!user) return { title: "Atleta no encontrado", robots: { index: false, follow: false } };
   return {
-    title: `${user.name} - Perfil atleta - JavipaurRun`,
+    // Los perfiles de atleta son datos personales: no deben indexarse.
+    title: `${user.name} - Perfil atleta`,
     description: `Perfil de ${user.name} con sus resultados y marcas en carreras populares.`,
+    robots: { index: false, follow: false },
   };
 }
 
