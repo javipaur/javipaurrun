@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatDate, getRaceDetailColor, getRaceTypeLabel } from "@/lib/utils";
+import { startOfToday } from "@/lib/time";
 import { EventJsonLd } from "@/components/JsonLd";
 import RaceDetailClient from "./RaceDetailClient";
 import RaceHeroImage from "./RaceHeroImage";
@@ -23,7 +24,7 @@ export const revalidate = 3600;
 export async function generateStaticParams() {
   try {
     const races = await prisma.race.findMany({
-      where: { pendingReview: false, date: { gte: new Date() } },
+      where: { pendingReview: false, date: { gte: startOfToday() } },
       orderBy: { date: "asc" },
       select: { slug: true },
       take: 500,
@@ -61,7 +62,7 @@ export default async function RaceDetailPage({ params }: PageProps) {
   const related = await prisma.race.findMany({
     where: {
       id: { not: race.id },
-      date: { gte: new Date() },
+      date: { gte: startOfToday() },
       OR: [
         { province: race.province },
         { type: race.type },

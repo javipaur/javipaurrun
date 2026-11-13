@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getDataQuality, timeAgo } from "@/lib/data-quality";
-import { slugForProvinceName } from "@/lib/utils";
+import { getProvinceDirectory } from "@/lib/races";
+import { startOfToday } from "@/lib/time";
 import { envSiteUrl } from "@/lib/site-url";
 import { ArrowRight, CheckCircle2, Database, MapPinned, Radio } from "lucide-react";
 
@@ -35,7 +36,7 @@ export default async function CompletitudPage() {
   // `envSiteUrl()` en vez del host de la peticion: con `headers()` esta pagina
   // ignoraba su `revalidate` y se renderizaba en cada visita.
   const SITE_URL = envSiteUrl();
-  const dq = await getDataQuality();
+  const [dq, directory] = await Promise.all([getDataQuality(), getProvinceDirectory()]);
 
   // Estado degradado: preferimos decirlo a renderizar una página vacía.
   if (!dq.ok) {
@@ -60,12 +61,15 @@ export default async function CompletitudPage() {
   const bestField = [...dq.fields].sort((a, b) => b.percent - a.percent)[0];
   const worstField = [...dq.fields].sort((a, b) => a.percent - b.percent)[0];
 
-  // slugForProvinceName y no PROVINCE_SLUGS[...]: el nombre de la BD puede ser
-  // "Araba" mientras el slug se llama "Álava/Araba", y con el lookup directo
-  // esas provincias salían sin enlace.
-  const linkedProvinces = dq.provinces
-    .map((p) => ({ ...p, slug: slugForProvinceName(p.province) }))
-    .filter((p): p is typeof p & { slug: string } => p.slug !== null);
+  // Mismo directorio que la home y el hub: una provincia = un slug, con alias
+  // deduplicados. Antes "Álava" y "Araba" contaban como dos provincias aquí y
+  // como una en el resto del sitio.
+  const linkedProvinces = directory.provinces;
+
+  const daysSinceSync = dq.lastSync
+    ? Math.floor((startOfToday().getTime() - dq.lastSync.getTime()) / 86400000)
+    : null;
+  const syncIsStale = daysSinceSync === null || daysSinceSync >= 7;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -79,7 +83,7 @@ export default async function CompletitudPage() {
     variableMeasured: [
       { "@type": "PropertyValue", name: "Carreras totales", value: dq.total },
       { "@type": "PropertyValue", name: "Próximas", value: dq.upcoming },
-      { "@type": "PropertyValue", name: "Provincias", value: dq.provinceCount },
+      { "@type": "PropertyValue", name: "Provincias", value: directory.provinceCount },
     ],
   };
 
@@ -122,7 +126,7 @@ export default async function CompletitudPage() {
             Provincias
           </p>
           <p className="text-3xl font-black text-text-primary tabular-nums">
-            {dq.provinceCount}
+            {directory.provinceCount}
           </p>
         </div>
         <div className="stats-card">
@@ -147,6 +151,17 @@ export default async function CompletitudPage() {
               ? `El calendario se reconstruye automáticamente contra cada fuente. La información puede cambiar en origen; siempre puedes seguir el enlace de inscripción original.`
               : `Todavía no hay registro de sincronización. Los datos provienen del alta manual y de las fuentes indexadas.`}
           </p>
+          {syncIsStale && (
+            <p className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-700 dark:text-amber-400">
+              La última sincronización automática tiene más de una semana. Las carreras ya
+              publicadas y sus enlaces de inscripción siguen siendo válidos, pero puede faltar
+              algún evento nuevo.{" "}
+              <Link href="/enviar-carrera" className="font-semibold underline underline-offset-2">
+                Puedes añadirlo tú
+              </Link>
+              .
+            </p>
+          )}
         </div>
       </div>
 
@@ -270,13 +285,13 @@ export default async function CompletitudPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {linkedProvinces.map((p) => (
             <Link
-              key={p.province}
+              key={p.slug}
               href={`/carreras/${p.slug}`}
               className="card-premium card-premium-hover p-4 flex items-center justify-between gap-2"
             >
               <span className="min-w-0">
                 <span className="block text-sm font-semibold text-text-primary truncate">
-                  {p.province}
+                  {p.label}
                 </span>
                 <span className="block text-xs text-text-tertiary truncate">
                   {p.communityLabel}

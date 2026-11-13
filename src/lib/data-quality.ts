@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { startOfToday } from "@/lib/time";
 import {
   getAutonomousCommunity,
   getAutonomousCommunityLabel,
@@ -100,15 +101,15 @@ export async function getDataQuality(): Promise<DataQuality | DataQualityUnavail
     const [total, upcoming, byProvince, byType, bySource, recentLogs, samples] =
       await Promise.all([
         prisma.race.count({ where: { pendingReview: false } }),
-        prisma.race.count({ where: { pendingReview: false, date: { gte: new Date() } } }),
+        prisma.race.count({ where: { pendingReview: false, date: { gte: startOfToday() } } }),
         prisma.race.groupBy({
           by: ["province"],
-          where: { pendingReview: false, date: { gte: new Date() } },
+          where: { pendingReview: false, date: { gte: startOfToday() } },
           _count: true,
         }),
         prisma.race.groupBy({
           by: ["type"],
-          where: { pendingReview: false, date: { gte: new Date() } },
+          where: { pendingReview: false, date: { gte: startOfToday() } },
           _count: true,
         }),
         prisma.race.groupBy({
@@ -123,7 +124,7 @@ export async function getDataQuality(): Promise<DataQuality | DataQualityUnavail
         }),
         // Muestra por provincia para el cálculo de completitud (barato y suficiente).
         prisma.race.findMany({
-          where: { pendingReview: false, date: { gte: new Date() } },
+          where: { pendingReview: false, date: { gte: startOfToday() } },
           select: {
             location: true,
             time: true,

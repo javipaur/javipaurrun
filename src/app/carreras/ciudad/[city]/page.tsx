@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import RaceCard from "@/components/RaceCard";
 import Link from "next/link";
@@ -15,7 +15,9 @@ interface PageProps {
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
-  return Object.keys(cities).map((city) => ({ city }));
+  return Object.keys(cities)
+    .filter((city) => canonicalCitySlug(city) === city)
+    .map((city) => ({ city }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -39,6 +41,9 @@ export default async function CityPage({ params }: PageProps) {
   const { city } = await params;
   const info = cities[city.toLowerCase()];
   if (!info) notFound();
+  // `gasteiz` y `vitoria-gasteiz` servían el mismo contenido con dos URLs.
+  if (city !== canonicalCitySlug(city)) permanentRedirect(`/carreras/ciudad/${canonicalCitySlug(city)}`);
+
   const provinceSlug =
     slugForProvinceName(info.province) ?? info.province.toLowerCase().replace(/[^a-z]/g, "");
 
@@ -66,13 +71,11 @@ export default async function CityPage({ params }: PageProps) {
         </div>
         <p className="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
           {races.length} carrera{races.length !== 1 ? "s" : ""} próxima{races.length !== 1 ? "s" : ""} en {info.name}
-          {races.length === 0 && (
-            <span className="ml-1">
-              · <Link href={`/carreras/${provinceSlug}`} className="text-orange-600 hover:text-orange-700">
-                Ver carreras en {info.province}
-              </Link>
-            </span>
-          )}
+          <span className="ml-1">
+            · <Link href={`/carreras/${provinceSlug}`} className="text-orange-600 hover:text-orange-700">
+              Ver todas en {info.province}
+            </Link>
+          </span>
         </p>
       </div>
 

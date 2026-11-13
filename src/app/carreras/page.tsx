@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
-import { PROVINCE_SLUGS, getAutonomousCommunity, getAutonomousCommunityLabel, getProvinceDbNames } from "@/lib/utils";
-import { MapPin, ChevronRight } from "lucide-react";
+import { getProvinceDirectory } from "@/lib/races";
+import { getAutonomousCommunityLabel } from "@/lib/utils";
+import { MapPin, ChevronRight, Info } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Carreras por provincia",
@@ -10,6 +10,8 @@ export const metadata: Metadata = {
     "Encuentra carreras populares en tu provincia: running, trail, media maratón y marchas. Directorio de carreras por provincia en toda España.",
   alternates: { canonical: "/carreras" },
 };
+
+export const revalidate = 3600;
 
 const communityOrder = [
   "andalucia", "aragon", "asturias", "baleares", "canarias", "cantabria",
@@ -19,36 +21,15 @@ const communityOrder = [
 ];
 
 export default async function ProvincesPage() {
-  // Contamos solo carreras próximas y publicadas para que el contador del hub
-// coincida con el de la página de detalle.
-  const counted = await prisma.race
-    .groupBy({
-      by: ["province"],
-      where: { pendingReview: false, date: { gte: new Date() } },
-      _count: true,
-    })
-    .catch(() => []);
+  // Mismo directorio que usan la home y cada provincia: alias deduplicados y
+  // contadores que cuadran entre páginas.
+  const directory = await getProvinceDirectory();
 
-  const countByProvince = new Map(counted.map((c) => [c.province, c._count]));
-
-  const provinces = Object.entries(PROVINCE_SLUGS).map(([slug, name]) => {
-    // Los nombres de la BD no siempre coinciden con el nombre visible (p.ej. "Araba" vs "Álava/Araba").
-    const dbNames = getProvinceDbNames(slug);
-    let count = 0;
-    for (const dbName of dbNames) {
-      count += countByProvince.get(dbName) ?? 0;
-    }
-    return { slug, name, count, dbName: dbNames[0] ?? name };
-  });
-
-  const grouped = new Map<string, typeof provinces>();
-  for (const p of provinces) {
-    const community = getAutonomousCommunity(p.dbName);
-    if (!grouped.has(community)) grouped.set(community, []);
-    grouped.get(community)!.push(p);
+  const grouped = new Map<string, typeof directory.allProvinces>();
+  for (const province of directory.allProvinces) {
+    if (!grouped.has(province.community)) grouped.set(province.community, []);
+    grouped.get(province.community)!.push(province);
   }
-
-  const totalCount = provinces.reduce((acc, p) => acc + p.count, 0);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
@@ -63,8 +44,22 @@ export default async function ProvincesPage() {
           </div>
         </div>
         <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
-          {totalCount} carreras próximas en {provinces.length} provincias de toda España.
+          {directory.upcomingTotal.toLocaleString("es-ES")} carreras próximas en{" "}
+          {directory.provinceCount} provincias de toda España.
         </p>
+        {directory.unassignedUpcoming > 0 && (
+          <p className="text-gray-500 dark:text-gray-400 text-xs mt-1.5 flex items-start gap-1.5">
+            <Info size={13} className="mt-0.5 shrink-0" />
+            <span>
+              {directory.unassignedUpcoming.toLocaleString("es-ES")} de ellas todavía no tienen
+              provincia asignada; puedes verlas en el{" "}
+              <Link href="/calendario" className="text-orange-600 hover:text-orange-700 font-medium">
+                calendario completo
+              </Link>
+              .
+            </span>
+          </p>
+        )}
       </div>
 
       {communityOrder.map((community) => {
@@ -75,7 +70,7 @@ export default async function ProvincesPage() {
             <h2 className="section-eyebrow mb-4">{getAutonomousCommunityLabel(community)}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {items
-                .sort((a, b) => a.name.localeCompare(b.name, "es"))
+                .sort((a, b) => a.label.localeCompare(b.label, "es"))
                 .map((p) => (
                   <Link
                     key={p.slug}
@@ -87,7 +82,7 @@ export default async function ProvincesPage() {
                         <MapPin size={16} />
                       </span>
                       <span className="font-medium text-gray-900 dark:text-white truncate">
-                        {p.name}
+                        {p.label}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">

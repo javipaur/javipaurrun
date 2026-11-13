@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import RaceCard from "@/components/RaceCard";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, MapPin } from "lucide-react";
-import { PROVINCE_SLUGS, getProvinceDbNames } from "@/lib/utils";
-
-const provinceSlugs = PROVINCE_SLUGS;
+import {
+  PROVINCE_SLUGS,
+  canonicalProvinceSlug,
+  canonicalProvinceSlugs,
+  getRaceTypeLabel,
+  getAutonomousCommunityLabel,
+} from "@/lib/utils";
+import { getProvinceDirectory, raceProvinceNames, upcomingWhere } from "@/lib/races";
+import { ItemListJsonLd } from "@/components/JsonLd";
 
 interface PageProps {
   params: Promise<{ provincia: string }>;
@@ -18,21 +24,28 @@ export const revalidate = 3600;
 /**
  * Sin `generateStaticParams` la ruta se renderiza en cada peticion y Next
  * responde `Cache-Control: private, no-store`: el ISR de `revalidate` no llega
- * a aplicarse. Con la lista de provincias, las 30 landings se prerenderizan.
+ * a aplicarse. Con la lista de provincias, las landings se prerenderizan.
+ *
+ * Solo se generan los slugs canónicos: `arabako` es alias de `alava` y no debe
+ * producir una segunda URL con el mismo contenido.
  */
 export async function generateStaticParams() {
-  return Object.keys(provinceSlugs).map((provincia) => ({ provincia }));
+  return canonicalProvinceSlugs().map((provincia) => ({ provincia }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { provincia } = await params;
-  const slug = provincia.toLowerCase();
-  const name = provinceSlugs[slug];
+  const slug = canonicalProvinceSlug(provincia);
+  const name = PROVINCE_SLUGS[slug];
 
-  if (!name) return { title: "Provincia no encontrada" };
+  if (!name) return { title: "Provincia no encontrada", robots: { index: false, follow: false } };
+
+  const directory = await getProvinceDirectory();
+  const count = directory.bySlug.get(slug)?.count ?? 0;
+  const countLabel = count > 0 ? `${count} próximas · ` : "";
 
   const title = `Carreras populares en ${name}`;
-  const description = `Calendario de carreras populares en ${name}. Running, trail, media maratón y marchas. Encuentra tu próxima carrera.`;
+  const description = `${countLabel}calendario de carreras populares en ${name}: running, trail, media maratón y marchas. Encuentra tu próxima carrera.`;
 
   return {
     title,
@@ -42,57 +55,61 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-function displayName(canonical: string): string {
-  return canonical;
-}
-
 export default async function ProvincePage({ params }: PageProps) {
   const { provincia } = await params;
-  const slug = provincia.toLowerCase();
-  const name = provinceSlugs[slug];
+  const slug = canonicalProvinceSlug(provincia);
+  const name = PROVINCE_SLUGS[slug];
 
   if (!name) notFound();
 
+  // Los alias (`/carreras/arabako`) redirigen a la URL canónica en vez de
+  // servir el mismo contenido en dos direcciones.
+  if (provincia !== slug) permanentRedirect(`/carreras/${slug}`);
+
   // Nombres exactos tal y como están en la BD (p.ej. slug "alava" -> ["Araba"]).
-  const dbProvinces = getProvinceDbNames(slug);
-  const dbProvince = dbProvinces[0] ?? name;
+  // Salen del mismo directorio que alimenta el contador del hub.
+  const provinceNames = await raceProvinceNames(slug);
+  const directory = await getProvinceDirectory();
+  const entry = directory.bySlug.get(slug);
 
-  const races = await prisma.race.findMany({
-    where: {
-      province: { in: dbProvinces },
-      pendingReview: false,
-      date: { gte: new Date() },
-    },
-    orderBy: { date: "asc" },
-  });
+  const [races, typeCounts, galleryRaces] = await Promise.all([
+    prisma.race.findMany({
+      where: upcomingWhere({ province: { in: provinceNames } }),
+      orderBy: { date: "asc" },
+    }),
+    prisma.race.groupBy({
+      by: ["type"],
+      where: upcomingWhere({ province: { in: provinceNames } }),
+      _count: true,
+    }),
+    prisma.race.findMany({
+      where: { province: { in: provinceNames }, pendingReview: false, image: { not: null } },
+      orderBy: { date: "desc" },
+      take: 6,
+      select: { name: true, slug: true, image: true },
+    }),
+  ]);
 
-  const typeCounts = await prisma.race.groupBy({
-    by: ["type"],
-    where: { province: { in: dbProvinces }, pendingReview: false },
-    _count: true,
-  });
-
-  const galleryRaces = await prisma.race.findMany({
-    where: {
-      province: { in: dbProvinces },
-      pendingReview: false,
-      image: { not: null },
-    },
-    orderBy: { date: "desc" },
-    take: 6,
-    select: { name: true, slug: true, image: true },
-  });
-
-  const allProvinceSlugs = Object.keys(provinceSlugs);
+  const allProvinceSlugs = canonicalProvinceSlugs();
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
+      {races.length > 0 && (
+        <ItemListJsonLd
+          name={`Carreras populares en ${name}`}
+          items={races.slice(0, 25).map((race) => ({
+            name: race.name,
+            url: `/carrera/${race.slug}`,
+          }))}
+        />
+      )}
+
       <Link
-        href="/calendario"
+        href="/carreras"
         className="inline-flex items-center gap-1.5 text-sm text-orange-600 hover:text-orange-700 mb-6 transition-colors"
       >
         <ArrowLeft size={16} />
-        Volver al calendario
+        Todas las provincias
       </Link>
 
       <div className="mb-7">
@@ -101,7 +118,7 @@ export default async function ProvincePage({ params }: PageProps) {
             <MapPin size={22} className="text-orange-500" />
           </div>
           <div>
-            <p className="section-eyebrow mb-0.5">Por provincia</p>
+            <p className="section-eyebrow mb-0.5">{entry?.communityLabel ?? getAutonomousCommunityLabel("otra")}</p>
             <h1 className="section-title">
               Carreras en {name}
             </h1>
@@ -109,21 +126,27 @@ export default async function ProvincePage({ params }: PageProps) {
         </div>
         <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
           {races.length} carrera{races.length !== 1 ? "s" : ""} próxima{races.length !== 1 ? "s" : ""} en {name}
+          {races.length > 0 && (
+            <>
+              {" · "}
+              <Link href={`/calendario?provincia=${encodeURIComponent(provinceNames[0] ?? name)}`} className="text-orange-600 hover:text-orange-700">
+                ver en el calendario
+              </Link>
+            </>
+          )}
         </p>
       </div>
 
       {typeCounts.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-7">
-          {typeCounts.map((t) => (
-            <Link
-              key={t.type}
-              href={`/calendario?tipo=${t.type}&provincia=${encodeURIComponent(dbProvince)}`}
-              className="chip"
-            >
-              {t.type.replace("_", " ").toLowerCase()}
-              <span className="font-semibold opacity-60">({t._count})</span>
-            </Link>
-          ))}
+          {typeCounts
+            .sort((a, b) => b._count - a._count)
+            .map((t) => (
+              <span key={t.type} className="chip">
+                {getRaceTypeLabel(t.type)}
+                <span className="font-semibold opacity-60">({t._count})</span>
+              </span>
+            ))}
         </div>
       )}
 
@@ -167,7 +190,7 @@ export default async function ProvincePage({ params }: PageProps) {
           <div className="flex flex-wrap gap-2 justify-center">
             {allProvinceSlugs
               .filter((s) => s !== slug)
-              .sort((a, b) => provinceSlugs[a].localeCompare(provinceSlugs[b], "es"))
+              .sort((a, b) => PROVINCE_SLUGS[a].localeCompare(PROVINCE_SLUGS[b], "es"))
               .slice(0, 6)
               .map((k) => (
                 <Link
@@ -175,7 +198,7 @@ export default async function ProvincePage({ params }: PageProps) {
                   href={`/carreras/${k}`}
                   className="chip"
                 >
-                  {displayName(provinceSlugs[k])}
+                  {PROVINCE_SLUGS[k]}
                 </Link>
               ))}
           </div>

@@ -180,6 +180,42 @@ export const PROVINCE_SLUGS: Record<string, string> = {
 };
 
 /**
+ * Slug canónico de cada provincia.
+ *
+ * `PROVINCE_SLUGS` tiene alias (`alava` y `arabako` apuntan a la misma ficha)
+ * porque son dos formas habituales de buscar la misma provincia. Sin un slug
+ * canónico se generaban dos páginas con contenido idéntico, las dos aparecían
+ * en el sitemap y el hub contaba la misma provincia dos veces.
+ */
+export const CANONICAL_PROVINCE_SLUG: Record<string, string> = (() => {
+  const byName = new Map<string, string>();
+  const map: Record<string, string> = {};
+  for (const [slug, display] of Object.entries(PROVINCE_SLUGS)) {
+    const canonical = byName.get(display);
+    if (canonical) {
+      map[slug] = canonical;
+    } else {
+      byName.set(display, slug);
+      map[slug] = slug;
+    }
+  }
+  return map;
+})();
+
+/** Slug canónico para una URL de provincia (`arabako` -> `alava`). */
+export function canonicalProvinceSlug(slug: string): string {
+  const key = slug.toLowerCase();
+  return CANONICAL_PROVINCE_SLUG[key] ?? key;
+}
+
+/** Slugs de provincia sin alias: exactamente una URL por provincia. */
+export function canonicalProvinceSlugs(): string[] {
+  return Object.entries(CANONICAL_PROVINCE_SLUG)
+    .filter(([slug, canonical]) => slug === canonical)
+    .map(([slug]) => slug);
+}
+
+/**
  * Alias de cada provincia hacia el nombre canónico que se guarda en la BD.
  * Sin esto "Álava" y "Araba" aparecen como dos provincias distintas.
  */
@@ -367,6 +403,15 @@ export function normalizeProvinceName(value?: string | null): string | null {
  * fuera del sitemap.
  */
 export function slugForProvinceName(province: string): string | null {
+  const slug = resolveProvinceSlug(province);
+  return slug ? canonicalProvinceSlug(slug) : null;
+}
+
+/**
+ * Resolución interna: devuelve el primer slug que coincide, que puede ser un
+ * alias. `slugForProvinceName` lo pasa después por `canonicalProvinceSlug`.
+ */
+function resolveProvinceSlug(province: string): string | null {
   if (!province) return null;
   const flat = stripAccentsLoose(province.trim());
   if (!flat) return null;

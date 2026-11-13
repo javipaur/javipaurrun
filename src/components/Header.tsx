@@ -13,17 +13,28 @@ import Logo from "./Logo";
 
 const categories = [
   { href: "/calendario", label: "Todas las carreras" },
-  { href: "/calendario?tipo=ASFALTO", label: "Running" },
-  { href: "/calendario?tipo=TRAIL", label: "Trail" },
-  { href: "/calendario?tipo=MEDIA_MARATON", label: "Media Maratón" },
-  { href: "/calendario?tipo=MARATON", label: "Maratón" },
-  { href: "/calendario?tipo=MARCHA", label: "Marcha" },
-  { href: "/calendario?tipo=ORIENTACION", label: "Orientación" },
+  { href: "/carreras/tipo/asfalto", label: "Running" },
+  { href: "/carreras/tipo/trail", label: "Trail" },
+  { href: "/carreras/tipo/media-maraton", label: "Media Maratón" },
+  { href: "/carreras/tipo/maraton", label: "Maratón" },
+  { href: "/carreras/tipo/marcha", label: "Marcha" },
+  { href: "/carreras/tipo/orientacion", label: "Orientación" },
+  { href: "/carreras/tipo/10k", label: "10K" },
   { href: "/carreras", label: "Por provincia" },
   { href: "/mapa", label: "Mapa" },
   { href: "/calculadora-ritmo", label: "Calculadora" },
   { href: "/ranking", label: "Ranking" },
 ];
+
+/** Compatibilidad con enlaces antiguos `/calendario?tipo=...`. */
+const TYPE_TO_LANDING: Record<string, string> = {
+  ASFALTO: "asfalto",
+  TRAIL: "trail",
+  MEDIA_MARATON: "media-maraton",
+  MARATON: "maraton",
+  MARCHA: "marcha",
+  ORIENTACION: "orientacion",
+};
 
 const bottomNav = [
   { href: "/", label: "Inicio", icon: Home },
@@ -141,9 +152,8 @@ export default function Header() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="flex items-center gap-1.5 overflow-x-auto py-2.5 scrollbar-none">
               {categories.map((cat) => {
-                const isActive = pathname === "/calendario" && cat.href.includes("tipo=")
-                  ? activeType === cat.href.split("=")[1]
-                  : pathname === cat.href;
+                const legacyHref = activeType ? `/carreras/tipo/${TYPE_TO_LANDING[activeType] ?? ""}` : null;
+                const isActive = pathname === cat.href || (pathname === "/calendario" && legacyHref === cat.href);
                 return (
                   <Link
                     key={cat.href}

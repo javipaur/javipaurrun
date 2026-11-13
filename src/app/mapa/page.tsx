@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import MapClient from "./MapClient";
 import { publicRaces } from "@/lib/race-filters";
+import { startOfToday } from "@/lib/time";
 
 export const revalidate = 3600;
 
@@ -17,7 +18,7 @@ export default async function MapaPage() {
     where: publicRaces({
       latitude: { not: null },
       longitude: { not: null },
-      date: { gte: new Date() },
+      date: { gte: startOfToday() },
     }),
     orderBy: { date: "asc" },
     take: 500,
@@ -37,7 +38,7 @@ export default async function MapaPage() {
   }));
 
   const noCoords = await prisma.race.count({
-    where: publicRaces({ latitude: null, date: { gte: new Date() } }),
+    where: publicRaces({ latitude: null, date: { gte: startOfToday() } }),
   });
 
   return (

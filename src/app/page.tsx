@@ -8,7 +8,8 @@ import NearbyRaces from "@/components/NearbyRaces";
 import HeroParallax from "@/components/HeroParallax";
 import { EventJsonLd } from "@/components/JsonLd";
 import { ArrowRight, CalendarDays, ChevronRight, Mail, MapPin, Search } from "lucide-react";
-import { publicRaces } from "@/lib/race-filters";
+import { upcomingWhere, getProvinceDirectory } from "@/lib/races";
+import { RACE_TYPE_LANDINGS } from "@/lib/race-types";
 
 export const revalidate = 3600;
 
@@ -45,26 +46,24 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [featuredRaces, raceCounts, latestPosts, totalRaces, provinceStats, openRaces, gpsRaces] = await Promise.all([
+  const [featuredRaces, raceCounts, latestPosts, directory, openRaces, gpsRaces] = await Promise.all([
     prisma.race.findMany({
-      where: publicRaces({ date: { gte: new Date() } }),
+      where: upcomingWhere(),
       orderBy: { date: "asc" },
       take: 6,
     }),
-    prisma.race.groupBy({ by: ["type"], where: publicRaces(), _count: true }),
+    prisma.race.groupBy({ by: ["type"], where: { pendingReview: false }, _count: true }),
     prisma.blogPost.findMany({
       where: { published: true },
       orderBy: { createdAt: "desc" },
       take: 3,
     }),
-    prisma.race.count({ where: publicRaces() }),
-    prisma.race.groupBy({ by: ["province"], where: publicRaces({ date: { gte: new Date() } }), _count: true }),
+    getProvinceDirectory(),
     prisma.race.count({
-      where: publicRaces({ date: { gte: new Date() }, url: { not: null } }),
+      where: upcomingWhere({ url: { not: null } }),
     }),
     prisma.race.findMany({
-      where: publicRaces({
-        date: { gte: new Date() },
+      where: upcomingWhere({
         latitude: { not: null },
         longitude: { not: null },
         location: { not: "Por determinar" },
@@ -88,7 +87,8 @@ export default async function Home() {
   const typeCountMap: Record<string, number> = {};
   raceCounts.forEach((r) => { typeCountMap[r.type] = r._count; });
 
-  const totalProvinces = provinceStats.length;
+  const totalRaces = directory.upcomingTotal;
+  const totalProvinces = directory.provinceCount;
 
   const nearbyRaceData = gpsRaces.map((r) => ({
     id: r.id,
@@ -103,14 +103,12 @@ export default async function Home() {
     longitude: r.longitude as number,
   }));
 
-  const categories = [
-    { type: "ASFALTO", label: "Running / Asfalto", path: "/calendario?tipo=ASFALTO" },
-    { type: "TRAIL", label: "Trail / Montaña", path: "/calendario?tipo=TRAIL" },
-    { type: "MEDIA_MARATON", label: "Media Maratón", path: "/calendario?tipo=MEDIA_MARATON" },
-    { type: "MARATON", label: "Maratón", path: "/calendario?tipo=MARATON" },
-    { type: "MARCHA", label: "Marcha", path: "/calendario?tipo=MARCHA" },
-    { type: "ORIENTACION", label: "Orientación", path: "/calendario?tipo=ORIENTACION" },
-  ];
+  const categories = RACE_TYPE_LANDINGS.map((landing) => ({
+    type: landing.type ?? "ASFALTO",
+    slug: landing.slug,
+    label: landing.label,
+    path: `/carreras/tipo/${landing.slug}`,
+  }));
 
   return (
     <div>
@@ -139,7 +137,7 @@ export default async function Home() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-400"></span>
               </span>
-              {totalRaces} carreras en el calendario
+              {totalRaces} carreras próximas
             </div>
             <h1 className="text-4xl sm:text-6xl font-black text-white mb-5 leading-[1.05] tracking-tight animate-fade-in-up stagger-1">
               Encuentra tu <span className="text-brand-gradient">próxima carrera</span>
@@ -183,9 +181,9 @@ export default async function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { value: totalRaces.toLocaleString("es-ES"), label: "Carreras en el calendario" },
+              { value: totalRaces.toLocaleString("es-ES"), label: "Carreras próximas" },
               { value: totalProvinces.toLocaleString("es-ES"), label: "Provincias cubiertas" },
-              { value: openRaces.toLocaleString("es-ES"), label: "Inscripciones abiertas" },
+              { value: openRaces.toLocaleString("es-ES"), label: "Con inscripción online" },
             ].map((stat) => (
               <div key={stat.label} className="stats-card text-center">
                 <p className="text-3xl md:text-4xl font-black text-brand-gradient">{stat.value}</p>
@@ -202,12 +200,14 @@ export default async function Home() {
           <div className="flex flex-wrap gap-2 justify-center">
             {categories.filter((cat) => (typeCountMap[cat.type] || 0) > 0).map((cat) => (
               <Link
-                key={cat.type}
+                key={cat.slug}
                 href={cat.path}
                 className="chip"
               >
                 {cat.label}
-                <span className="text-xs font-semibold opacity-60">({typeCountMap[cat.type]})</span>
+                {cat.slug !== "10k" && (
+                  <span className="text-xs font-semibold opacity-60">({typeCountMap[cat.type]})</span>
+                )}
               </Link>
             ))}
           </div>

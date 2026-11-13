@@ -1,3 +1,5 @@
+import { startOfToday } from "@/lib/time";
+
 export interface CityInfo {
   name: string;
   province: string;
@@ -120,6 +122,6 @@ export function cityWhere(city: CityInfo) {
       { location: { contains: alias, mode: "insensitive" as const } },
     ]),
     pendingReview: false,
-    date: { gte: new Date() },
+    date: { gte: startOfToday() },
   };
 }

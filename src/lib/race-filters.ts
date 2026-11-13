@@ -1,5 +1,6 @@
 import { Prisma, RaceType } from "@/generated/prisma/client";
 import { distanceRanges, getProvincesByCommunity } from "@/lib/utils";
+import { startOfToday } from "@/lib/time";
 
 export interface CalendarFilters {
   tipo?: string;
@@ -32,7 +33,7 @@ export function parseCalendarFilters(raw: CalendarFilters) {
   };
 }
 
-export function buildCalendarWhere(raw: CalendarFilters, now = new Date()): Prisma.RaceWhereInput {
+export function buildCalendarWhere(raw: CalendarFilters, now = startOfToday()): Prisma.RaceWhereInput {
   const where: Prisma.RaceWhereInput = { pendingReview: false };
 
   const tipo = raw.tipo;

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { startOfToday } from "@/lib/time";
 import Link from "next/link";
 
 export default async function AdminDashboard() {
@@ -8,7 +9,7 @@ export default async function AdminDashboard() {
       prisma.blogPost.count({ where: { published: true } }),
       prisma.newsletterSubscriber.count({ where: { active: true } }),
       prisma.race.findMany({
-        where: { date: { gte: new Date() } },
+        where: { date: { gte: startOfToday() } },
         orderBy: { date: "asc" },
         take: 5,
       }),

@@ -1,7 +1,10 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
-import { PROVINCE_SLUGS, slugForProvinceName } from "@/lib/utils";
+import { PROVINCE_SLUGS, canonicalProvinceSlugs, slugForProvinceName } from "@/lib/utils";
 import { cities, canonicalCitySlug } from "@/lib/cities";
+import { RACE_TYPE_LANDINGS, raceTypeLandingWhere } from "@/lib/race-types";
+import { upcomingWhere } from "@/lib/races";
+import { startOfToday } from "@/lib/time";
 import { envSiteUrl } from "@/lib/site-url";
 
 // Sin esto el sitemap se genera una vez en el build y no incorpora carreras
@@ -38,14 +41,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     try {
       const grouped = await prisma.race.groupBy({
         by: ["province"],
-        where: { pendingReview: false, date: { gte: new Date() } },
+        where: { pendingReview: false, date: { gte: startOfToday() } },
         _count: true,
       });
       provinceCounts = grouped.map((g) => ({ province: g.province, _count: g._count }));
     } catch {}
   }
 
-  const provinceEntries = Object.entries(PROVINCE_SLUGS);
+  let landingsWithRaces: typeof RACE_TYPE_LANDINGS = [];
+  if (process.env.DATABASE_URL) {
+    // Solo se declaran en el sitemap las landings que no estan vacias: las
+    // vacias se sirven con `noindex` y no deben aparecer aqui.
+    try {
+      const counts = await Promise.all(
+        RACE_TYPE_LANDINGS.map((landing) =>
+          prisma.race.count({ where: upcomingWhere(raceTypeLandingWhere(landing)) })
+        )
+      );
+      landingsWithRaces = RACE_TYPE_LANDINGS.filter((_, i) => counts[i] > 0);
+    } catch {}
+  }
+
+  const provinceEntries = canonicalProvinceSlugs().map((slug) => [slug, PROVINCE_SLUGS[slug]] as const);
   const provincePriority = new Map<string, number>();
   const counted = new Set<string>();
 
@@ -74,6 +91,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/calculadora-ritmo`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE}/about`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${BASE}/completitud`, changeFrequency: "weekly", priority: 0.5 },
+    // Landings por disciplina: sustituyen a las URLs `?tipo=...` y compiten por
+    // busquedas propias ("maratones en España", "carreras 10k").
+    ...landingsWithRaces.map((landing) => ({
+      url: `${BASE}/carreras/tipo/${landing.slug}`,
+      changeFrequency: "daily" as const,
+      priority: 0.7,
+    })),
     // Sin URLs con query (?tipo=...): compiten entre si y ya no existe una
     // landing estatica equivalente. Volveran al sitemap cuando exista ruta propia.
     // Una sola URL por ciudad: los alias (`gasteiz`, `san-sebastian`,

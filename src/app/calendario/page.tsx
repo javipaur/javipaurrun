@@ -7,6 +7,7 @@ import LoadMoreRaces from "@/components/LoadMoreRaces";
 import { Prisma, RaceType } from "@/generated/prisma/client";
 import { haversineKm } from "@/lib/utils";
 import { buildCalendarWhere, buildCalendarOrder, parseCalendarFilters } from "@/lib/race-filters";
+import { startOfToday } from "@/lib/time";
 import { SearchX } from "lucide-react";
 import AutoLocationFilter from "@/components/AutoLocationFilter";
 import ActiveFilterChips from "@/components/ActiveFilterChips";
@@ -39,7 +40,7 @@ interface PageProps {
 export default async function CalendarPage({ searchParams }: PageProps) {
   const params = await searchParams;
 
-  const now = new Date();
+  const now = startOfToday();
   const { near } = parseCalendarFilters(params);
   const where = buildCalendarWhere(params, now);
   const orderBy = buildCalendarOrder(params);
