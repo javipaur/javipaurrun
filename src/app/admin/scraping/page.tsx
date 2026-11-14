@@ -24,6 +24,7 @@ const sources = [
   { id: "rockthesport", name: "RockTheSport", desc: "API pública nacional trail/running (~350)", icon: "🎽" },
   { id: "sportmaniacs", name: "Sportmaniacs", desc: "Calendario nacional running (~3000)", icon: "🏁" },
   { id: "buscametas", name: "Buscametas", desc: "Scraping HTML (anti-bot)", icon: "🔍" },
+  { id: "carreraspopulares", name: "CarrerasPopulares", desc: "API pública de carreras populares en España", icon: "📅" },
 ];
 
 const sourceLabels: Record<string, string> = {
@@ -31,6 +32,7 @@ const sourceLabels: Record<string, string> = {
   rockthesport: "RockTheSport",
   sportmaniacs: "Sportmaniacs",
   buscametas: "Buscametas",
+  carreraspopulares: "CarrerasPopulares",
 };
 
 export default function ScrapingPage() {
