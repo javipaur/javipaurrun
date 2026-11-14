@@ -73,16 +73,16 @@ export async function GET(req: Request) {
   const ics = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//JavipaurRun//ES",
+    "PRODID:-//RunHub//ES",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    "X-WR-CALNAME:JavipaurRun",
+    "X-WR-CALNAME:RunHub",
     events,
     "END:VCALENDAR",
   ].join("\r\n");
 
   const stamp = new Date().toISOString().slice(0, 10);
-  const filename = `javipaurrun-${stamp}.ics`;
+  const filename = `runhub-${stamp}.ics`;
 
   return new Response(ics, {
     headers: {

@@ -26,26 +26,26 @@ export interface RaceTypeLanding {
 
 export const RACE_TYPE_LANDINGS: RaceTypeLanding[] = [
   {
-    slug: "asfalto",
+    slug: "running",
     type: "ASFALTO",
     label: "Running",
-    title: "Carreras de asfalto y running en España",
-    heading: "Carreras de asfalto y running",
+    title: "Carreras de running y asfalto en España",
+    heading: "Carreras de running y asfalto",
     description:
-      "Calendario de carreras populares de asfalto en España: 5K, 10K, medias y maratones. Fechas, provincias, distancias e inscripciones actualizadas.",
+      "Calendario de carreras populares de asfalto en España: 5K, 10K y más. Fechas, provincias, distancias e inscripciones.",
     intro:
-      "Las carreras de asfalto son la puerta de entrada al running popular: distancias cortas, circuitos urbanos y ambientazo en la calle. Aquí tienes todas las pruebas de asfalto del calendario, ordenadas por fecha y con el enlace de inscripción cuando está disponible.",
+      "Carreras urbanas y populares de asfalto en toda España. Encuentra tu próxima 5K, 10K o prueba de ruta y accede a la inscripción oficial.",
   },
   {
     slug: "trail",
     type: "TRAIL",
     label: "Trail",
-    title: "Carreras de trail running en España",
-    heading: "Carreras de trail running",
+    title: "Carreras de trail y montaña en España",
+    heading: "Carreras de trail y montaña",
     description:
-      "Calendario de carreras de trail y montaña en España: desde iniciación hasta ultras. Fechas, desnivel cuando está disponible y enlaces de inscripción.",
+      "Calendario de trail running en España: iniciación, media montaña y ultras, con fechas y provincias.",
     intro:
-      "El trail cambia el asfalto por senderos, pistas y montaña. Encontrarás pruebas de iniciación de pocos kilómetros y carreras de ultradistancia, con la fecha y la provincia de cada una para planificar la temporada.",
+      "Senderos, pistas y montaña en todas las comunidades. Aquí tienes las próximas carreras de trail para planificar tu temporada.",
   },
   {
     slug: "media-maraton",
@@ -54,20 +54,64 @@ export const RACE_TYPE_LANDINGS: RaceTypeLanding[] = [
     title: "Medias maratones en España | Calendario",
     heading: "Medias maratones en España",
     description:
-      "Calendario de medias maratones en España (21,097 km). Consulta fechas, provincias e inscripciones abiertas de las próximas 21K.",
+      "Calendario de medias maratones (21,097 km) en España con fechas, provincias e inscripciones.",
     intro:
-      "La media maratón es el salto natural antes del maratón: 21,097 km que exigen preparación pero se disfrutan. Estas son las próximas medias maratones del calendario, con su fecha, provincia e información de inscripción.",
+      "La distancia ideal antes del maratón. Consulta las próximas 21K del calendario por fecha y ubicación.",
   },
   {
     slug: "maraton",
     type: "MARATON",
     label: "Maratón",
-    title: "Maratones en España | Calendario 2026",
+    title: "Maratones en España | Calendario",
     heading: "Maratones en España",
     description:
-      "Calendario de maratones en España: fechas, ciudades, plazos de inscripción y estado de cada 42K. Planifica tu próximo maratón.",
+      "Calendario de maratones en España: fechas, ciudades y enlaces de inscripción para tu próximo 42K.",
     intro:
-      "Cuarenta y dos kilómetros y ciento noventa y cinco metros. Aquí están los maratones que se celebran en España, con la fecha, la ciudad y el enlace a la inscripción oficial para que no se te escape el plazo.",
+      "Todos los maratones del calendario en España, con la información clave para preparar tu objetivo.",
+  },
+  {
+    slug: "ciclismo",
+    type: "CICLISMO",
+    label: "Ciclismo",
+    title: "Marchas y carreras ciclistas en España",
+    heading: "Ciclismo en España",
+    description:
+      "Calendario de eventos ciclistas en España: carretera, BTT, gravel y marchas cicloturistas.",
+    intro:
+      "Pruebas y marchas ciclistas por toda España, de carretera, montaña o gravel, para todos los niveles.",
+  },
+  {
+    slug: "triatlon",
+    type: "TRIATLON",
+    label: "Triatlón",
+    title: "Triatlones y duatlones en España",
+    heading: "Triatlón en España",
+    description:
+      "Calendario de triatlones y duatlones en España con fechas, sedes y distancias.",
+    intro:
+      "Natación, ciclismo y carrera en un mismo evento. Descubre los próximos triatlones y duatlones del calendario.",
+  },
+  {
+    slug: "natacion",
+    type: "NATACION",
+    label: "Natación",
+    title: "Travesías y pruebas de natación en España",
+    heading: "Natación en aguas abiertas",
+    description:
+      "Calendario de travesías y eventos de natación en España, en mar, pantanos y ríos.",
+    intro:
+      "Travesías y pruebas de natación en aguas abiertas por toda España, para nadadores populares y federados.",
+  },
+  {
+    slug: "hibridos",
+    type: "HIBRIDO",
+    label: "Híbridos",
+    title: "Carreras híbridas y OCR en España (HYROX, OCR…)",
+    heading: "Carreras híbridas y OCR",
+    description:
+      "Calendario de eventos híbridos y OCR en España: HYROX, carreras de obstáculos y fitness funcional.",
+    intro:
+      "Eventos que combinan carrera con fuerza y habilidades: HYROX, OCR y retos híbridos en toda España.",
   },
   {
     slug: "marcha",
@@ -76,9 +120,9 @@ export const RACE_TYPE_LANDINGS: RaceTypeLanding[] = [
     title: "Marchas y caminatas populares en España",
     heading: "Marchas y caminatas populares",
     description:
-      "Calendario de marchas y caminatas populares en España. Pruebas no competitivas para todos los niveles, con fecha y provincia.",
+      "Calendario de marchas y caminatas populares en España para todos los niveles.",
     intro:
-      "No todo el calendario es competitivo. Las marchas y caminatas populares permiten disfrutar del deporte sin cronómetro, en familia o como primera toma de contacto. Estas son las próximas.",
+      "Pruebas no competitivas para disfrutar caminando, en familia o como iniciación. Estas son las próximas marchas.",
   },
   {
     slug: "orientacion",
@@ -87,9 +131,9 @@ export const RACE_TYPE_LANDINGS: RaceTypeLanding[] = [
     title: "Carreras de orientación en España",
     heading: "Carreras de orientación",
     description:
-      "Calendario de carreras de orientación en España: pruebas con mapa y brújula para todos los niveles, con fecha y provincia.",
+      "Calendario de carreras de orientación en España con mapa y brújula.",
     intro:
-      "La orientación combina carrera y navegación: hay que encontrar los controles con mapa y brújula en el menor tiempo posible. Un deporte con menos pruebas que el asfalto, pero con un calendario activo en toda España.",
+      "Carreras donde la navegación es clave. Encuentra pruebas de orientación por toda España.",
   },
   {
     slug: "10k",
@@ -99,9 +143,9 @@ export const RACE_TYPE_LANDINGS: RaceTypeLanding[] = [
     title: "Carreras de 10K en España | Calendario",
     heading: "Carreras de 10K en España",
     description:
-      "Calendario de carreras de 10 kilómetros en España: fechas, provincias e inscripciones. La distancia más popular del running.",
+      "Calendario de carreras de 10 kilómetros en España: fechas, provincias e inscripciones.",
     intro:
-      "Los 10K son la distancia más popular del calendario: exigentes pero asequibles, y con pruebas casi todos los fines de semana. Aquí tienes las carreras de 10 kilómetros registradas, ordenadas por fecha.",
+      "Los 10K son una de las distancias más populares. Aquí tienes las próximas carreras de 10 kilómetros registradas.",
   },
 ];
 

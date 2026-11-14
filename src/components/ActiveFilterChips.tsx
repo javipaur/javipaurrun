@@ -8,12 +8,13 @@ interface ActiveFilterChipsProps {
   total: number;
 }
 
-/** Filtros constan→valor y como se muestran. `key` = parametro de la URL. */
+/** Filtros clave→valor y cómo se muestran. `key` = parámetro de la URL. */
 const LABELS: Record<string, (v: string) => string> = {
   tipo: (v) => getRaceTypeLabel(v),
   provincia: (v) => v,
   comunidad: (v) => getAutonomousCommunityLabel(v),
   distancia: (v) => distanceRanges.find((d) => d.value === v)?.label ?? v,
+  precio: (v) => (v === "gratis" ? "Gratis" : v === "pago" ? "De pago" : v),
   mes: (v) => {
     const [y, m] = v.split("-").map(Number);
     if (!y || !m) return v;
@@ -35,10 +36,19 @@ export default function ActiveFilterChips({ total }: ActiveFilterChipsProps) {
     .map(([key, value]) => ({ key, value, label: LABELS[key]?.(value) ?? value }));
 
   const hasNearby = searchParams.has("lat") && searchParams.has("lng");
+  const radius = searchParams.get("radio") || "25";
 
   function remove(key: string) {
     const params = new URLSearchParams(searchParams.toString());
     params.delete(key);
+    router.push(`/calendario?${params.toString()}`);
+  }
+
+  function removeNearby() {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("lat");
+    params.delete("lng");
+    params.delete("radio");
     router.push(`/calendario?${params.toString()}`);
   }
 
@@ -57,11 +67,12 @@ export default function ActiveFilterChips({ total }: ActiveFilterChipsProps) {
 
       {hasNearby && (
         <button
-          onClick={clearAll}
+          onClick={removeNearby}
           className="group inline-flex items-center gap-1.5 pl-2.5 pr-2 py-1 rounded-full bg-orange-100 text-orange-800 text-xs font-semibold hover:bg-orange-200 transition-colors"
+          title="Quitar filtro de cercanía"
         >
           <MapPin size={12} />
-          Cerca de mí
+          Cerca de mí ({radius} km)
           <X size={12} className="opacity-60 group-hover:opacity-100" />
         </button>
       )}

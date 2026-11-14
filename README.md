@@ -1,4 +1,4 @@
-# JavipaurRun
+# RunHub
 
 Director web de carreras populares (asfalto, trail, media maratón, maratón, marcha y orientación) en toda España. Permite buscar por **provincia**, **distancia** y **tipo de carrera**, y consultar un calendario actualizado cada día.
 

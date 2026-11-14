@@ -6,8 +6,8 @@ export function OrganizationJsonLd() {
     "@context": "https://schema.org",
     "@type": "Organization",
     "@id": `${SITE_URL}/#organization`,
-    name: "JavipaurRun",
-    alternateName: "Javipaur Run",
+    name: "RunHub",
+    alternateName: "RunHub",
     url: SITE_URL,
     description:
       "Directorio y calendario de carreras populares en toda España: running, trail, media maratón, maratón, marcha y orientación.",
@@ -56,7 +56,7 @@ export function WebSiteJsonLd() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "@id": `${SITE_URL}/#website`,
-    name: "JavipaurRun",
+    name: "RunHub",
     url: SITE_URL,
     inLanguage: "es-ES",
     publisher: { "@id": `${SITE_URL}/#organization` },
@@ -223,7 +223,7 @@ export function BlogPostJsonLd({
     datePublished: datePublished.toISOString(),
     author: {
       "@type": "Person",
-      name: author || "JavipaurRun",
+      name: author || "RunHub",
     },
   };
 

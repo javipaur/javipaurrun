@@ -15,9 +15,9 @@ import ActiveFilterChips from "@/components/ActiveFilterChips";
 const PAGE_SIZE = 12;
 
 export const metadata: Metadata = {
-  title: "Calendario de carreras populares",
+  title: "Calendario de carreras en España",
   description:
-    "Calendario actualizado con todas las carreras populares en España. Filtra por tipo, provincia, comunidad autónoma o busca tu próxima carrera.",
+    "Calendario actualizado con carreras y eventos de todo tipo en España. Filtra por disciplina, provincia, distancia, precio o busca las más cercanas a ti.",
   alternates: { canonical: "/calendario" },
 };
 
@@ -27,6 +27,7 @@ interface PageProps {
     provincia?: string;
     comunidad?: string;
     distancia?: string;
+    precio?: string;
     buscar?: string;
     page?: string;
     mes?: string;
@@ -98,6 +99,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
   if (params.provincia) baseParams.set("provincia", params.provincia);
   if (params.comunidad) baseParams.set("comunidad", params.comunidad);
   if (params.distancia) baseParams.set("distancia", params.distancia);
+  if (params.precio) baseParams.set("precio", params.precio);
   if (params.buscar) baseParams.set("buscar", params.buscar);
   if (params.mes) baseParams.set("mes", params.mes);
   if (params.orden) baseParams.set("orden", params.orden);

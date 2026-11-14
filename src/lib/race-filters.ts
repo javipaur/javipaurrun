@@ -7,6 +7,7 @@ export interface CalendarFilters {
   provincia?: string;
   comunidad?: string;
   distancia?: string;
+  precio?: string;
   buscar?: string;
   mes?: string;
   orden?: string;
@@ -73,6 +74,36 @@ export function buildCalendarWhere(raw: CalendarFilters, now = startOfToday()): 
         }
       }
     }
+  }
+
+  const andConditions: Prisma.RaceWhereInput[] = Array.isArray(where.AND)
+    ? [...where.AND]
+    : where.AND
+      ? [where.AND]
+      : [];
+
+  if (raw.precio === "gratis") {
+    andConditions.push({
+      OR: [
+        { price: null },
+        { price: "" },
+        { price: { equals: "0", mode: "insensitive" } },
+        { price: { contains: "gratis", mode: "insensitive" } },
+        { price: { contains: "gratuit", mode: "insensitive" } },
+        { price: { contains: "free", mode: "insensitive" } },
+      ],
+    });
+  } else if (raw.precio === "pago") {
+    andConditions.push({ NOT: { price: null } });
+    andConditions.push({ NOT: { price: "" } });
+    andConditions.push({ NOT: { price: { equals: "0", mode: "insensitive" } } });
+    andConditions.push({ NOT: { price: { contains: "gratis", mode: "insensitive" } } });
+    andConditions.push({ NOT: { price: { contains: "gratuit", mode: "insensitive" } } });
+    andConditions.push({ NOT: { price: { contains: "free", mode: "insensitive" } } });
+  }
+
+  if (andConditions.length > 0) {
+    where.AND = andConditions;
   }
 
   if (raw.mes && /^\d{4}-\d{2}$/.test(raw.mes)) {

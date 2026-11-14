@@ -8,7 +8,7 @@ export function getZodErrorMessage(error: ZodError): string {
   return issue.message;
 }
 
-const RaceTypeEnum = z.enum(["ASFALTO", "MEDIA_MARATON", "MARATON", "TRAIL", "MARCHA", "ORIENTACION"]);
+const RaceTypeEnum = z.enum(["ASFALTO", "MEDIA_MARATON", "MARATON", "TRAIL", "MARCHA", "ORIENTACION", "CICLISMO", "TRIATLON", "NATACION", "HIBRIDO"]);
 const RaceStatusEnum = z.enum(["PROXIMAMENTE", "INSCRIPCIONES_ABIERTAS", "COMPLETADA", "CANCELADA"]);
 
 export const registerSchema = z.object({

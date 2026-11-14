@@ -22,6 +22,7 @@ export interface RaceCardRace {
   url?: string | null;
   price?: string | null;
   image?: string | null;
+  status?: string | null;
 }
 
 interface RaceCardProps {
@@ -120,7 +121,11 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
               <span className={getRaceDotClass(race.type)} />
               {getRaceTypeLabel(race.type)}
             </span>
-            {race.url && (
+            {race.status === "CANCELADA" ? (
+              <span className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/90 dark:bg-black/60 backdrop-blur text-red-600 dark:text-red-400 shadow-sm">
+                Cancelada
+              </span>
+            ) : race.status === "INSCRIPCIONES_ABIERTAS" ? (
               <span className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/90 dark:bg-black/60 backdrop-blur text-emerald-600 dark:text-emerald-400 shadow-sm">
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -128,7 +133,7 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
                 </span>
                 Inscripciones abiertas
               </span>
-            )}
+            ) : null}
           </div>
         )}
 
@@ -149,9 +154,21 @@ export default function RaceCard({ race, index = 0 }: RaceCardProps) {
                 <span className={getRaceDotClass(race.type)} />
                 {getRaceTypeLabel(race.type)}
               </span>
-              {race.distance && (
-                <span className="text-xs font-semibold text-text-tertiary">{race.distance}</span>
-              )}
+              <div className="flex items-center gap-2">
+                {race.status === "CANCELADA" ? (
+                  <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-700 dark:bg-red-950/30 dark:text-red-300">
+                    Cancelada
+                  </span>
+                ) : race.status === "INSCRIPCIONES_ABIERTAS" ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    Abiertas
+                  </span>
+                ) : null}
+                {race.distance && (
+                  <span className="text-xs font-semibold text-text-tertiary">{race.distance}</span>
+                )}
+              </div>
             </div>
           )}
 

@@ -2,7 +2,7 @@
 
 ## Resumen ejecutivo
 
-**JavipaurRun** es una aplicación web de **director de carreras populares en España** con un segundo bloque en construcción: una **plataforma B2B de seguimiento en vivo** (estilo LiveTrail) para eventos de trail/running.
+**RunHub** es una aplicación web de **director de carreras populares en España** con un segundo bloque en construcción: una **plataforma B2B de seguimiento en vivo** (estilo LiveTrail) para eventos de trail/running.
 
 - **Producto visible hoy:** calendario filtrable, directorio por provincia/ciudad, detalle de carrera con mapa, reviews, resultados, comparador, recordatorios, newsletter, blog y panel admin.
 - **En construcción:** organizadores, eventos live, tracking GPS de corredores, checkpoints y dashboard en tiempo real.
@@ -60,7 +60,7 @@ El árbol actual incluye cambios no committeados de la fase LiveTrail. No revert
 ## Estructura del repositorio
 
 ```text
-javipaurrun/
+runhub/
 ├── prisma/schema.prisma                  # Esquema DB actual/incremental
 ├── scripts/
 │   ├── import-all.mts                    # Scraping manual completo
@@ -205,7 +205,7 @@ Ver `.env.example`:
 - `DATABASE_URL`: PostgreSQL. **SQLite no funciona aunque `.env.example` lo sugiera**
   (`src/lib/prisma.ts` fuerza el adapter `PrismaPg`, que solo habla el protocolo de Postgres).
   El Postgres local de Windows exige `scram-sha-256`, así que la URL necesita
-  `postgresql://USUARIO:CLAVE@localhost:5432/javipaurrun`. Sin credenciales la app
+  `postgresql://USUARIO:CLAVE@localhost:5432/runhub`. Sin credenciales la app
   **no lanza**: las páginas devuelven 200 con contenido vacío, lo que hace el fallo
   muy difícil de detectar.
 
@@ -215,7 +215,7 @@ Ver `.env.example`:
 - `envSiteUrl()`: variable de entorno validada, con fallback al dominio real.
 - `siteUrl()`: **el host de la petición gana siempre**. Así una variable mal puesta
   en producción ya no puede envenenar el sitemap, el robots ni los canonicals.
-- **No reintroducir `javipaurrun.com`**: ese dominio no resuelve en DNS. Pasó un
+- **No reintroducir `runhub.com`**: ese dominio no resuelve en DNS. Pasó un
   tiempo apuntando el sitemap entero a un dominio inexistente.
 - `site-url.ts` NO puede importar `next/headers` (acaba en el bundle del cliente
   vía `ical.ts` -> `RaceDetailClient`). De ahi la separación en dos modulos.
@@ -288,7 +288,7 @@ Producción añade Redis y el gateway siempre vivo; sin Redis, live queda parcia
 
 ## Directrices para agentes
 
-- Trabajar en `C:\ProyectosGit\javipaurrun` (o mover la sesión allí).
+- Trabajar en `C:\ProyectosGit\runhub` (o mover la sesión allí).
 - No tocar `node_modules`, `.next`, `src/generated/prisma` ni archivos binarios.
 - Siempre ejecutar `git status` antes de editar por los cambios no committeados.
 - Preferir cambios pequeños y verificables.
@@ -461,7 +461,7 @@ npm run import:races
 
 ## Referencias
 
-- Diseño LiveTrail: `docs/superpowers/specs/2026-09-21-javipaurrun-livetrail-design.md`
+- Diseño LiveTrail: `docs/superpowers/specs/2026-09-21-runhub-livetrail-design.md`
 - Schema: `prisma/schema.prisma`
 - Provincias: `src/lib/utils.ts` (`PROVINCE_SLUGS`)
 - Scraping: `src/lib/scraping.ts`
@@ -575,7 +575,7 @@ Toda consulta de carreras en pagina publica debe usar `publicRaces({...})` de
 - `src/components/AutoLocationFilter.tsx`: filtro automatico por ubicacion.
 
 **SEO**
-- `layout.tsx`: `metadataBase`, plantilla de titulos `%s | JavipaurRun`,
+- `layout.tsx`: `metadataBase`, plantilla de titulos `%s | RunHub`,
   keywords, canonical.
 - JSON-LD: `Organization` (ya no "Euskadi/Cantabria/Zamora" sino Espana),
   `WebSite`, `SportsEvent` con `offers`/`eventStatus`, e `ItemListJsonLd`.

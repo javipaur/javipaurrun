@@ -7,7 +7,7 @@ export type RaceSubmissionInput = z.infer<typeof raceSubmissionSchema>;
 export interface NormalizedSubmission {
   name: string;
   slug: string;
-  type: "ASFALTO" | "MEDIA_MARATON" | "MARATON" | "TRAIL" | "MARCHA" | "ORIENTACION";
+  type: "ASFALTO" | "MEDIA_MARATON" | "MARATON" | "TRAIL" | "MARCHA" | "ORIENTACION" | "CICLISMO" | "TRIATLON" | "NATACION" | "HIBRIDO";
   distance?: string;
   distanceKm: number | null;
   location: string;

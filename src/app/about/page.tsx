@@ -5,7 +5,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Sobre nosotros",
   description:
-    "Qué es JavipaurRun, de dónde salen los datos del calendario de carreras populares y cómo puedes proponer o corregir una prueba.",
+    "Qué es RunHub, de dónde salen los datos del calendario de carreras populares y cómo puedes proponer o corregir una prueba.",
   alternates: { canonical: "/about" },
 };
 
@@ -16,12 +16,12 @@ export default function AboutPage() {
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-orange-200">
           <User size={28} className="text-white" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900">Sobre JavipaurRun</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Sobre RunHub</h1>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm space-y-5 text-gray-600 leading-relaxed">
         <p>
-          JavipaurRun nace con la idea de crear un calendario completo y actualizado
+          RunHub nace con la idea de crear un calendario completo y actualizado
           de carreras populares en Euskadi y comunidades cercanas.
         </p>
         <p>

@@ -232,12 +232,16 @@ const provinces = Array.from(
 ).sort();
 
 const raceTypes = [
-  { value: "ASFALTO", label: "Asfalto" },
+  { value: "ASFALTO", label: "Running / Asfalto" },
   { value: "MEDIA_MARATON", label: "Media Maratón" },
   { value: "MARATON", label: "Maratón" },
-  { value: "TRAIL", label: "Trail" },
+  { value: "TRAIL", label: "Trail / Montaña" },
   { value: "MARCHA", label: "Marcha" },
   { value: "ORIENTACION", label: "Orientación" },
+  { value: "CICLISMO", label: "Ciclismo" },
+  { value: "TRIATLON", label: "Triatlón" },
+  { value: "NATACION", label: "Natación" },
+  { value: "HIBRIDO", label: "Híbridos (HYROX/OCR)" },
 ] as const;
 
 const distanceRanges = [
@@ -280,7 +284,7 @@ export function getAutonomousCommunityLabel(value: string): string {
   return autonomousCommunities.find((c) => c.value === value)?.label || value;
 }
 
-const RACE_TYPE_KEYS = ["ASFALTO", "MEDIA_MARATON", "MARATON", "TRAIL", "MARCHA", "ORIENTACION"] as const;
+const RACE_TYPE_KEYS = ["ASFALTO", "MEDIA_MARATON", "MARATON", "TRAIL", "MARCHA", "ORIENTACION", "CICLISMO", "TRIATLON", "NATACION", "HIBRIDO"] as const;
 
 const RACE_TYPE_GRADIENTS: Record<string, string> = {
   TRAIL: "from-emerald-600 via-emerald-500/50 to-teal-600",
@@ -289,6 +293,10 @@ const RACE_TYPE_GRADIENTS: Record<string, string> = {
   ASFALTO: "from-slate-600 via-slate-500/50 to-zinc-600",
   MARCHA: "from-amber-600 via-amber-500/50 to-orange-600",
   ORIENTACION: "from-pink-600 via-pink-500/50 to-rose-600",
+  CICLISMO: "from-lime-600 via-lime-500/50 to-green-600",
+  TRIATLON: "from-cyan-600 via-cyan-500/50 to-sky-600",
+  NATACION: "from-blue-700 via-blue-500/50 to-cyan-500",
+  HIBRIDO: "from-fuchsia-600 via-fuchsia-500/50 to-purple-600",
 };
 
 const RACE_TYPE_DETAIL_COLORS: Record<string, string> = {
@@ -298,6 +306,10 @@ const RACE_TYPE_DETAIL_COLORS: Record<string, string> = {
   TRAIL: "bg-emerald-50 text-emerald-700",
   MARCHA: "bg-amber-50 text-amber-700",
   ORIENTACION: "bg-blue-50 text-blue-700",
+  CICLISMO: "bg-lime-50 text-lime-700",
+  TRIATLON: "bg-cyan-50 text-cyan-700",
+  NATACION: "bg-sky-50 text-sky-700",
+  HIBRIDO: "bg-fuchsia-50 text-fuchsia-700",
 };
 
 const RACE_TYPE_HEX_COLORS: Record<string, string> = {
@@ -307,6 +319,10 @@ const RACE_TYPE_HEX_COLORS: Record<string, string> = {
   TRAIL: "#22c55e",
   MARCHA: "#f59e0b",
   ORIENTACION: "#06b6d4",
+  CICLISMO: "#65a30d",
+  TRIATLON: "#0891b2",
+  NATACION: "#0284c7",
+  HIBRIDO: "#c026d3",
 };
 
 export function isKnownRaceType(type: string): boolean {

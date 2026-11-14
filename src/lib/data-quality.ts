@@ -89,7 +89,7 @@ const UNKNOWN_LOCATIONS = ["Por determinar", "", "-"];
 /**
  * Métricas de completitud del directorio.
  *
- * Se muestran públicamente: es la ventaja diferencial de JavipaurRun frente a
+ * Se muestran públicamente: es la ventaja diferencial de RunHub frente a
  * directorios que no dicen de dónde sacan los datos ni cuánto falta por rellenar.
  *
  * NUNCA lanza. Si la base de datos no está disponible devuelve `ok: false` y

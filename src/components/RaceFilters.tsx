@@ -19,8 +19,9 @@ export default function RaceFilters() {
   const currentProvince = searchParams.get("provincia") || "";
   const currentComunidad = searchParams.get("comunidad") || "";
   const currentDistancia = searchParams.get("distancia") || "";
+  const currentPrecio = searchParams.get("precio") || "";
   const currentSearch = searchParams.get("buscar") || "";
-  const hasFilters = currentType || currentProvince || currentComunidad || currentDistancia || currentSearch;
+  const hasFilters = currentType || currentProvince || currentComunidad || currentDistancia || currentPrecio || currentSearch;
 
   useEffect(() => {
     if (currentType) localStorage.setItem(SAVED_TIPO, currentType);
@@ -32,7 +33,7 @@ export default function RaceFilters() {
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
-    if (!currentType && !currentProvince && !currentComunidad && !currentDistancia && !currentSearch) {
+    if (!currentType && !currentProvince && !currentComunidad && !currentDistancia && !currentPrecio && !currentSearch) {
       const tipo = localStorage.getItem(SAVED_TIPO) || "";
       const provincia = localStorage.getItem(SAVED_PROVINCIA) || "";
       if (tipo || provincia) {
@@ -42,7 +43,7 @@ export default function RaceFilters() {
         router.replace(`/calendario?${params.toString()}`);
       }
     }
-  }, [currentType, currentProvince, currentComunidad, currentDistancia, currentSearch, router]);
+  }, [currentType, currentProvince, currentComunidad, currentDistancia, currentPrecio, currentSearch, router]);
 
   function updateFilter(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -76,7 +77,7 @@ export default function RaceFilters() {
         try {
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=es`,
-            { headers: { "User-Agent": "JavipaurRun/1.0" } }
+            { headers: { "User-Agent": "RunHub/1.0" } }
           );
           const data = await res.json();
           const addr = data.address || {};
@@ -161,6 +162,19 @@ export default function RaceFilters() {
           {distanceRanges.map((r) => (
             <option key={r.value} value={r.value}>{r.label}</option>
           ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Precio</label>
+        <select
+          value={currentPrecio}
+          onChange={(e) => updateFilter("precio", e.target.value)}
+          className="field"
+        >
+          <option value="">Todos</option>
+          <option value="gratis">Gratis</option>
+          <option value="pago">De pago</option>
         </select>
       </div>
 

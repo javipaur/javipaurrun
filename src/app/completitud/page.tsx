@@ -11,14 +11,14 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Estado y calidad de los datos",
   description:
-    "Cuántas carreras hay en JavipaurRun, de qué fuentes proceden, cuándo se sincronizaron por última vez y qué porcentaje de campos (ciudad, precio, distancia, coordenadas) está completo. Transparencia total sobre el calendario de carreras de España.",
+    "Cuántas carreras hay en RunHub, de qué fuentes proceden, cuándo se sincronizaron por última vez y qué porcentaje de campos (ciudad, precio, distancia, coordenadas) está completo. Transparencia total sobre el calendario de carreras de España.",
   alternates: { canonical: "/completitud" },
   openGraph: {
     title: "Estado y calidad de los datos",
     description:
       "Transparencia total: fuentes, sincronización y completitud de los datos del calendario de carreras de España.",
     url: "/completitud",
-    siteName: "JavipaurRun",
+    siteName: "RunHub",
     type: "website",
     locale: "es_ES",
   },
@@ -74,7 +74,7 @@ export default async function CompletitudPage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Dataset",
-    name: "Calendario de carreras populares de España (JavipaurRun)",
+    name: "Calendario de carreras populares de España (RunHub)",
     description:
       "Directorio de carreras populares en España con fecha, distancia, localidad y enlace de inscripción.",
     creator: { "@id": `${SITE_URL}/#organization` },

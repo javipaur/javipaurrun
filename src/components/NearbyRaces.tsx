@@ -64,12 +64,9 @@ export default function NearbyRaces({
 
     const watchdog = window.setTimeout(() => {
       if (settled) return;
-      // El navegador no respondió (permiso bloqueado o sin prompt) → avisar y permitir reintentar
       settled = true;
       setStatus("idle");
-      setError(
-        "No se pudo obtener tu ubicación. Asegúrate de permitir el acceso a la ubicación en tu navegador (y usa HTTPS) e inténtalo de nuevo."
-      );
+      setError("No se pudo obtener tu ubicación. Permite el acceso a la ubicación (y usa HTTPS) e inténtalo de nuevo.");
     }, 12000);
 
     navigator.geolocation.getCurrentPosition(
@@ -84,7 +81,7 @@ export default function NearbyRaces({
         window.clearTimeout(watchdog);
         fail(
           err?.code === 1
-            ? "Has denegado el acceso a la ubicación. Actívalo en los ajustes de tu navegador para ver carreras cerca de ti."
+            ? "Has denegado el acceso a la ubicación. Actívalo en tu navegador para ver carreras cerca de ti."
             : "No se pudo obtener tu ubicación en este momento. Inténtalo de nuevo."
         );
       },
@@ -100,11 +97,12 @@ export default function NearbyRaces({
         km: haversineKm(coords.lat, coords.lng, race.latitude, race.longitude),
       }))
       .sort((a, b) => a.km - b.km)
-      .slice(0, 5);
+      .slice(0, 6);
   }
 
   const showList = status === "granted" && coords;
   const fallbackCity = defaultLocation.split(",")[0].trim();
+  const calendarBase = coords ? `/calendario?lat=${coords.lat.toFixed(5)}&lng=${coords.lng.toFixed(5)}` : "/calendario";
 
   return (
     <div>
@@ -117,7 +115,7 @@ export default function NearbyRaces({
             <div>
               <h3 className="font-bold text-gray-900 dark:text-white">Carreras cerca de ti</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                {error || "Comparte tu ubicación para encontrar las carreras más cercanas."}
+                {error || "Comparte tu ubicación para descubrir las carreras y eventos más próximos, de cualquier disciplina."}
               </p>
             </div>
           </div>
@@ -134,11 +132,21 @@ export default function NearbyRaces({
 
       {showList && sorted.length > 0 && (
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Navigation size={16} className="text-orange-500" />
-            <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-              A {formatKm(sorted[0].km)} de ti
-            </span>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2">
+              <Navigation size={16} className="text-orange-500" />
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                Más cercana a {formatKm(sorted[0].km)} de ti
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="text-gray-500">Ver en calendario:</span>
+              {[25, 50, 100, 200].map((r) => (
+                <Link key={r} href={`${calendarBase}&radio=${r}`} className="rounded-full border border-orange-200 px-2.5 py-1 font-medium text-orange-700 hover:bg-orange-50 dark:border-orange-900 dark:text-orange-300 dark:hover:bg-orange-950/30">
+                  {r} km
+                </Link>
+              ))}
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {sorted.map(({ race, km }) => (
@@ -161,22 +169,32 @@ export default function NearbyRaces({
                     <Navigation size={11} className="text-gray-400" />
                     <span className="font-semibold text-orange-500">{formatKm(km)}</span>
                     <span className="text-gray-300 dark:text-gray-600">·</span>
-                    <span>{race.location}</span>
+                    <span className="truncate">{race.location}</span>
                   </p>
                 </div>
               </Link>
             ))}
           </div>
-          <div className="mt-4">
-            <Link href="/mapa" className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange-500 hover:text-orange-600 transition-colors">
-              Ver todas en el mapa <ArrowRight size={14} />
+          <div className="mt-4 flex flex-wrap gap-4">
+            <Link href={`${calendarBase}&radio=50`} className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange-500 hover:text-orange-600 transition-colors">
+              Ver todas las cercanas en el calendario <ArrowRight size={14} />
+            </Link>
+            <Link href="/mapa" className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">
+              Ver mapa nacional <ArrowRight size={14} />
             </Link>
           </div>
         </div>
       )}
 
+      {showList && sorted.length === 0 && (
+        <div className="card-premium p-6 text-center">
+          <p className="text-sm text-gray-600 dark:text-gray-400">No hemos encontrado carreras con ubicación cerca de ti ahora mismo.</p>
+          <Link href="/calendario" className="mt-3 inline-flex text-sm font-semibold text-orange-500 hover:text-orange-600">Explorar todo el calendario →</Link>
+        </div>
+      )}
+
       {status === "unsupported" && (
-        <p className="text-xs text-gray-400">Tu navegador no soporta geolocalización. Carreras cerca de <span className="font-semibold">{fallbackCity}</span> no disponibles.</p>
+        <p className="text-xs text-gray-400">Tu navegador no soporta geolocalización. Puedes explorar carreras cerca de <span className="font-semibold">{fallbackCity}</span> desde el calendario por provincia.</p>
       )}
     </div>
   );

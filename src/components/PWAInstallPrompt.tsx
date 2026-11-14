@@ -50,7 +50,7 @@ export default function PWAInstallPrompt() {
           <Download size={18} />
         </button>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-text-primary mb-0.5">Instala JavipaurRun</p>
+          <p className="text-sm font-semibold text-text-primary mb-0.5">Instala RunHub</p>
           <p className="text-xs text-text-secondary leading-relaxed">
             Accede al calendario de carreras sin conexión y más rápido.
           </p>

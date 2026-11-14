@@ -11,7 +11,7 @@
  * Dominio real del sitio. Es el unico valor que debe usarse cuando no hay
  * una variable de entorno o esta apunta a un dominio que no responde.
  *
- * IMPORTANTE: no reintroducir `javipaurrun.com`. Ese dominio no resuelve en
+ * IMPORTANTE: no reintroducir `runhub.com`. Ese dominio no resuelve en
  * DNS y fue el que enveneno sitemap.xml, robots.txt y el JSON-LD en produccion.
  */
 export const FALLBACK_SITE_URL = "https://running.javierpalacio.es";

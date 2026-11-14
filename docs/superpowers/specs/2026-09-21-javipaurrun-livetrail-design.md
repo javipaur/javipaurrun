@@ -1,4 +1,4 @@
-# JavipaurRun + Plataforma LiveTrail-like — Diseño
+# RunHub + Plataforma LiveTrail-like — Diseño
 
 Fecha: 2026-09-21
 

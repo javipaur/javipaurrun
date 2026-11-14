@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { getRaceHexColor } from "@/lib/utils";
+import { getRaceHexColor, getRaceTypeLabel } from "@/lib/utils";
 
 interface RaceMarker {
   id: string;
@@ -88,8 +88,8 @@ export default function RaceMap({
           <strong style="font-size: 14px;">${race.name}</strong><br/>
           <span style="color: #6b7280;">${dateStr}${race.distance ? ` · ${race.distance}` : ""}</span><br/>
           <span style="color: #6b7280;">${race.location}, ${race.province}</span><br/>
-          <span style="display: inline-block; margin-top: 4px; padding: 1px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; background: ${color}; color: white;">${race.type}</span>
-          ${race.url ? `<br/><br/><a href="${race.url}" target="_blank" rel="noopener noreferrer" style="color: #f97316; font-weight: 500; text-decoration: none;">Ver carrera →</a>` : ""}
+          <span style="display: inline-block; margin-top: 4px; padding: 1px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; background: ${color}; color: white;">${getRaceTypeLabel(race.type)}</span>
+          ${race.url ? `<br/><br/><a href="${race.url}" target="_blank" rel="noopener noreferrer" style="color: #f97316; font-weight: 500; text-decoration: none;">Ver evento →</a>` : ""}
         </div>
       `;
 

@@ -7,7 +7,7 @@ const resend = process.env.RESEND_API_KEY
 
 // Sin peticion (cron): se resuelve por entorno con fallback al dominio real.
 const SITE_URL = envSiteUrl();
-const from = `JavipaurRun <recordatorio@${SITE_URL.replace(/^https?:\/\//, "")}>`;
+const from = `RunHub <recordatorio@${SITE_URL.replace(/^https?:\/\//, "")}>`;
 
 export async function sendNewRacesAlert({
   to,
@@ -52,12 +52,12 @@ export async function sendNewRacesAlert({
       subject: `🏃 ${races.length} nueva${races.length !== 1 ? "s" : ""} carrera${races.length !== 1 ? "s" : ""} para ti`,
       html: `
         <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
-          <h2 style="color:#f97316;margin:0 0 8px">JavipaurRun</h2>
+          <h2 style="color:#f97316;margin:0 0 8px">RunHub</h2>
           <h1 style="font-size:20px;margin:0 0 16px">Nuevas carreras que encajan contigo</h1>
           <table style="width:100%;border-collapse:collapse;margin-bottom:20px">${rows}</table>
           <a href="${absoluteUrl(SITE_URL, "calendario")}" style="display:inline-block;padding:12px 24px;background:#f97316;color:#fff;text-decoration:none;border-radius:8px;font-weight:600">Ver todo el calendario</a>
           <p style="color:#999;font-size:12px;margin-top:24px">
-            Recibes esto porque tienes una alerta activa en JavipaurRun.<br/>
+            Recibes esto porque tienes una alerta activa en RunHub.<br/>
             <a href="${unsubscribeUrl}" style="color:#999">Dar de baja la alerta</a>
           </p>
         </div>
@@ -97,14 +97,14 @@ export async function sendRaceReminder({
       subject: `🏃 ${dayText} — ${raceName}`,
       html: `
         <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px">
-          <h2 style="color:#f97316;margin:0 0 8px">JavipaurRun</h2>
+          <h2 style="color:#f97316;margin:0 0 8px">RunHub</h2>
           <h1 style="font-size:20px;margin:0 0 16px">${dayText} para <strong>${raceName}</strong></h1>
           <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
             <tr><td style="padding:8px 0;color:#666">📅 Fecha</td><td style="padding:8px 0;font-weight:600">${raceDate}</td></tr>
             <tr><td style="padding:8px 0;color:#666">📍 Lugar</td><td style="padding:8px 0;font-weight:600">${raceLocation}</td></tr>
           </table>
           ${raceUrl ? `<a href="${raceUrl}" style="display:inline-block;padding:12px 24px;background:#f97316;color:#fff;text-decoration:none;border-radius:8px;font-weight:600">Ver detalles de la carrera</a>` : ""}
-          <p style="color:#999;font-size:12px;margin-top:24px">Recibes esto porque activaste un recordatorio en JavipaurRun.</p>
+          <p style="color:#999;font-size:12px;margin-top:24px">Recibes esto porque activaste un recordatorio en RunHub.</p>
         </div>
       `,
     });

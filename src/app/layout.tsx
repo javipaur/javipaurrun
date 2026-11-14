@@ -25,35 +25,36 @@ export function generateMetadata(): Metadata {
   return {
     metadataBase: base,
     openGraph: {
-      siteName: "JavipaurRun",
+      siteName: "RunHub",
       locale: "es_ES",
       type: "website",
     },
     twitter: { card: "summary_large_image" },
     title: {
-      default: "JavipaurRun — Calendario de carreras populares en España",
-      template: "%s | JavipaurRun",
+      default: "RunHub — Calendario y buscador de carreras en España",
+      template: "%s | RunHub",
     },
     description:
-      "Directorio y calendario de carreras populares en toda España: running, trail, media maratón, maratón, marcha y orientación. Filtra por provincia, comunidad, distancia y mes. Actualizado cada día.",
-    applicationName: "JavipaurRun",
+      "Calendario y buscador de carreras en toda España: running, trail, ciclismo, triatlón, natación, híbridos y más. Filtra por provincia, distancia y disciplina, descubre carreras cerca de ti y usa la guía Animar para espectadores.",
+    applicationName: "RunHub",
     generator: "Next.js",
     keywords: [
-      "carreras populares España",
+      "carreras España",
       "calendario carreras",
       "carreras running",
-      "carreras trail",
-      "media maratón",
-      "maratón",
-      "marchas",
-      "orientación",
+      "trail",
+      "ciclismo",
+      "triatlón",
+      "natación",
+      "hyrox",
       "inscripciones carreras",
+      "carreras cerca de mí",
     ],
     category: "sports",
     appleWebApp: {
       capable: true,
       statusBarStyle: "default",
-      title: "JavipaurRun",
+      title: "RunHub",
     },
     icons: {
       icon: [

@@ -13,19 +13,20 @@ export default async function Footer() {
             <Link href="/" className="mb-4 inline-block">
               <Logo size={38} markOnly />
             </Link>
-            <span className="sr-only">JavipaurRun</span>
+            <span className="sr-only">RunHub</span>
             <p className="text-sm text-gray-500 leading-relaxed mt-2">
-              El calendario de carreras populares de España. Accede a los trails, maratones y marchas de todo el país.
+              Calendario y buscador de carreras en toda España: running, trail, ciclismo, triatlón, natación, híbridos y más, con carreras cerca de ti.
             </p>
           </div>
           <div>
-            <h4 className="font-semibold text-white text-sm mb-4">Carreras</h4>
+            <h4 className="font-semibold text-white text-sm mb-4">Disciplinas</h4>
             <ul className="space-y-2.5">
-              <li><Link href="/calendario?tipo=ASFALTO" className="text-sm text-gray-400 hover:text-white transition-colors">Running</Link></li>
-              <li><Link href="/calendario?tipo=TRAIL" className="text-sm text-gray-400 hover:text-white transition-colors">Trail</Link></li>
-              <li><Link href="/calendario?tipo=MEDIA_MARATON" className="text-sm text-gray-400 hover:text-white transition-colors">Media Maratón</Link></li>
-              <li><Link href="/calendario?tipo=MARATON" className="text-sm text-gray-400 hover:text-white transition-colors">Maratón</Link></li>
-              <li><Link href="/calendario?tipo=MARCHA" className="text-sm text-gray-400 hover:text-white transition-colors">Marcha</Link></li>
+              <li><Link href="/carreras/tipo/running" className="text-sm text-gray-400 hover:text-white transition-colors">Running</Link></li>
+              <li><Link href="/carreras/tipo/trail" className="text-sm text-gray-400 hover:text-white transition-colors">Trail</Link></li>
+              <li><Link href="/carreras/tipo/ciclismo" className="text-sm text-gray-400 hover:text-white transition-colors">Ciclismo</Link></li>
+              <li><Link href="/carreras/tipo/triatlon" className="text-sm text-gray-400 hover:text-white transition-colors">Triatlón</Link></li>
+              <li><Link href="/carreras/tipo/natacion" className="text-sm text-gray-400 hover:text-white transition-colors">Natación</Link></li>
+              <li><Link href="/carreras/tipo/hibridos" className="text-sm text-gray-400 hover:text-white transition-colors">Híbridos</Link></li>
             </ul>
           </div>
           <div>
@@ -64,7 +65,7 @@ export default async function Footer() {
       <div className="border-t border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-xs text-gray-500">
-            &copy; {new Date().getFullYear()} JavipaurRun. Todos los derechos reservados.
+            &copy; {new Date().getFullYear()} RunHub. Todos los derechos reservados.
           </p>
           <p className="text-xs text-gray-600 flex items-center gap-1.5">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />

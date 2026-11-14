@@ -1,4 +1,4 @@
-const CACHE = "javipaurrun-v2";
+const CACHE = "runhub-v2";
 const STATIC = [
   "/",
   "/calendario",

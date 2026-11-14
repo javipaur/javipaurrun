@@ -15,7 +15,7 @@ export async function geocodeLocation(
     const response = await fetch(
       `${NOMINATIM_BASE}/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
       {
-        headers: { "User-Agent": "javipaurrun-app/1.0" },
+        headers: { "User-Agent": "runhub-app/1.0" },
       }
     );
 
@@ -29,7 +29,7 @@ export async function geocodeLocation(
       const fallback = await fetch(
         `${NOMINATIM_BASE}/search?q=${encodeURIComponent(fallbackParts.join(", "))}&format=json&limit=1`,
         {
-          headers: { "User-Agent": "javipaurrun-app/1.0" },
+          headers: { "User-Agent": "runhub-app/1.0" },
         }
       );
       const fallbackData = (await fallback.json()) as { lat: string; lon: string }[];

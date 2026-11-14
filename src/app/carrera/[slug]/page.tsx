@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatDate, getRaceDetailColor, getRaceTypeLabel } from "@/lib/utils";
 import { startOfToday } from "@/lib/time";
@@ -8,6 +9,7 @@ import RaceDetailClient from "./RaceDetailClient";
 import RaceHeroImage from "./RaceHeroImage";
 import RelatedRaces from "@/components/RelatedRaces";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import SpectatorGuide from "@/components/SpectatorGuide";
 import { Calendar, Clock, ExternalLink, MapPin, Tag } from "lucide-react";
 
 interface PageProps {
@@ -59,18 +61,35 @@ export default async function RaceDetailPage({ params }: PageProps) {
 
   if (!race) notFound();
 
-  const related = await prisma.race.findMany({
-    where: {
-      id: { not: race.id },
-      date: { gte: startOfToday() },
-      OR: [
-        { province: race.province },
-        { type: race.type },
-      ],
-    },
-    orderBy: { date: "asc" },
-    take: 4,
-  });
+  const [related, event] = await Promise.all([
+    prisma.race.findMany({
+      where: {
+        id: { not: race.id },
+        date: { gte: startOfToday() },
+        OR: [
+          { province: race.province },
+          { type: race.type },
+        ],
+      },
+      orderBy: { date: "asc" },
+      take: 4,
+    }),
+    prisma.event.findFirst({
+      where: { raceId: race.id },
+      include: { checkpoints: { orderBy: { order: "asc" } } },
+    }),
+  ]);
+
+  const spectatorPoints = event?.checkpoints?.length
+    ? event.checkpoints.map((cp) => ({
+        id: cp.id,
+        label: cp.name,
+        km: cp.km,
+        tip: cp.lat != null && cp.lng != null ? "Punto oficial del recorrido." : "Punto del recorrido.",
+        lat: cp.lat,
+        lng: cp.lng,
+      }))
+    : undefined;
 
   const isPast = new Date(race.date) < new Date();
   const typeLabel = getRaceTypeLabel(race.type);
@@ -197,7 +216,39 @@ export default async function RaceDetailPage({ params }: PageProps) {
                     Consulta la información oficial del organizador para horarios, recorrido y detalles de la inscripción.
                   </p>
                 )}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link
+                    href={`/calendario?tipo=${encodeURIComponent(race.type)}`}
+                    className="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:border-orange-300 hover:text-orange-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-200 dark:hover:border-orange-700"
+                  >
+                    Más {typeLabel.toLowerCase()}
+                  </Link>
+                  <Link
+                    href={`/calendario?provincia=${encodeURIComponent(race.province)}`}
+                    className="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:border-orange-300 hover:text-orange-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-200 dark:hover:border-orange-700"
+                  >
+                    Más en {race.province}
+                  </Link>
+                  {race.latitude != null && race.longitude != null && (
+                    <Link
+                      href="/mapa"
+                      className="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:border-orange-300 hover:text-orange-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-200 dark:hover:border-orange-700"
+                    >
+                      Ver en mapa
+                    </Link>
+                  )}
+                </div>
               </div>
+
+              <SpectatorGuide
+                raceName={race.name}
+                distance={race.distance}
+                startTime={race.time}
+                latitude={race.latitude}
+                longitude={race.longitude}
+                location={`${race.location}, ${race.province}`}
+                points={spectatorPoints}
+              />
 
               <RaceDetailClient race={race} />
             </div>

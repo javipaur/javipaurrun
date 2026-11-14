@@ -8,7 +8,18 @@ export type RaceAlertInput = z.infer<typeof raceAlertSchema>;
 export interface AlertBounds {
   province: string | null;
   community: string | null;
-  type: "ASFALTO" | "MEDIA_MARATON" | "MARATON" | "TRAIL" | "MARCHA" | "ORIENTACION" | null;
+  type:
+    | "ASFALTO"
+    | "MEDIA_MARATON"
+    | "MARATON"
+    | "TRAIL"
+    | "MARCHA"
+    | "ORIENTACION"
+    | "CICLISMO"
+    | "TRIATLON"
+    | "NATACION"
+    | "HIBRIDO"
+    | null;
   minKm: number | null;
   maxKm: number | null;
 }

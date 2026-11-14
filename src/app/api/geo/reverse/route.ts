@@ -43,7 +43,7 @@ export async function GET(req: Request) {
 
   try {
     const res = await fetch(url, {
-      headers: { "User-Agent": `JavipaurRun/1.0 (+${envSiteUrl()})` },
+      headers: { "User-Agent": `RunHub/1.0 (+${envSiteUrl()})` },
       next: { revalidate: 86_400 },
     });
 

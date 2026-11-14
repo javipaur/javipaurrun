@@ -14,34 +14,36 @@ import { RACE_TYPE_LANDINGS } from "@/lib/race-types";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  // El sufijo "| JavipaurRun" lo añade la plantilla del layout raíz.
-  title: "Carreras populares en España | Calendario 2026",
+  // El sufijo "| RunHub" lo añade la plantilla del layout raíz.
+  title: "Carreras en España: calendario y buscador | RunHub",
   description:
-    "Encuentra tu próxima carrera de running, trail, media maratón, maratón, marcha u orientación. Más de 1.000 carreras en toda España, filtradas por provincia, comunidad, distancia y mes. Actualizado a diario.",
+    "Encuentra carreras de todo tipo en España: running, trail, ciclismo, triatlón, natación, híbridos y más, gratis y de pago. Busca por provincia, distancia y disciplina, descubre carreras cerca de ti y consulta la guía Animar.",
   keywords: [
-    "carreras populares",
+    "carreras España",
     "calendario de carreras",
+    "carreras cerca de mí",
     "carreras de running",
-    "carreras de trail",
-    "media maratón",
-    "maratón",
-    "carreras en España",
+    "trail",
+    "ciclismo",
+    "triatlón",
+    "natación",
+    "hyrox",
     "inscripciones carreras",
   ],
   alternates: { canonical: "/" },
   openGraph: {
-    title: "JavipaurRun — Calendario de carreras populares en España",
+    title: "RunHub — Calendario y buscador de carreras en España",
     description:
-      "Running, trail, medias maratones, maratones y marchas en toda España. Filtra por provincia, distancia y mes.",
+      "Todas las carreras de España en un solo sitio: por disciplina, provincia y cercanía, con guía para animar en carrera.",
     url: "/",
-    siteName: "JavipaurRun",
+    siteName: "RunHub",
     type: "website",
     locale: "es_ES",
   },
   twitter: {
     card: "summary_large_image",
-    title: "JavipaurRun — Calendario de carreras populares en España",
-    description: "Running, trail y maratón en toda España, actualizado a diario.",
+    title: "RunHub — Calendario y buscador de carreras en España",
+    description: "Carreras de todo tipo en España, cerca de ti y con guía para animar.",
   },
 };
 
@@ -142,8 +144,8 @@ export default async function Home() {
             <h1 className="text-4xl sm:text-6xl font-black text-white mb-5 leading-[1.05] tracking-tight animate-fade-in-up stagger-1">
               Encuentra tu <span className="text-brand-gradient">próxima carrera</span>
             </h1>
-            <p className="text-white/85 text-base sm:text-lg max-w-xl mx-auto mb-10 leading-relaxed animate-fade-in-up stagger-2 drop-shadow">
-              Carreras populares, trails, marchas y orientación por toda España. Filtra por tipo, distancia o provincia.
+            <p className="text-white/85 text-base sm:text-lg max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-in-up stagger-2 drop-shadow">
+              Todas las carreras y eventos deportivos de España — running, trail, ciclismo, triatlón, natación, híbridos y más, gratis y de pago. Busca por provincia, distancia y disciplina, descubre las más cercanas y usa la guía “Animar” para acompañantes.
             </p>
 
             {/* Search bar */}

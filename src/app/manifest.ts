@@ -2,14 +2,14 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "JavipaurRun - Calendario de carreras",
-    short_name: "JavipaurRun",
+    name: "RunHub - Calendario y buscador de carreras",
+    short_name: "RunHub",
     description:
-      "Encuentra tu próxima carrera popular en toda España",
+      "Encuentra carreras de todo tipo en toda España: cerca de ti, con filtros y guía para animar.",
     start_url: "/",
     display: "standalone",
     background_color: "#f6f7fb",
-    theme_color: "#ff4d00",
+    theme_color: "#0284c7",
     orientation: "portrait-primary",
     categories: ["sports", "lifestyle"],
     lang: "es",

@@ -14,6 +14,10 @@ enum RaceType {
   TRAIL
   MARCHA
   ORIENTACION
+  CICLISMO
+  TRIATLON
+  NATACION
+  HIBRIDO
 }
 
 enum RaceStatus {

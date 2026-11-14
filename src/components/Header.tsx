@@ -12,28 +12,32 @@ import LangSwitcher from "./LangSwitcher";
 import Logo from "./Logo";
 
 const categories = [
-  { href: "/calendario", label: "Todas las carreras" },
-  { href: "/carreras/tipo/asfalto", label: "Running" },
+  { href: "/calendario", label: "Todas" },
+  { href: "/carreras/tipo/running", label: "Running" },
   { href: "/carreras/tipo/trail", label: "Trail" },
-  { href: "/carreras/tipo/media-maraton", label: "Media Maratón" },
+  { href: "/carreras/tipo/ciclismo", label: "Ciclismo" },
+  { href: "/carreras/tipo/triatlon", label: "Triatlón" },
+  { href: "/carreras/tipo/natacion", label: "Natación" },
+  { href: "/carreras/tipo/hibridos", label: "Híbridos" },
+  { href: "/carreras/tipo/media-maraton", label: "Media" },
   { href: "/carreras/tipo/maraton", label: "Maratón" },
-  { href: "/carreras/tipo/marcha", label: "Marcha" },
-  { href: "/carreras/tipo/orientacion", label: "Orientación" },
-  { href: "/carreras/tipo/10k", label: "10K" },
-  { href: "/carreras", label: "Por provincia" },
+  { href: "/carreras", label: "Provincias" },
   { href: "/mapa", label: "Mapa" },
   { href: "/calculadora-ritmo", label: "Calculadora" },
-  { href: "/ranking", label: "Ranking" },
 ];
 
 /** Compatibilidad con enlaces antiguos `/calendario?tipo=...`. */
 const TYPE_TO_LANDING: Record<string, string> = {
-  ASFALTO: "asfalto",
+  ASFALTO: "running",
   TRAIL: "trail",
   MEDIA_MARATON: "media-maraton",
   MARATON: "maraton",
   MARCHA: "marcha",
   ORIENTACION: "orientacion",
+  CICLISMO: "ciclismo",
+  TRIATLON: "triatlon",
+  NATACION: "natacion",
+  HIBRIDO: "hibridos",
 };
 
 const bottomNav = [

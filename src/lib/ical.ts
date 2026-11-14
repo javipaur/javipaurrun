@@ -78,7 +78,7 @@ export function generateICalEvent({
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//JavipaurRun//ES",
+    "PRODID:-//RunHub//ES",
     "BEGIN:VEVENT",
     `DTSTART:${start}`,
     `DTEND:${end}`,
