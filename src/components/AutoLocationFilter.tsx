@@ -60,10 +60,23 @@ export default function AutoLocationFilter() {
 
   // Aplica el filtro automáticamente una vez, solo si el usuario no eligió otro.
   useEffect(() => {
-    if (phase !== "ready" || !location?.province || hasManualFilter) return;
+    if (phase !== "ready" || !location || hasManualFilter) return;
 
     const params = new URLSearchParams(searchParams.toString());
-    params.set("provincia", location.province);
+    if (location.province) {
+      params.set("provincia", location.province);
+      params.delete("lat");
+      params.delete("lng");
+      params.delete("radio");
+    } else if (location.lat != null && location.lng != null) {
+      params.set("lat", String(location.lat));
+      params.set("lng", String(location.lng));
+      if (!params.get("radio")) params.set("radio", "50");
+      params.delete("provincia");
+      params.delete("comunidad");
+    } else {
+      return;
+    }
     params.delete("page");
     localStorage.setItem("jp-location-applied", "1");
 
@@ -99,7 +112,7 @@ export default function AutoLocationFilter() {
         localStorage.removeItem("jp-location-applied");
         setLocation(next);
 
-        if (next.province) {
+        if (next.province || (next.lat != null && next.lng != null)) {
           setPhase("ready");
         } else {
           setPhase("declined");
@@ -161,9 +174,9 @@ export default function AutoLocationFilter() {
     );
   }
 
-  if (phase === "ready" && location?.province) {
+  if (phase === "ready" && location && (location.province || (location.lat != null && location.lng != null))) {
     const communityProvinces =
-      location.community && location.community !== location.province
+      location.community && location.community !== location.province && location.province
         ? getProvincesByCommunity(location.community).slice(0, 4)
         : [];
 
@@ -172,12 +185,14 @@ export default function AutoLocationFilter() {
         <MapPin size={18} className="text-primary shrink-0" />
         <div className="flex-1">
           <p className="text-sm font-semibold text-text-primary">
-            Mostrando carreras de {location.province}
-            {location.community ? ` (${communityLabel(location.community)})` : ""}
+            {location.province
+              ? `Mostrando carreras de ${location.province}${location.community ? ` (${communityLabel(location.community)})` : ""}`
+              : "Mostrando carreras cerca de tu ubicación"}
           </p>
           <p className="text-xs text-text-secondary">
             Detectado desde tu ubicación
-            {communityProvinces.length > 0 && ` · También incluye: ${communityProvinces.join(", ")}`}
+            {location.province && communityProvinces.length > 0 && ` · También incluye: ${communityProvinces.join(", ")}`}
+            {!location.province && location.lat != null && location.lng != null && " · Filtrado por distancia (50 km)"}
           </p>
         </div>
         <div className="flex gap-2">
