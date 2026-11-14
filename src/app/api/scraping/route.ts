@@ -7,6 +7,7 @@ import {
   scrapeFromRockTheSport,
   scrapeFromBuscametas,
   scrapeFromSportmaniacs,
+  scrapeFromCarrerasPopulares,
   importScrapedRaces,
 } from "@/lib/scraping";
 import { prisma } from "@/lib/prisma";
@@ -16,6 +17,7 @@ const sources: Record<string, { scrape: () => Promise<unknown[]>; label: string 
   rockthesport: { scrape: scrapeFromRockTheSport, label: "RockTheSport" },
   sportmaniacs: { scrape: scrapeFromSportmaniacs, label: "Sportmaniacs" },
   buscametas: { scrape: scrapeFromBuscametas, label: "Buscametas" },
+  carreraspopulares: { scrape: scrapeFromCarrerasPopulares, label: "CarrerasPopulares" },
 };
 
 export async function POST(req: Request) {
@@ -32,7 +34,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = scrapingSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Fuente no soportada. Usa: lasterketak, rockthesport, sportmaniacs, buscametas" }, { status: 400 });
+      return NextResponse.json({ error: "Fuente no soportada. Usa: lasterketak, rockthesport, sportmaniacs, buscametas, carreraspopulares" }, { status: 400 });
     }
 
     const { source } = parsed.data;

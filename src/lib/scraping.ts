@@ -90,25 +90,93 @@ function getProvinceFromTag(tagSlug: string): string {
 
 function detectRaceType(name: string, distance?: string, sport?: string): string {
   const lower = name.toLowerCase();
+  const sportLower = (sport || "").toLowerCase();
 
-  if (sport === "trail" || sport === "ultra-trail") return "TRAIL";
+  if (
+    lower.includes("hyrox") ||
+    lower.includes("ocr") ||
+    lower.includes("obstac") ||
+    lower.includes("spartan") ||
+    lower.includes("farinato") ||
+    lower.includes("desafío de guerreros") ||
+    lower.includes("desafio de guerreros") ||
+    lower.includes("functional fitness") ||
+    lower.includes("fitness race")
+  ) {
+    return "HIBRIDO";
+  }
+
+  if (
+    lower.includes("triatl") ||
+    lower.includes("duatl") ||
+    lower.includes("aquatl") ||
+    lower.includes("swimrun") ||
+    sportLower.includes("triathlon")
+  ) {
+    return "TRIATLON";
+  }
+
+  if (
+    lower.includes("travesía") ||
+    lower.includes("travesia") ||
+    lower.includes("natación") ||
+    lower.includes("natacion") ||
+    lower.includes("aguas abiertas") ||
+    lower.includes("open water") ||
+    sportLower.includes("swim") ||
+    sportLower.includes("natacion")
+  ) {
+    return "NATACION";
+  }
+
+  if (
+    lower.includes("ciclismo") ||
+    lower.includes("ciclista") ||
+    lower.includes("cicloturista") ||
+    lower.includes("btt") ||
+    lower.includes("mtb") ||
+    lower.includes("gravel") ||
+    lower.includes("gran fondo") ||
+    lower.includes("marcha ciclista") ||
+    sportLower.includes("cycling") ||
+    sportLower.includes("bike") ||
+    sportLower.includes("btt")
+  ) {
+    return "CICLISMO";
+  }
+
+  if (sportLower === "trail" || sportLower === "ultra-trail") return "TRAIL";
 
   if (lower.includes("orientación") || lower.includes("orientacion")) return "ORIENTACION";
 
-  if (lower.includes("marcha") && !lower.includes("media maratón") && !lower.includes("media maraton")) return "MARCHA";
-
-  if (lower.includes("trail") || lower.includes("txakurkros") || lower.includes("montaña") || lower.includes("montana") || lower.includes("carrera por mont") || lower.includes("mendi")) return "TRAIL";
+  if (lower.includes("marcha") && !lower.includes("media maratón") && !lower.includes("media maraton") && !lower.includes("marcha ciclista")) return "MARCHA";
 
   if (
-    lower.includes("maratón") || lower.includes("marathon") ||
-    lower.startsWith("maratón") || lower.startsWith("marathon")
-  ) return "MARATON";
+    lower.includes("trail") ||
+    lower.includes("txakurkros") ||
+    lower.includes("montaña") ||
+    lower.includes("montana") ||
+    lower.includes("carrera por mont") ||
+    lower.includes("mendi") ||
+    lower.includes("ultra")
+  ) {
+    return "TRAIL";
+  }
+
+  if (
+    lower.includes("maratón") || lower.includes("maraton") || lower.includes("marathon") ||
+    lower.startsWith("maratón") || lower.startsWith("maraton") || lower.startsWith("marathon")
+  ) {
+    return "MARATON";
+  }
 
   if (
     lower.includes("media maratón") || lower.includes("media maraton") ||
     lower.includes("medio maratón") || lower.includes("medio maraton") ||
     lower.startsWith("media maratón") || lower.startsWith("media maraton")
-  ) return "MEDIA_MARATON";
+  ) {
+    return "MEDIA_MARATON";
+  }
 
   if (distance) {
     const distNum = parseFloat(distance.replace(",", ".").split(" ")[0]);
@@ -972,7 +1040,7 @@ export async function importScrapedRaces(scrapedRaces: ScrapedRace[], source: st
 
     const data = {
       name: race.name,
-      type: race.type as "ASFALTO" | "MEDIA_MARATON" | "MARATON" | "TRAIL" | "MARCHA" | "ORIENTACION",
+      type: race.type as "ASFALTO" | "MEDIA_MARATON" | "MARATON" | "TRAIL" | "MARCHA" | "ORIENTACION" | "CICLISMO" | "TRIATLON" | "NATACION" | "HIBRIDO",
       distance: race.distance,
       distanceKm: parseKmFromDistance(race.distance),
       location: race.location,
