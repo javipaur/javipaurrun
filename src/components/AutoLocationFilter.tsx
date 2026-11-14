@@ -88,13 +88,15 @@ export default function AutoLocationFilter() {
         try {
           // El reverse geocode se hace en el servidor (/api/geo/reverse):
           // Nominatim exige un User-Agent válido que el navegador no puede enviar.
-          const res = await fetch(`/api/geo/reverse?lat=${latitude}&lng=${longitude}`);
+          const res = await fetch(`/api/geo/reverse?lat=${latitude}&lng=${longitude}`, { cache: "no-store" });
           if (res.ok) next = (await res.json()) as VisitorLocation;
         } catch {
           // Si falla el reverse geocode, mantenemos solo las coordenadas.
         }
 
         localStorage.setItem(VISITOR_LOCATION_KEY, JSON.stringify(next));
+        localStorage.removeItem(VISITOR_DISMISSED_KEY);
+        localStorage.removeItem("jp-location-applied");
         setLocation(next);
 
         if (next.province) {
@@ -104,8 +106,14 @@ export default function AutoLocationFilter() {
         }
       },
       () => setPhase("declined"),
-      { timeout: 10000, maximumAge: 5 * 60 * 1000 }
+      { timeout: 10000, maximumAge: 0, enableHighAccuracy: false }
     );
+  }
+
+  function redetect() {
+    localStorage.removeItem(VISITOR_LOCATION_KEY);
+    localStorage.removeItem("jp-location-applied");
+    detect();
   }
 
   function dismiss() {
@@ -119,7 +127,9 @@ export default function AutoLocationFilter() {
     params.delete("comunidad");
     params.delete("lat");
     params.delete("lng");
+    params.delete("radio");
     router.replace(`${pathname}?${params.toString()}`);
+    // Oculta solo esta vez; si el usuario quiere cambiarla, puede volver a detectarla.
     setPhase("hidden");
   }
 
@@ -171,6 +181,9 @@ export default function AutoLocationFilter() {
           </p>
         </div>
         <div className="flex gap-2">
+          <button onClick={redetect} className="btn-secondary text-xs py-2">
+            Actualizar ubicación
+          </button>
           <button onClick={showAll} className="btn-secondary text-xs py-2">
             Ver todas
           </button>
