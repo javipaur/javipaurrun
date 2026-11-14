@@ -13,6 +13,7 @@ export async function GET(req: Request) {
     provincia: searchParams.get("provincia") || undefined,
     comunidad: searchParams.get("comunidad") || undefined,
     distancia: searchParams.get("distancia") || undefined,
+    precio: searchParams.get("precio") || undefined,
     buscar: searchParams.get("buscar") || undefined,
     mes: searchParams.get("mes") || undefined,
     orden: searchParams.get("orden") || undefined,
