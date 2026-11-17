@@ -1,6 +1,6 @@
 # RunHub
 
-Director web de carreras populares (asfalto, trail, media maratón, maratón, marcha y orientación) en toda España. Permite buscar por **provincia**, **distancia** y **tipo de carrera**, y consultar un calendario actualizado cada día.
+Director y calendario de pruebas deportivas populares en toda España: running y asfalto, trail, media maratón y maratón, marchas, orientación, ciclismo, triatlón, natación e híbridos (HYROX/OCR). Permite buscar por **provincia**, **distancia** y **disciplina**, y consultar un calendario actualizado cada día.
 
 ## Stack
 
@@ -15,8 +15,9 @@ Director web de carreras populares (asfalto, trail, media maratón, maratón, ma
 - **Calendario filtrable** (`/calendario`) por tipo, provincia, comunidad autónoma, distancia y búsqueda libre.
 - **Directorio por provincia** (`/carreras/[provincia]`) con páginas para las 50 provincias españolas.
 - **Directorio por ciudad** (`/carreras/ciudad/[ciudad]`).
-- **Detalle de carrera** (`/carrera/[slug]`) con mapa, tiempo, reviews, comparador, recordatorios.
+- **Detalle de carrera** (`/carrera/[slug]`) con mapa, tiempo, reviews, comparador, recordatorios y guía **Animar** para acompañantes (puntos de ánimo, ETAs por ritmo y checkpoints).
 - Panel **admin** para gestionar carreras, resultados, blog, suscriptores y el scraping.
+- **Live tracking** (en desarrollo): eventos, corredores, checkpoints y mapa en tiempo real para organizadores.
 
 ## Scraping de carreras
 
@@ -28,6 +29,7 @@ El proyecto importa carreras automáticamente desde varias fuentes gratuitas:
 | RockTheSport | Nacional (~350 carreras de trail/running) |
 | Buscametas | Calendario nacional |
 | Lasterketak.eus | País Vasco / norte |
+| CarrerasPopulares | Calendario nacional (API pública) |
 
 Todas las carreras se deduplican (por URL o nombre+fecha) y se **actualizan** en cada ejecución: si una carrera cambia de fecha, distancia o precio, se refresca en lugar de crear un duplicado. Las provincias se normalizan a un vocabulario canónico de 50 provincias.
 
@@ -98,13 +100,15 @@ npx tsx scripts/import-all.mts
 
 Este script ejecuta todos los scrapers, imprime un resumen por fuente (encontradas/nuevas) y el total de carreras en BD. La deduplicación por URL o nombre+fecha evita duplicados y la actualización mantiene fechas, distancias y precios al día.
 
-### Ejecución automática en el despliegue (Nixpacks)
+### Esquema y arranque en producción
 
-En producción, el arranque (`nixpacks.toml`) usa `scripts/start.sh`:
+El esquema se aplica con `scripts/apply-schema.sh`, no directamente con `prisma db push`. En una base de datos gestionada el usuario no puede crear la *shadow database*, así que el script intenta `db push` y, si falla, genera el SQL con `prisma migrate diff --script` y lo aplica con `db execute`. Es idempotente y no aborta el arranque si hay un error de esquema: deja el sitio en pie y lo registra en el log.
 
-1. Aplica el esquema con `prisma db push --skip-generate`.
-2. Arranca `next start` **inmediatamente** (la web queda disponible al momento).
-3. Lanza la importación de carreras (`tsx scripts/import-all.mts`) **en segundo plano** para poblar o actualizar la base de datos sin bloquear el servicio.
+- `nixpacks.toml` ejecuta `apply-schema.sh` durante el build.
+- `scripts/start.sh` vuelve a aplicarlo al arrancar y después:
+  1. Arranca el gateway realtime (`services/realtime/gateway.mts`) si hay `REDIS_URL`.
+  2. Arranca `next start`, que queda disponible de inmediato.
+  3. Lanza la importación de carreras (`tsx scripts/import-all.mts`) **en segundo plano**.
 
 El import no afecta a la disponibilidad: Next ya está sirviendo mientras se rellena la BD. Si el despliegue se reinicia, el import vuelve a ejecutarse; el cron diario se encarga del refresco continuo.
 
@@ -112,11 +116,13 @@ El import no afecta a la disponibilidad: Next ya está sirviendo mientras se rel
 
 Ver `.env.example`:
 
-- `DATABASE_URL` — cadena de conexión a PostgreSQL.
+- `DATABASE_URL` — cadena de conexión a PostgreSQL (SQLite no funciona: el adapter es `PrismaPg`).
 - `AUTH_SECRET` — secreto de NextAuth.
 - `CRON_SECRET` — secreto para los endpoints de cron.
 - `RESEND_API_KEY` — para envío de emails.
 - `NEXT_PUBLIC_APP_URL` — URL pública de la aplicación.
+- `REDIS_URL` — bus del live realtime (sin ella, el seguimiento en vivo queda parcial).
+- `NEXT_PUBLIC_LIVE_URL` — URL del gateway realtime.
 
 ## Desarrollo
 
@@ -127,4 +133,4 @@ npm run dev
 
 ## Producción
 
-Despliegue vía Nixpacks (`nixpacks.toml`) que ejecuta `prisma db push` y `npm run start`.
+Despliegue con Nixpacks (`nixpacks.toml`) + `scripts/start.sh`. El dominio público se resuelve desde el host de la petición (`src/lib/site-url.ts`), no de una variable de entorno, para que un valor mal puesto no envenene sitemap, robots ni canonicals.

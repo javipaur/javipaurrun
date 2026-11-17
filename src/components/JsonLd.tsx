@@ -10,7 +10,7 @@ export function OrganizationJsonLd() {
     alternateName: "RunHub",
     url: SITE_URL,
     description:
-      "Directorio y calendario de carreras populares en toda España: running, trail, media maratón, maratón, marcha y orientación.",
+      "Directorio y calendario de pruebas deportivas populares en toda España: running, trail, maratón, ciclismo, triatlón, natación, orientación e híbridos.",
     inLanguage: "es-ES",
     logo: {
       "@type": "ImageObject",
@@ -21,12 +21,18 @@ export function OrganizationJsonLd() {
     image: `${SITE_URL}/icons/icon-512.png`,
     knowsAbout: [
       "Atletismo",
-      "Trail running",
       "Carreras populares",
+      "Trail running",
       "Medias maratones",
       "Maratones",
       "Marchas atléticas",
       "Orientación",
+      "Ciclismo",
+      "Triatlón",
+      "Duatlón",
+      "Natación en aguas abiertas",
+      "HYROX",
+      "OCR (obstacle course racing)",
     ],
     areaServed: {
       "@type": "Country",
@@ -115,6 +121,25 @@ function parsePrice(price?: string | null): number | null {
   return Number.isFinite(value) ? value : null;
 }
 
+/**
+ * Nombre de deporte para schema.org a partir del tipo de prueba.
+ *
+ * `SportsEvent.sport` acepta texto libre; sin este mapa todas las fichas se
+ * declaraban como "Running", incluidas las de ciclismo o natación.
+ */
+const SPORT_BY_RACE_TYPE: Record<string, string> = {
+  ASFALTO: "Running",
+  MEDIA_MARATON: "Running",
+  MARATON: "Running",
+  MARCHA: "Race walking",
+  TRAIL: "Trail running",
+  ORIENTACION: "Orienteering",
+  CICLISMO: "Cycling",
+  TRIATLON: "Triathlon",
+  NATACION: "Swimming",
+  HIBRIDO: "Obstacle course racing",
+};
+
 export function EventJsonLd({
   name,
   date,
@@ -126,6 +151,7 @@ export function EventJsonLd({
   image,
   status,
   price,
+  type,
 }: {
   name: string;
   date: string;
@@ -137,6 +163,7 @@ export function EventJsonLd({
   image?: string | null;
   status?: string | null;
   price?: string | null;
+  type?: string | null;
 }) {
   const SITE_URL = envSiteUrl();
   const isCancelled = status === "CANCELADA";
@@ -160,7 +187,7 @@ export function EventJsonLd({
         addressCountry: "ES",
       },
     },
-    sport: "Running",
+    sport: SPORT_BY_RACE_TYPE[type ?? ""] ?? "Running",
     organizer: { "@id": `${SITE_URL}/#organization` },
   };
 

@@ -44,8 +44,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const count = directory.bySlug.get(slug)?.count ?? 0;
   const countLabel = count > 0 ? `${count} próximas · ` : "";
 
-  const title = `Carreras populares en ${name}`;
-  const description = `${countLabel}calendario de carreras populares en ${name}: running, trail, media maratón y marchas. Encuentra tu próxima carrera.`;
+  const title = `Carreras populares y pruebas en ${name}`;
+  const description = `${countLabel}calendario de carreras y pruebas deportivas en ${name}: running, trail, ciclismo, triatlón, natación, marchas y más.`;
 
   return {
     title,
@@ -96,7 +96,7 @@ export default async function ProvincePage({ params }: PageProps) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
       {races.length > 0 && (
         <ItemListJsonLd
-          name={`Carreras populares en ${name}`}
+          name={`Carreras y pruebas en ${name}`}
           items={races.slice(0, 25).map((race) => ({
             name: race.name,
             url: `/carrera/${race.slug}`,
@@ -120,7 +120,7 @@ export default async function ProvincePage({ params }: PageProps) {
           <div>
             <p className="section-eyebrow mb-0.5">{entry?.communityLabel ?? getAutonomousCommunityLabel("otra")}</p>
             <h1 className="section-title">
-              Carreras en {name}
+              Carreras y pruebas en {name}
             </h1>
           </div>
         </div>

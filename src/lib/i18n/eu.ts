@@ -26,7 +26,7 @@ const eu: Translations = {
   },
   home: {
     title: "Aurkitu zure hurrengo lasterketa",
-    subtitle: "Euskal Herriko, Kantabriako, Burgosko, Errioxako, Nafarroako eta Zamorako lasterketa herrikoien egutegi osatuena.",
+    subtitle: "Espainia osoko proba herrikoien egutegi osatuena: runninga, traila, txirrindularitza, triatloia, igeriketa eta gehiago.",
     explore: "Egutegia arakatu",
     search: "Bilatu lasterketak...",
     upcomingRaces: "Hurrengo lasterketak",

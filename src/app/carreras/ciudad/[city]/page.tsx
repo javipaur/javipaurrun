@@ -26,11 +26,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!info) return { title: "Ciudad no encontrada", robots: { index: false, follow: false } };
   const canonical = `/carreras/ciudad/${canonicalCitySlug(city)}`;
   return {
-    title: `Carreras populares en ${info.name}`,
+    title: `Carreras populares y pruebas en ${info.name}`,
     description: info.description,
     alternates: { canonical },
     openGraph: {
-      title: `Carreras populares en ${info.name}`,
+      title: `Carreras populares y pruebas en ${info.name}`,
       description: info.description,
       url: canonical,
     },
@@ -66,7 +66,7 @@ export default async function CityPage({ params }: PageProps) {
         <div className="flex items-center gap-2 mb-2">
           <MapPin size={20} className="text-orange-500" />
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-            Carreras en {info.name}
+            Carreras y pruebas en {info.name}
           </h1>
         </div>
         <p className="text-gray-500 dark:text-gray-400 text-sm mt-0.5">

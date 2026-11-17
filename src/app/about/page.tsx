@@ -5,7 +5,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Sobre nosotros",
   description:
-    "Qué es RunHub, de dónde salen los datos del calendario de carreras populares y cómo puedes proponer o corregir una prueba.",
+    "Qué es RunHub, de dónde salen los datos del calendario de pruebas deportivas en España y cómo puedes proponer o corregir una prueba.",
   alternates: { canonical: "/about" },
 };
 
@@ -21,21 +21,43 @@ export default function AboutPage() {
 
       <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-8 shadow-sm space-y-5 text-gray-600 leading-relaxed">
         <p>
-          RunHub nace con la idea de crear un calendario completo y actualizado
-          de carreras populares en Euskadi y comunidades cercanas.
+          RunHub reúne el calendario de pruebas deportivas populares de toda
+          España: running y asfalto, trail, media maratón y maratón, marchas,
+          orientación, ciclismo, triatlón, natación e híbridos (HYROX y OCR).
         </p>
         <p>
-          Aquí encontrarás carreras de asfalto, trail, marchas y orientación en
-          Álava, Bizkaia, Gipuzkoa, Cantabria, Burgos, La Rioja, Navarra y Zamora.
+          Los datos proceden de calendarios públicos y de las webs de los
+          organizadores: fecha, provincia, distancia, tipo de prueba, precio,
+          coordenadas y enlace de inscripción. Cuando un dato no está
+          disponible lo marcamos como pendiente en lugar de rellenarlo con una
+          suposición.
         </p>
         <p>
-          El objetivo es ofrecer un sitio sencillo donde poder buscar tu próxima
-          carrera sin tener que rebuscar en múltiples webs.
+          La idea es sencilla: que encuentres tu próxima prueba sin tener que
+          rebuscar en diez webs distintas, y que puedas comparar fechas,
+          distancias y precios en un solo sitio.
+        </p>
+        <p>
+          Si echas en falta una prueba o ves un dato incorrecto,{" "}
+          <Link
+            href="/enviar-carrera"
+            className="text-orange-600 hover:text-orange-700 underline underline-offset-2 font-medium"
+          >
+            propón una carrera
+          </Link>{" "}
+          y la revisamos antes de publicarla. También puedes consultar la{" "}
+          <Link
+            href="/completitud"
+            className="text-orange-600 hover:text-orange-700 underline underline-offset-2 font-medium"
+          >
+            cobertura de datos
+          </Link>{" "}
+          del calendario.
         </p>
 
         <div className="flex items-center gap-2 pt-4 text-sm text-gray-500">
           <Heart size={16} className="text-orange-500" />
-          Hecho con pasión para la comunidad runner
+          Hecho con pasión para la comunidad deportiva
         </div>
       </div>
     </div>

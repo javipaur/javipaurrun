@@ -24,7 +24,7 @@ const es = {
   },
   home: {
     title: "Encuentra tu próxima carrera",
-    subtitle: "El calendario más completo de carreras populares en Euskadi, Navarra, Cantabria, Burgos, La Rioja y Zamora.",
+    subtitle: "El calendario más completo de pruebas deportivas populares en toda España: running, trail, ciclismo, triatlón, natación y más.",
     explore: "Explorar calendario",
     search: "Buscar carreras...",
     upcomingRaces: "Próximas carreras",

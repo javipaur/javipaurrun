@@ -75,7 +75,7 @@ export default function SpectatorGuideMap({
     }
 
     if (group.length > 0) {
-      const bounds = L.featureGroup(group as any).getBounds();
+      const bounds = L.featureGroup(group).getBounds();
       bounds.extend([latitude, longitude]);
       map.fitBounds(bounds.pad(0.2));
     }

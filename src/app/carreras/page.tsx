@@ -7,7 +7,7 @@ import { MapPin, ChevronRight, Info } from "lucide-react";
 export const metadata: Metadata = {
   title: "Carreras por provincia",
   description:
-    "Encuentra carreras populares en tu provincia: running, trail, media maratón y marchas. Directorio de carreras por provincia en toda España.",
+    "Encuentra carreras y pruebas deportivas en tu provincia: running, trail, ciclismo, triatlón, natación, marchas y más. Directorio nacional por provincia.",
   alternates: { canonical: "/carreras" },
 };
 

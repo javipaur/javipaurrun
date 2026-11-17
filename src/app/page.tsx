@@ -124,6 +124,7 @@ export default async function Home() {
           url={race.url}
           description={race.description}
           image={race.image}
+          type={race.type}
         />
       ))}
 

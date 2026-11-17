@@ -108,6 +108,7 @@ export default async function RaceDetailPage({ params }: PageProps) {
         image={race.image}
         status={race.status}
         price={race.price}
+        type={race.type}
       />
 
       <div className="max-w-4xl mx-auto">

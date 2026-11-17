@@ -7,9 +7,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 const PAGE_SIZE = 9;
 
 export const metadata: Metadata = {
-  title: "Blog de running",
+  title: "Blog de running y deporte",
   description:
-    "Artículos sobre carreras populares, trail, entrenamiento y próximos eventos en Euskadi y norte de España.",
+    "Artículos sobre running, trail, ciclismo, triatlón, entrenamiento y las próximas pruebas de toda España.",
   alternates: { canonical: "/blog" },
 };
 
