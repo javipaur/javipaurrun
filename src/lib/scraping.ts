@@ -583,6 +583,7 @@ export async function scrapeFromSportmaniacs(): Promise<ScrapedRace[]> {
 
 export async function scrapeFromBuscametas(): Promise<ScrapedRace[]> {
   const races: ScrapedRace[] = [];
+  const seenUrls = new Set<string>();
 
   try {
     const res = await fetchWithTimeout(
@@ -612,12 +613,14 @@ export async function scrapeFromBuscametas(): Promise<ScrapedRace[]> {
       sixMonthsAhead.setMonth(sixMonthsAhead.getMonth() + 6);
       const year = candidateYear > sixMonthsAhead ? currentYear - 1 : currentYear;
       const dateStr = `${year}-${month}-${day.padStart(2, "0")}`;
-      const text = dataHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      const text = decodeHtmlEntities(dataHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
 
       const nameMatch = dataHtml.match(/<h[234][^>]*>(.*?)<\/h[234]>/);
-      const name = nameMatch
-        ? nameMatch[1].replace(/<[^>]+>/g, "").trim()
-        : text.split("Ver más")[0]?.trim();
+      const name = decodeHtmlEntities(
+        nameMatch
+          ? nameMatch[1].replace(/<[^>]+>/g, "").trim()
+          : text.split("Ver más")[0]?.trim() || ""
+      );
       if (!name || name.length < 3) continue;
 
       const distance = parseDistanceFromText(text);
@@ -626,13 +629,16 @@ export async function scrapeFromBuscametas(): Promise<ScrapedRace[]> {
       const locationMatch = dataHtml.match(
         /item-calendar-data__location[\s\S]*?<span>([\s\S]*?)<\/span>(?:\s*\(([^)]*)\))?/
       );
-      const city = locationMatch?.[1]?.replace(/<[^>]+>/g, "").trim();
+      const city = decodeHtmlEntities(locationMatch?.[1]?.replace(/<[^>]+>/g, "").trim() || "");
       const locProvinceStr = locationMatch?.[2]?.trim();
 
       const location = city && city !== "Buscametas" ? city : "Por determinar";
       const scrapeProvince = locProvinceStr
         ? normalizeProvince(locProvinceStr)
-        : detectProvince(location);
+        : inferProvinceFromTexts(city, name, text);
+      const url = `https://www.buscametas.com${href}`;
+      if (seenUrls.has(url)) continue;
+      seenUrls.add(url);
 
       races.push({
         name,
@@ -641,11 +647,254 @@ export async function scrapeFromBuscametas(): Promise<ScrapedRace[]> {
         location,
         province: scrapeProvince,
         date: dateStr,
-        url: `https://www.buscametas.com${href}`,
+        url,
+        city: city && city !== "Buscametas" ? city : undefined,
       });
     }
   } catch (error) {
     console.error("Error scraping Buscametas:", error);
+  }
+
+  return races;
+}
+
+export async function scrapeFromKronoak(): Promise<ScrapedRace[]> {
+  const races: ScrapedRace[] = [];
+  const seenUrls = new Set<string>();
+  const baseUrl =
+    "https://inscripciones.kronoak.com/es/iframe/flygroupfortuna?frm=0&fltr=110&chg=1&prt=1&cmp=1&men=1&tit=1&stop=0&pat=1&clra=";
+  const maxPages = Math.min(4, Number(process.env.SCRAPER_MAX_PAGES) || 4);
+
+  const extractDetailLocation = async (url: string): Promise<{ location?: string; province?: string; image?: string }> => {
+    try {
+      const res = await fetchWithTimeout(url, 15000);
+      if (!res.ok) return {};
+      const html = await res.text();
+      const titleMeta = html.match(/<title>[\s\S]*?\|\s*\d{4}\s*\|\s*([^<]+)<\/title>/i)?.[1]?.trim();
+      const provinceMeta = html.match(/Provincia[^<]*<\/[^>]+>\s*<[^>]*>([^<]+)/i)?.[1]?.trim()
+        || html.match(/"province"\s*:\s*"([^"]+)"/i)?.[1]?.trim();
+      const locationMeta = html.match(/Lugar[^<]*<\/[^>]+>\s*<[^>]*>([^<]+)/i)?.[1]?.trim()
+        || html.match(/Localidad[^<]*<\/[^>]+>\s*<[^>]*>([^<]+)/i)?.[1]?.trim()
+        || html.match(/Ubicaci[oó]n[^<]*<\/[^>]+>\s*<[^>]*>([^<]+)/i)?.[1]?.trim()
+        || titleMeta?.split(",")[0]?.trim();
+      const image = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i)?.[1]
+        || html.match(/<meta\s+name="twitter:image"\s+content="([^"]+)"/i)?.[1];
+      return {
+        location: locationMeta ? decodeHtmlEntities(locationMeta) : undefined,
+        province: provinceMeta ? normalizeProvince(decodeHtmlEntities(provinceMeta)) : undefined,
+        image: isValidImageUrl(image),
+      };
+    } catch {
+      return {};
+    }
+  };
+
+  try {
+    for (let page = 1; page <= maxPages; page++) {
+      const res = await fetchWithTimeout(`${baseUrl}&page=${page}&pageSize=20`, 30000);
+      if (!res.ok) break;
+      const html = await res.text();
+      const rowRegex = /<tr>[\s\S]*?<a\s+href="(https?:\/\/inscripciones\.kronoak\.com\/es\/evento\/[^"?]+)[^"]*"[\s\S]*?<h3>([\s\S]*?)<\/h3>[\s\S]*?([A-Za-zÁÉÍÓÚáéíóúñÑ]+,\s*\d{1,2}\s+de\s+[a-záéíóúñ]+\s+de\s+20\d{2}(?:\s+a\s+las\s+\d{1,2}:\d{2})?)[\s\S]*?<ul>([\s\S]*?)<\/ul>[\s\S]*?<\/tr>/gi;
+      let match: RegExpExecArray | null;
+      let foundOnPage = 0;
+
+      while ((match = rowRegex.exec(html)) !== null) {
+        foundOnPage++;
+        const eventUrl = match[1].split("?")[0];
+        if (seenUrls.has(eventUrl)) continue;
+
+        const name = decodeHtmlEntities(match[2].replace(/<[^>]+>/g, "").trim());
+        if (!name) continue;
+        const parsedDate = parseSpanishLongDate(match[3]);
+        if (!parsedDate) continue;
+        const lis = [...match[4].matchAll(/<li>([\s\S]*?)<\/li>/gi)].map((m) =>
+          decodeHtmlEntities(m[1].replace(/<[^>]+>/g, "").trim())
+        );
+        const distance = lis.map((v) => normalizeDistanceLabel(v)).find((v) => /km|m\b/i.test(v))
+          || lis.find((v) => /km|m\b/i.test(v));
+        const sportHint = lis.join(" ");
+        const type = detectRaceType(`${name} ${sportHint}`, distance, sportHint);
+
+        const inferredProvince = inferProvinceFromTexts(name, eventUrl, sportHint);
+        let province = inferredProvince;
+        let location = "Por determinar";
+        let image: string | undefined;
+
+        let detail: { location?: string; province?: string; image?: string } | null = null;
+        if (!isTargetPvAragonProvince(province)) {
+          detail = await extractDetailLocation(eventUrl);
+          province = normalizeProvince(detail.province || inferProvinceFromTexts(detail.location, name, eventUrl));
+          location = detail.location || location;
+          image = detail.image;
+        }
+
+        if (!isTargetPvAragonProvince(province)) continue;
+
+        if (location === "Por determinar") {
+          if (!detail) detail = await extractDetailLocation(eventUrl);
+          location = detail.location || name;
+          image = image || detail.image;
+          province = normalizeProvince(detail.province || province);
+          if (!isTargetPvAragonProvince(province)) continue;
+        }
+
+        seenUrls.add(eventUrl);
+        races.push({
+          name,
+          type,
+          distance,
+          location,
+          province,
+          date: parsedDate.date,
+          time: parsedDate.time,
+          url: eventUrl,
+          image,
+        });
+      }
+
+      if (foundOnPage === 0) break;
+    }
+  } catch (error) {
+    console.error("Error scraping Kronoak:", error);
+  }
+
+  return races;
+}
+
+export async function scrapeFromMonrasin(): Promise<ScrapedRace[]> {
+  const races: ScrapedRace[] = [];
+  const seen = new Set<string>();
+
+  try {
+    const res = await fetchWithTimeout("https://monrasin.blogspot.com/feeds/posts/default?max-results=40", 30000);
+    if (!res.ok) return races;
+    const xml = await res.text();
+    const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/gi)].map((m) => m[1]);
+
+    for (const entry of entries) {
+      const title = decodeHtmlEntities((entry.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || "").replace(/<!\[CDATA\[|\]\]>/g, "").trim());
+      const altLink = entry.match(/<link[^>]+rel='alternate'[^>]+href='([^']+)'/i)?.[1]
+        || entry.match(/<link[^>]+href='([^']+)'[^>]+rel='alternate'/i)?.[1]
+        || "";
+      const content = decodeHtmlEntities((entry.match(/<content[^>]*>([\s\S]*?)<\/content>/i)?.[1] || "").replace(/<!\[CDATA\[|\]\]>/g, ""));
+      const plain = decodeHtmlEntities(content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+      const combined = `${title} ${plain}`;
+      const province = inferProvinceFromTexts(combined);
+      if (!isTargetPvAragonProvince(province)) continue;
+
+      const candidates = combined
+        .split(/(?=\b\d{1,2}\s+de\s+[a-záéíóúñ]+\b|\b\d{1,2}[\/\-]\d{1,2}[\/\-]20\d{2}\b)/i)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 20);
+
+      for (const candidate of candidates.length ? candidates : [combined]) {
+        const parsedDate = parseSpanishLongDate(candidate) || parseEventDateFromText(candidate);
+        if (!parsedDate) continue;
+        const eventDate = new Date(`${parsedDate.date}T12:00:00`);
+        if (Number.isNaN(eventDate.getTime()) || eventDate < new Date()) continue;
+
+        const localProvince = inferProvinceFromTexts(candidate, combined);
+        if (!isTargetPvAragonProvince(localProvince)) continue;
+
+        let name = title;
+        const nameMatch = candidate.match(/(?:trail|carrera|marcha|cross|media maratón|maratón|krosa|lasterketa|subida|duatl[oó]n|triatl[oó]n)[^.\n]{0,80}/i);
+        if (nameMatch) name = decodeHtmlEntities(nameMatch[0].replace(/\s+/g, " ").trim());
+        if (!/trail|carrera|marcha|cross|marat|kros|lasterketa|running|btt|cicli|triat|duatl|nataci/i.test(`${name} ${candidate}`)) continue;
+
+        const distance = parseDistanceFromText(candidate) || parseDistanceFromText(combined);
+        const type = detectRaceType(`${name} ${candidate}`, distance);
+        const locationMatch = candidate.match(/\(([^)]+\/[^)]+)\)/) || candidate.match(/\(([^)]+)\)/);
+        const location = decodeHtmlEntities(locationMatch?.[1]?.split("/")[0]?.trim() || localProvince);
+        const key = `${normalizeNameKey(name)}|${parsedDate.date}|${localProvince}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+
+        races.push({
+          name: name.length >= 4 ? name : title,
+          type,
+          distance,
+          location,
+          province: localProvince,
+          date: parsedDate.date,
+          time: parsedDate.time || extractTimeFromText(candidate),
+          url: altLink || undefined,
+          description: plain.slice(0, 240) || undefined,
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Error scraping Monrasin:", error);
+  }
+
+  return races;
+}
+
+export async function scrapeFromFAA(): Promise<ScrapedRace[]> {
+  const races: ScrapedRace[] = [];
+  const seen = new Set<string>();
+
+  try {
+    const res = await fetchWithTimeout(
+      "https://www.federacionaragonesadeatletismo.com/competiciones/calendario-y-resultados-faa/2021-2/",
+      30000
+    );
+    if (!res.ok) return races;
+    const html = await res.text();
+
+    const rowRegex = /<li>\s*(?:<a[^>]*href="([^"]*)"[^>]*>)?[\s\S]*?<div class="innerentri fecha">(\d{2}\/\d{2}\/\d{4})<\/div>[\s\S]*?<span class="named">([\s\S]*?)<\/span>[\s\S]*?<span class="pruebad">([\s\S]*?)<\/span>[\s\S]*?<span class="lugard">([\s\S]*?)<\/span>[\s\S]*?(?:<\/a>)?\s*<\/li>/gi;
+    let match: RegExpExecArray | null;
+
+    while ((match = rowRegex.exec(html)) !== null) {
+      const url = match[1] ? decodeHtmlEntities(match[1]) : undefined;
+      const dateParts = match[2].split("/");
+      const dateStr = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+      const eventDate = new Date(`${dateStr}T12:00:00`);
+      if (Number.isNaN(eventDate.getTime()) || eventDate < new Date(Date.now() - 86400000)) continue;
+
+      const name = decodeHtmlEntities(match[3].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+      const category = decodeHtmlEntities(match[4].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+      const place = decodeHtmlEntities(match[5].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+      if (!name || !place) continue;
+      if (/asamblea|control|campeonato|pntd|trofeo/i.test(name) && !/trail|cross|ruta|marcha|carrera|10k|5k|media|marat/i.test(`${name} ${category}`)) {
+        continue;
+      }
+
+      let province = inferProvinceFromTexts(place, name);
+      if (!isTargetPvAragonProvince(province)) {
+        const placeLower = stripAccents(place).toLowerCase();
+        if (/huesca|barbastro|sabinanigo|sabiñanigo|jaca|benasque|monzon|monzón|ainsa|aínsa|graus|fraga|binefar|binéfar|sallent|broto|boltaña/.test(placeLower)) {
+          province = "Huesca";
+        } else if (/teruel|alcaniz|alcañiz|andorra|calamocha|monreal|utrillas|montalban|montalbán|albarracin|albarracín/.test(placeLower)) {
+          province = "Teruel";
+        } else {
+          province = "Zaragoza";
+        }
+      }
+      const finalProvince = province;
+      const distance = parseDistanceFromText(name) || parseDistanceFromText(category);
+      const type = /montaña|trail/i.test(category)
+        ? "TRAIL"
+        : /marcha/i.test(category)
+          ? "MARCHA"
+          : detectRaceType(`${name} ${category}`, distance);
+
+      const key = `${normalizeNameKey(name)}|${dateStr}|${place.toLowerCase()}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      races.push({
+        name,
+        type,
+        distance,
+        location: place,
+        province: finalProvince,
+        date: dateStr,
+        url,
+        description: category || undefined,
+      });
+    }
+  } catch (error) {
+    console.error("Error scraping FAA:", error);
   }
 
   return races;
@@ -789,6 +1038,42 @@ export async function scrapeFromCarrerasPopulares(): Promise<ScrapedRace[]> {
   }
 
   return races;
+}
+
+const TARGET_PV_ARAGON_PROVINCES = new Set([
+  "Araba",
+  "Bizkaia",
+  "Gipuzkoa",
+  "Huesca",
+  "Zaragoza",
+  "Teruel",
+]);
+
+function isTargetPvAragonProvince(province: string): boolean {
+  return TARGET_PV_ARAGON_PROVINCES.has(normalizeProvince(province) || province);
+}
+
+function inferProvinceFromTexts(...texts: Array<string | undefined>): string {
+  for (const text of texts) {
+    if (!text) continue;
+    const detected = detectProvince(text);
+    if (detected && detected !== "Otra") return detected;
+  }
+  return "Otra";
+}
+
+function parseSpanishLongDate(text: string): { date: string; time?: string } | null {
+  const match = text
+    .toLowerCase()
+    .match(
+      /(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)\s+de\s+(20\d{2})(?:\s+a\s+las\s+(\d{1,2}):(\d{2}))?/i
+    );
+  if (!match) return null;
+  const day = match[1].padStart(2, "0");
+  const month = String(MONTH_NAME_MAP[match[2]]).padStart(2, "0");
+  const year = match[3];
+  const time = match[4] && match[5] ? `${match[4].padStart(2, "0")}:${match[5]}` : undefined;
+  return { date: `${year}-${month}-${day}`, time };
 }
 
 export function detectProvince(text: string): string {
@@ -1125,6 +1410,9 @@ const sources = [
   { key: "sportmaniacs", label: "Sportmaniacs", scrape: scrapeFromSportmaniacs },
   { key: "buscametas", label: "Buscametas", scrape: scrapeFromBuscametas },
   { key: "carreraspopulares", label: "CarrerasPopulares", scrape: scrapeFromCarrerasPopulares },
+  { key: "kronoak", label: "Kronoak", scrape: scrapeFromKronoak },
+  { key: "monrasin", label: "Monrasin", scrape: scrapeFromMonrasin },
+  { key: "faa", label: "FAA Aragón", scrape: scrapeFromFAA },
 ] as const;
 
 export async function runAllScrapers(): Promise<ScrapeResult[]> {

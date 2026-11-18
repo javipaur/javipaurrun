@@ -23,8 +23,11 @@ const sources = [
   { id: "lasterketak", name: "Lasterketak.eus", desc: "API REST de WordPress +8500 carreras", icon: "🏃" },
   { id: "rockthesport", name: "RockTheSport", desc: "API pública nacional trail/running (~350)", icon: "🎽" },
   { id: "sportmaniacs", name: "Sportmaniacs", desc: "Calendario nacional running (~3000)", icon: "🏁" },
-  { id: "buscametas", name: "Buscametas", desc: "Scraping HTML (anti-bot)", icon: "🔍" },
+  { id: "buscametas", name: "Buscametas", desc: "Scraping HTML (calendario nacional)", icon: "🔍" },
   { id: "carreraspopulares", name: "CarrerasPopulares", desc: "API pública de carreras populares en España", icon: "📅" },
+  { id: "kronoak", name: "Kronoak", desc: "Inscripciones RockTheSport/Kronoak (foco País Vasco y Aragón)", icon: "🗻" },
+  { id: "monrasin", name: "Monrasin", desc: "Blog/feed de trail y montaña (filtrado PV y Aragón)", icon: "📰" },
+  { id: "faa", name: "FAA Aragón", desc: "Calendario de competiciones de atletismo en Aragón", icon: "🏟️" },
 ];
 
 const sourceLabels: Record<string, string> = {
@@ -33,6 +36,9 @@ const sourceLabels: Record<string, string> = {
   sportmaniacs: "Sportmaniacs",
   buscametas: "Buscametas",
   carreraspopulares: "CarrerasPopulares",
+  kronoak: "Kronoak",
+  monrasin: "Monrasin",
+  faa: "FAA Aragón",
 };
 
 export default function ScrapingPage() {
